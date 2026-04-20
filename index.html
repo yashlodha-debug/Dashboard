@@ -4,7 +4,7 @@
   <title>Live Dashboard</title>
   <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600&display=swap" rel="stylesheet">
 </head>
-<body class="font-family: Arial; margin:0; background:#f4f6f9;">
+<body style="font-family: Arial; margin:0; background:#f4f6f9;">
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2"></script>
 
@@ -235,7 +235,6 @@ Category-wise Task Distribution
 </div>
 </div>
 
-
 <!-- CHARTS SECTION -->
 <div style="
   display:flex;
@@ -369,7 +368,7 @@ const sheetURL = "https://docs.google.com/spreadsheets/d/1-VxbQ_IaRMKtDH--2JDeqv
 const masterURL = "https://docs.google.com/spreadsheets/d/1-VxbQ_IaRMKtDH--2JDeqvGFrb_Or3D0kG-mGLu7dG8/export?format=csv&gid=1007217209";
 const fromInput = document.getElementById("fromDate");
 const toInput = document.getElementById("toDate");
-
+let lastDataHash = "";
 let hoursData = {}; // GLOBAL
 function timeToSeconds(t){
   let parts = t.split(':');
@@ -422,6 +421,16 @@ let chartData = {};
   fetch(sheetURL + "&t=" + new Date().getTime())
     .then(res => res.text())
     .then(csv => {
+
+//  (performance boost)
+let currentHash = csv.length;
+
+if(currentHash === lastDataHash){
+  console.log("No change → skip UI update");
+  return;
+}
+
+lastDataHash = currentHash;
 
       // ✅ CORRECT CSV PARSER
       function parseCSV(csv) {
@@ -1067,6 +1076,11 @@ document.getElementById("hoursTable").innerHTML = html2;
 
     });
 }
+
+// 🔥 AUTO REFRESH EVERY 5 SEC (BEST)
+setInterval(() => {
+  loadData(fromInput.value, toInput.value);
+}, 5000);
 
 
 </script>
