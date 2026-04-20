@@ -367,7 +367,6 @@ thead th{
 <script>
 const sheetURL = "https://docs.google.com/spreadsheets/d/1-VxbQ_IaRMKtDH--2JDeqvGFrb_Or3D0kG-mGLu7dG8/export?format=csv&gid=1747930222";
 const masterURL = "https://docs.google.com/spreadsheets/d/1-VxbQ_IaRMKtDH--2JDeqvGFrb_Or3D0kG-mGLu7dG8/export?format=csv&gid=1007217209";
-let lastDataHash = "";
 const fromInput = document.getElementById("fromDate");
 const toInput = document.getElementById("toDate");
 
@@ -457,15 +456,6 @@ let chartData = {};
 
         return rows;
       }
-
-      let currentHash = btoa(csv).length;
-
-if(currentHash === lastDataHash){
-  console.log("No change → skip update");
-  return;
-}
-
-lastDataHash = currentHash;
 
 
       const rows = parseCSV(csv); // ✅ IMPORTANT
@@ -1077,20 +1067,6 @@ document.getElementById("hoursTable").innerHTML = html2;
 
     });
 }
-
-setInterval(async () => {
-  const res = await fetch(sheetURL + "&t=" + new Date().getTime());
-  const csv = await res.text();
-
-  let currentHash = btoa(csv).length;
-
-  if(currentHash !== lastDataHash){
-    console.log("Data changed → updating UI");
-    loadData(fromInput.value, toInput.value);
-  } else {
-    console.log("No change");
-  }
-}, 5000);
 
 
 </script>
