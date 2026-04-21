@@ -1,1098 +1,1396 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-  <title>Live Dashboard</title>
-  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600&display=swap" rel="stylesheet">
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Live Performance Dashboard</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2"></script>
+  <style>
+    :root {
+      --bg: #f3f6fb;
+      --surface: #ffffff;
+      --surface-strong: #0f172a;
+      --text: #14213d;
+      --muted: #64748b;
+      --border: #dbe4f0;
+      --shadow: 0 12px 30px rgba(15, 23, 42, 0.08);
+      --radius: 18px;
+      --accent: #1d4ed8;
+      --accent-soft: rgba(29, 78, 216, 0.1);
+      --success: #16a34a;
+      --warning: #f59e0b;
+      --danger: #ef4444;
+      --info: #06b6d4;
+      --violet: #7c3aed;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      font-family: "Poppins", Arial, sans-serif;
+      background:
+        radial-gradient(circle at top right, rgba(37, 99, 235, 0.08), transparent 28%),
+        linear-gradient(180deg, #f8fbff 0%, var(--bg) 100%);
+      color: var(--text);
+    }
+
+    .page {
+      max-width: 1600px;
+      margin: 0 auto;
+      padding: 20px;
+    }
+
+    .header {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      position: relative;
+      padding: 18px 24px;
+      background: rgba(255, 255, 255, 0.92);
+      backdrop-filter: blur(10px);
+      border: 1px solid rgba(219, 228, 240, 0.8);
+      border-radius: 24px;
+      box-shadow: var(--shadow);
+    }
+
+    .header img {
+      position: absolute;
+      left: 24px;
+      height: 34px;
+    }
+
+    .header h1 {
+      margin: 0;
+      font-size: clamp(1.4rem, 2.5vw, 2rem);
+      font-weight: 700;
+      letter-spacing: 0.02em;
+    }
+
+    .toolbar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 18px;
+      flex-wrap: wrap;
+      margin-top: 18px;
+      padding: 18px 20px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+    }
+
+    .toolbar-left {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+
+    .toolbar label {
+      color: var(--muted);
+      font-size: 0.92rem;
+      font-weight: 500;
+    }
+
+    .toolbar input {
+      min-height: 42px;
+      padding: 10px 12px;
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      font: inherit;
+      color: var(--text);
+      background: #fff;
+    }
+
+    .status-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      min-height: 42px;
+      padding: 0 14px;
+      border-radius: 999px;
+      background: var(--accent-soft);
+      color: var(--accent);
+      font-size: 0.9rem;
+      font-weight: 600;
+    }
+
+    .status-dot {
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      background: currentColor;
+    }
+
+    .top-grid {
+      display: grid;
+      grid-template-columns: 160px minmax(0, 1fr) 360px;
+      gap: 20px;
+      margin-top: 20px;
+      align-items: start;
+    }
+
+    .metric-stack {
+      display: grid;
+      gap: 12px;
+    }
+
+    .metric-card {
+      padding: 14px 12px;
+      border-radius: 18px;
+      color: #fff;
+      box-shadow: var(--shadow);
+      text-align: center;
+      border: 1px solid rgba(255, 255, 255, 0.14);
+    }
+
+    .metric-card strong {
+      display: block;
+      font-size: 0.86rem;
+      font-weight: 600;
+    }
+
+    .metric-card span {
+      display: block;
+      margin-top: 8px;
+      font-size: 1.7rem;
+      font-weight: 700;
+      line-height: 1;
+    }
+
+    .blue { background: linear-gradient(135deg, #3b82f6, #2563eb); }
+    .green { background: linear-gradient(135deg, #22c55e, #15803d); }
+    .pink { background: linear-gradient(135deg, #ec4899, #be185d); }
+    .orange { background: linear-gradient(135deg, #fb923c, #ea580c); }
+    .lightgreen { background: linear-gradient(135deg, #34d399, #059669); }
+    .purple { background: linear-gradient(135deg, #8b5cf6, #6d28d9); }
+
+    .section {
+      margin-top: 20px;
+    }
+
+    .panel {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 22px;
+      box-shadow: var(--shadow);
+      overflow: hidden;
+    }
+
+    .panel-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      padding: 14px 18px;
+      background: linear-gradient(135deg, #0f172a, #1e293b);
+      color: #fff;
+    }
+
+    .panel-header h2 {
+      margin: 0;
+      font-size: 0.98rem;
+      font-weight: 600;
+    }
+
+    .panel-subtitle {
+      font-size: 0.8rem;
+      color: rgba(255, 255, 255, 0.72);
+    }
+
+    .table-wrap {
+      overflow: auto;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 13px;
+      background: var(--surface);
+    }
+
+    thead {
+      background: #1f2937;
+      color: #fff;
+    }
+
+    thead th {
+      position: sticky;
+      top: 0;
+      z-index: 2;
+      background: #1f2937;
+    }
+
+    th, td {
+      padding: 10px 12px;
+      text-align: center;
+      white-space: nowrap;
+      border-bottom: 1px solid #edf2f7;
+    }
+
+    tbody tr:nth-child(even) {
+      background: #f8fbff;
+    }
+
+    tbody tr:hover {
+      background: #eef6ff;
+    }
+
+    td.name-cell,
+    th.name-cell {
+      text-align: left;
+    }
+
+    .highlight-working { background: #fef3c7; font-weight: 600; }
+    .highlight-pending { background: #fee2e2; font-weight: 600; }
+    .highlight-assigned { background: #cffafe; font-weight: 600; }
+    .highlight-next { background: #e2e8f0; font-weight: 600; }
+
+    .total-row {
+      font-weight: 700;
+      background: #dbeafe !important;
+    }
+
+    .chart-panel {
+      padding: 14px;
+    }
+
+    .chart-box {
+      position: relative;
+      min-height: 320px;
+      padding: 6px;
+    }
+
+    .chart-shell {
+      position: relative;
+      overflow: hidden;
+      border-radius: 24px;
+      border: 1px solid rgba(148, 163, 184, 0.18);
+      background:
+        radial-gradient(circle at top left, rgba(59, 130, 246, 0.16), transparent 30%),
+        radial-gradient(circle at bottom right, rgba(236, 72, 153, 0.12), transparent 32%),
+        linear-gradient(145deg, #0f172a 0%, #172554 52%, #1e293b 100%);
+      box-shadow:
+        inset 0 1px 0 rgba(255, 255, 255, 0.06),
+        0 18px 40px rgba(15, 23, 42, 0.22);
+    }
+
+    .chart-shell::before {
+      content: "";
+      position: absolute;
+      inset: 0;
+      background:
+        linear-gradient(120deg, rgba(255, 255, 255, 0.06), transparent 28%),
+        linear-gradient(transparent 95%, rgba(255, 255, 255, 0.05) 100%);
+      pointer-events: none;
+    }
+
+    .chart-shell .chart-box {
+      padding: 18px 16px 12px;
+      min-height: 300px;
+    }
+
+    .split-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 20px;
+      margin-top: 20px;
+    }
+
+    .empty-state {
+      padding: 18px;
+      text-align: center;
+      color: var(--muted);
+      font-size: 0.92rem;
+    }
+
+    .error-banner {
+      display: none;
+      margin-top: 16px;
+      padding: 14px 16px;
+      border-radius: 14px;
+      border: 1px solid rgba(239, 68, 68, 0.25);
+      background: rgba(239, 68, 68, 0.08);
+      color: #991b1b;
+      font-size: 0.92rem;
+      font-weight: 500;
+    }
+
+    @media (max-width: 1200px) {
+      .top-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .metric-stack {
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+      }
+    }
+
+    @media (max-width: 900px) {
+      .split-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .metric-stack {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+      }
+
+      .header {
+        justify-content: flex-start;
+        padding-left: 72px;
+      }
+
+      .header img {
+        left: 20px;
+      }
+    }
+
+    @media (max-width: 640px) {
+      .page {
+        padding: 12px;
+      }
+
+      .toolbar {
+        align-items: stretch;
+      }
+
+      .metric-stack {
+        grid-template-columns: 1fr;
+      }
+
+      .header h1 {
+        font-size: 1.2rem;
+      }
+    }
+  </style>
 </head>
-<body class="font-family: Arial; margin:0; background:#f4f6f9;">
-<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2"></script>
+<body>
+  <div class="page">
+    <header class="header">
+      <img src="https://d28ewddc5mocr5.cloudfront.net/images/logos-new/pp-logo-new.svg" alt="Petpooja logo">
+      <h1>Live Performance Dashboard</h1>
+    </header>
 
-<!-- HEADER -->
-<div style="
-  display:flex;
-  align-items:center;
-  justify-content:center;
-  position:relative;
-  background:#ffffff;
-  padding:11px;
-  box-shadow:0 2px 6px rgba(0,0,0,0.1);
-">
+    <section class="toolbar">
+      <div class="toolbar-left">
+        <label for="fromDate">From</label>
+        <input type="date" id="fromDate">
+        <label for="toDate">To</label>
+        <input type="date" id="toDate">
+      </div>
+      <div class="status-pill" id="refreshStatus">
+        <span class="status-dot"></span>
+        <span>Waiting for data</span>
+      </div>
+    </section>
 
-  <!-- Logo Left -->
-  <img src="https://d28ewddc5mocr5.cloudfront.net/images/logos-new/pp-logo-new.svg" 
-       style="height:30px; position:absolute; left:15px;">
+    <div class="error-banner" id="errorBanner"></div>
 
-<!-- Title Center -->
-  <h2 style="margin:0; font-weight:600;">Live Performance Dashboard</h2>
+    <section class="top-grid">
+      <div class="metric-stack">
+        <div class="metric-card blue"><strong>Total Tasks</strong><span id="totalTasks">0</span></div>
+        <div class="metric-card green"><strong>Inventory</strong><span id="inventoryCount">0</span></div>
+        <div class="metric-card pink"><strong>POC</strong><span id="pocCount">0</span></div>
+        <div class="metric-card orange"><strong>Recipe &amp; Material</strong><span id="recipeCount">0</span></div>
+        <div class="metric-card lightgreen"><strong>Raw Material</strong><span id="rawCount">0</span></div>
+        <div class="metric-card purple"><strong>Other</strong><span id="otherRelatedCount">0</span></div>
+      </div>
 
-</div>
+      <div class="panel">
+        <div class="panel-header">
+          <h2>Today's Activity</h2>
+          <span class="panel-subtitle">Live employee-wise status summary</span>
+        </div>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th class="name-cell">Name</th>
+                <th>Done</th>
+                <th>Working On</th>
+                <th>Pending</th>
+                <th>Assigned</th>
+                <th>Hold</th>
+                <th>Close</th>
+                <th>Next Day</th>
+                <th>Priority</th>
+                <th>Open</th>
+                <th>Total</th>
+              </tr>
+            </thead>
+            <tbody id="activityTable"></tbody>
+          </table>
+        </div>
+      </div>
 
-<!-- FILTER CARD -->
-<div style="
-  margin:20px;
-  padding:15px;
-  background:#fff;
-  border-radius:13px;
-  box-shadow:0 2px 8px rgba(0,0,0,0.08);
-  display:flex;
-  align-items:center;
-  gap:15px;
-">
+      <div class="panel">
+        <div class="panel-header">
+          <h2>Average Time</h2>
+          <span class="panel-subtitle">Actual vs expected effort</span>
+        </div>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th class="name-cell">Name</th>
+                <th>Actual</th>
+                <th>Expected</th>
+                <th>Avg</th>
+              </tr>
+            </thead>
+            <tbody id="hoursTable"></tbody>
+          </table>
+        </div>
+      </div>
+    </section>
 
-  <label>From:</label>
-  <input type="date" id="fromDate"
-    style="padding:5px; border-radius:6px; border:1px solid #ccc;">
-  <label>To:</label>
-  <input type="date" id="toDate"
-    style="padding:5px; border-radius:6px; border:1px solid #ccc;">
+    <section class="section panel">
+      <div class="panel-header">
+        <h2>Day-wise Growth Chart</h2>
+        <span class="panel-subtitle">Trend of total and status counts</span>
+      </div>
+      <div class="chart-panel">
+        <div class="chart-box">
+          <canvas id="taskChart"></canvas>
+        </div>
+      </div>
+    </section>
 
-</div>
+    <section class="split-grid">
+      <div class="panel">
+        <div class="panel-header">
+          <h2>Related to Category wise-Status</h2>
+          <span class="panel-subtitle">Grouped by related category</span>
+        </div>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th class="name-cell">Related To</th>
+                <th>Done</th>
+                <th>Working</th>
+                <th>Pending</th>
+                <th>Assigned</th>
+                <th>Hold</th>
+                <th>Close</th>
+                <th>Next Day</th>
+                <th>Priority</th>
+                <th>Open</th>
+                <th>Total</th>
+              </tr>
+            </thead>
+            <tbody id="relatedTable"></tbody>
+          </table>
+        </div>
+      </div>
 
-<!-- MAIN LAYOUT -->
-<div style="
-  display:flex;
-  align-items:flex-start;
-  gap:40px;
-  margin:10px 22px;
-">
+      <div class="panel">
+        <div class="panel-header">
+          <h2>Category-wise Task Distribution</h2>
+          <span class="panel-subtitle">Employee category totals</span>
+        </div>
+        <div class="table-wrap" style="max-height: 320px;">
+          <table>
+            <thead>
+              <tr>
+                <th class="name-cell">Name</th>
+                <th>Raw Material</th>
+                <th>Recipe &amp; Material</th>
+                <th>Rework</th>
+                <th>Other</th>
+                <th>Total</th>
+              </tr>
+            </thead>
+            <tbody id="employeeCategoryTable"></tbody>
+          </table>
+        </div>
+      </div>
+    </section>
 
-  <!-- LEFT CARDS -->
-  <div style="
-    display:flex;
-    flex-direction:column;
-    gap:10px;
-    min-width:130px;
-  ">
-    <div class="card blue">Total Tasks <h2 id="totalTasks">0</h2></div>
-    <div class="card green">Inventory <h2 id="inventoryCount">0</h2></div>
-    <div class="card pink">POC <h2 id="pocCount">0</h2></div>
-    <div class="card orange">Recipe & Material <h2 id="recipeCount">0</h2></div>
-    <div class="card lightgreen">Raw Material <h2 id="rawCount">0</h2></div>
-    <div class="card purple">Other <h2 id="OtherRelatedCount">0</h2></div>
+    <section class="split-grid">
+      <div class="panel">
+        <div class="panel-header">
+          <h2>Status Insights Chart</h2>
+          <span class="panel-subtitle">Current year status totals</span>
+        </div>
+        <div class="chart-panel">
+          <div class="chart-shell">
+            <div class="chart-box" style="min-height: 280px;">
+              <canvas id="statusChart"></canvas>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="panel">
+        <div class="panel-header">
+          <h2>Month-wise Category Chart</h2>
+          <span class="panel-subtitle">Current year stacked category view</span>
+        </div>
+        <div class="chart-panel">
+          <div class="chart-shell">
+            <div class="chart-box" style="min-height: 280px;">
+              <canvas id="monthChart"></canvas>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
   </div>
 
-  <!-- CENTER ACTIVITY TABLE -->
-  <div style="flex:1; max-width:900px;">
-    
-    <div style="
-      background:#000;
-      color:#fff;
-      padding:5px;
-      border-radius:8px;
-      text-align:center;
-      font-weight:600;
-      font-size:14px;
-      margin-bottom:5px;
-    ">
-      Today's Activity
-    </div>
+  <script>
+    const sheetURL = "https://docs.google.com/spreadsheets/d/1-VxbQ_IaRMKtDH--2JDeqvGFrb_Or3D0kG-mGLu7dG8/export?format=csv&gid=1747930222";
+    const masterURL = "https://docs.google.com/spreadsheets/d/1-VxbQ_IaRMKtDH--2JDeqvGFrb_Or3D0kG-mGLu7dG8/export?format=csv&gid=1007217209";
 
-    <table>
-      <thead>
-        <tr>
-          <th style="text-align:left;">Name</th>
-          <th>Done</th>
-          <th>Working On</th>
-          <th>Pending</th>
-          <th>Assigned</th>
-          <th>Hold</th>
-          <th>Close</th>
-          <th>Next Day</th>
-          <th>Priority</th>
-          <th>Open</th>
-          <th>Total</th>
-        </tr>
-      </thead>
-      <tbody id="activityTable"></tbody>
-    </table>
+    const fromInput = document.getElementById("fromDate");
+    const toInput = document.getElementById("toDate");
+    const errorBanner = document.getElementById("errorBanner");
+    const refreshStatus = document.getElementById("refreshStatus");
 
-  </div>
+    let lastDataHash = "";
+    let hoursData = {};
+    let masterDataPromise = null;
+    let timer = null;
+    let isLoading = false;
 
-  <!-- RIGHT HOURS TABLE -->
-  <div style="
-    width:350px;
-    min-width:300px;
-  ">
+    function setRefreshStatus(message, isError = false) {
+      refreshStatus.innerHTML = `<span class="status-dot"></span><span>${message}</span>`;
+      refreshStatus.style.background = isError ? "rgba(239,68,68,0.12)" : "rgba(29,78,216,0.1)";
+      refreshStatus.style.color = isError ? "#b91c1c" : "#1d4ed8";
+    }
 
-    <div style="
-      background:#000;
-      color:#fff;
-      padding:5px;
-      border-radius:8px;
-      text-align:center;
-      font-weight:600;
-      font-size:14px;
-      margin-bottom:5px;
-    ">
-      Average Time
-    </div>
+    function showError(message) {
+      errorBanner.textContent = message;
+      errorBanner.style.display = "block";
+      setRefreshStatus("Refresh failed", true);
+    }
 
-    <table>
-      <thead>
-        <tr>
-          <th style="text-align:left;">Name</th>
-          <th>Actual</th>
-          <th>Expected</th>
-          <th>Avg</th>
-        </tr>
-      </thead>
-      <tbody id="hoursTable"></tbody>
-    </table>
-  </div>
-</div>
+    function clearError() {
+      errorBanner.style.display = "none";
+      errorBanner.textContent = "";
+    }
 
-<div style="
-  margin:20px 22px 5px;
-  background:#000;
-  color:#fff;
-  padding:5px;
-  border-radius:8px;
-  text-align:center;
-  font-weight:600;
-">
-  Day-wise Growth Chart
-</div>
+    function debounceLoad() {
+      clearTimeout(timer);
+      timer = setTimeout(() => {
+        loadData(fromInput.value, toInput.value, { force: true });
+      }, 350);
+    }
 
-<div style="margin:20px 22px;">
-  <canvas id="taskChart" height="270"></canvas>
-</div>
+    function formatDate(date) {
+      const d = String(date.getDate()).padStart(2, "0");
+      const m = String(date.getMonth() + 1).padStart(2, "0");
+      const y = date.getFullYear();
+      return `${y}-${m}-${d}`;
+    }
 
-<!-- BOTH TABLES SIDE BY SIDE -->
-<div style="
-  display:flex;
-  gap:20px;
-  margin:20px 22px;
-  align-items:flex-start;
-">
-  <!-- LEFT: RELATED TABLE -->
-  <div style="flex:1;">
-    <div style="
-      background:#000;
-      color:#fff;
-      padding:6px;
-      border-radius:8px;
-      text-align:center;
-      font-weight:600;
-      margin-bottom:5px;
-    ">
-      Related to Category wise-Status
-    </div>
+    function timeToSeconds(value) {
+      if (!value || typeof value !== "string") return 0;
+      const normalized = value.trim();
+      if (!normalized.includes(":")) return 0;
+      const parts = normalized.split(":").map(Number);
+      if (parts.some(Number.isNaN)) return 0;
+      while (parts.length < 3) parts.unshift(0);
+      return (parts[0] * 3600) + (parts[1] * 60) + parts[2];
+    }
 
-    <table>
-      <thead>
-        <tr>
-          <th style="text-align:left;">Related To</th>
-          <th>Done</th>
-          <th>Working</th>
-          <th>Pending</th>
-          <th>Assigned</th>
-          <th>Hold</th>
-          <th>Close</th>
-          <th>Next Day</th>
-          <th>Priority</th>
-          <th>Open</th>
-          <th>Total</th>
-        </tr>
-      </thead>
-      <tbody id="relatedTable"></tbody>
-    </table>
+    function secondsToTime(seconds) {
+      const safeSeconds = Math.max(0, Math.floor(seconds || 0));
+      const h = Math.floor(safeSeconds / 3600);
+      const m = Math.floor((safeSeconds % 3600) / 60);
+      const s = safeSeconds % 60;
+      return `${h}:${String(m).padStart(2, "0")}:${String(s).padStart(2, "0")}`;
+    }
 
-  </div>
+    function parseExpectedHours(value) {
+      if (value == null) return 0;
+      const normalized = String(value).trim();
+      if (!normalized) return 0;
+      if (normalized.includes(":")) return timeToSeconds(normalized);
 
-<!-- RIGHT: CATEGORY TABLE -->
-<div style="flex:1; display:flex; flex-direction:column;">
+      const numericHours = Number(normalized);
+      if (!Number.isNaN(numericHours) && numericHours >= 0) {
+        return numericHours * 3600;
+      }
 
-  <div style="
-    background:#000;
-    color:#fff;
-    padding:6px;
-    border-radius:8px;
-    text-align:center;
-    font-weight:600;
-    margin-bottom:5px;
-  ">
-Category-wise Task Distribution
-  </div><!-- ✅ SCROLL WRAPPER -->
-  <div style="
-    max-height:185px;
-    overflow-y:auto;
-    border-radius:8px;
-  "><table>
-      <thead>
-        <tr>
-          <th style="text-align:left;">Name</th>
-          <th>Raw Material</th>
-          <th>Recipe & Material</th>
-          <th>Rework</th>
-          <th>Other</th>
-          <th>Total</th>
-        </tr>
-      </thead>
-      <tbody id="employeeCategoryTable"></tbody>
-    </table>
-  </div>
-</div>
-</div>
+      return 0;
+    }
 
+    function formatExpectedHours(value) {
+      if (value == null) return "0";
+      const normalized = String(value).trim();
+      if (!normalized) return "0";
+      if (normalized.includes(":")) return normalized;
+      const numericHours = Number(normalized);
+      if (!Number.isNaN(numericHours)) return `${numericHours} hrs`;
+      return normalized;
+    }
 
-<!-- CHARTS SECTION -->
-<div style="
-  display:flex;
-  gap:20px;
-  margin:20px 22px;
-  align-items:flex-start;
-">
+    function normalizeName(name) {
+      return (name || "")
+        .toLowerCase()
+        .trim()
+        .replace(/\s+/g, " ");
+    }
 
-  <!-- LEFT CHART -->
-  <div style="flex:1;">
+    function toDisplayName(name) {
+      return normalizeName(name)
+        .split(" ")
+        .filter(Boolean)
+        .map(word => word.charAt(0).toUpperCase() + word.slice(1))
+        .join(" ");
+    }
 
-    <!-- HEADER (same like tables) -->
-    <div style="
-      background:#000;
-      color:#fff;
-      padding:6px;
-      border-radius:8px;
-      text-align:center;
-      font-weight:600;
-      margin-bottom:5px;
-    ">
-      Status Insights Chart
-    </div>
+    function normalizeRelated(related) {
+      const value = (related || "").toLowerCase().trim();
+      if (value === "recipe & material") return "Recipe & Material";
+      if (value === "raw material") return "Raw Material";
+      if (value === "rework") return "Rework";
+      return "Other";
+    }
 
-    <!-- CHART CARD -->
-    <div style="
-      background:#fff;
-      border-radius:8px;
-      padding:10px;
-      box-shadow:0 2px 10px rgba(0,0,0,0.08);
-    ">
-      <canvas id="statusChart" height="130"></canvas>
-    </div>
+    function parseCSV(text) {
+      const rows = [];
+      let row = [];
+      let current = "";
+      let insideQuotes = false;
 
-  </div>
+      for (let i = 0; i < text.length; i += 1) {
+        const char = text[i];
+        const nextChar = text[i + 1];
 
-  <!-- RIGHT CHART -->
-  <div style="flex:1;">
-
-    <!-- HEADER -->
-    <div style="
-      background:#000;
-      color:#fff;
-      padding:6px;
-      border-radius:8px;
-      text-align:center;
-      font-weight:600;
-      margin-bottom:5px;
-    ">
-      Month-wise Category Chart
-    </div>
-
-    <!-- CHART CARD -->
-    <div style="
-      background:#fff;
-      border-radius:8px;
-      padding:10px;
-      box-shadow:0 2px 10px rgba(0,0,0,0.08);
-    ">
-      <canvas id="monthChart" height="130"></canvas>
-    </div>
-
-  </div>
-
-</div>
-
-<!-- STYLE -->
-<style>
-
-table{
-  width:100%;
-  margin:0 auto;   /* center */
-  border-collapse:collapse;
-  background:#fff;
-  font-size:13px;
-  box-shadow:0 2px 10px rgba(0,0,0,0.08);
-  border-radius:8px;
-}
-
-.card{
-  width:110px;
-  padding:12px;
-  border-radius:10px;
-  color:#fff;
-  text-align:center;
-  font-size:13px;
-  box-shadow:0 2px 6px rgba(0,0,0,0.1);
-}
-
-.blue{background:#4facfe;}
-.green{background:#43e97b;}
-.pink{background:#fa709a;}
-.orange{background:#ff9a9e;}
-.lightgreen{background:#84fab0;}
-.purple{background:#a18cd1;}
-
-
-thead{
-  background:#2c3e50;
-  color:#fff;
-}
-
-th, td{
-  padding:8px;
-  text-align:center;
-}
-
-
-tbody tr:nth-child(even){
-  background:#f2f2f2;
-}
-
-tbody tr:hover{
-  background:#e6f2ff;
-}
-
-/* Sticky Header (only for scroll table) */
-thead th{
-  position: sticky;
-  top: 0;
-  background: #2c3e50; /* same as header */
-  z-index: 5;
-}
-
-
-
-</style>
-
-<script>
-const sheetURL = "https://docs.google.com/spreadsheets/d/1-VxbQ_IaRMKtDH--2JDeqvGFrb_Or3D0kG-mGLu7dG8/export?format=csv&gid=1747930222";
-const masterURL = "https://docs.google.com/spreadsheets/d/1-VxbQ_IaRMKtDH--2JDeqvGFrb_Or3D0kG-mGLu7dG8/export?format=csv&gid=1007217209";
-let lastDataHash = "";
-const fromInput = document.getElementById("fromDate");
-const toInput = document.getElementById("toDate");
-
-let hoursData = {}; // GLOBAL
-function timeToSeconds(t){
-  let parts = t.split(':');
-  return (+parts[0]*3600)+(+parts[1]*60)+(+parts[2]);
-}
-let timer;
-
-function debounceLoad(){
-  clearTimeout(timer);
-  timer = setTimeout(()=>{
-    loadData(fromInput.value, toInput.value);
-  }, 500);
-}
-// FILTER CHANGE
-fromInput.addEventListener("change", debounceLoad);
-toInput.addEventListener("change", debounceLoad);
-
-// DEFAULT DATE
-window.onload = function(){
-  const today = new Date();
-  const firstDay = new Date(today.getFullYear(), today.getMonth(), 1);
-
-  function formatDate(date){
-    let d = date.getDate().toString().padStart(2,'0');
-    let m = (date.getMonth()+1).toString().padStart(2,'0');
-    let y = date.getFullYear();
-    return `${y}-${m}-${d}`;
-  }
-
-  fromInput.value = formatDate(firstDay);  // ✅ FIXED
-  toInput.value = formatDate(today);       // ✅ FIXED
-
-  loadData(fromInput.value, toInput.value);
-};
-
-function loadData(fromDate, toDate){ 
-const fromParts = fromDate.split("-");
-const toParts = toDate.split("-");
-
-const from = new Date(fromParts[0], fromParts[1]-1, fromParts[2]);
-const to = new Date(toParts[0], toParts[1]-1, toParts[2]);
-
-to.setHours(23,59,59,999);
-const today = new Date();
-const yearStart = new Date(today.getFullYear(), 0, 1);
-const yearEnd = new Date(today.getFullYear(), 11, 31, 23, 59, 59);
-let monthData = {};
-hoursData = {};
-let chartData = {};
-  fetch(sheetURL + "&t=" + new Date().getTime())
-    .then(res => res.text())
-    .then(csv => {
-
-      // ✅ CORRECT CSV PARSER
-      function parseCSV(csv) {
-        const rows = [];
-        const lines = csv.split(/\r?\n/);
-
-        for (let line of lines) {
-          if(!line.trim()) continue; // skip empty
-
-          let row = [];
-          let current = '';
-          let insideQuotes = false;
-
-          for (let i = 0; i < line.length; i++) {
-            let char = line[i];
-
-            if (char === '"') {
-              insideQuotes = !insideQuotes;
-            } 
-            else if (char === ',' && !insideQuotes) {
-              row.push(current);
-              current = '';
-            } 
-            else {
-              current += char;
-            }
+        if (char === '"') {
+          if (insideQuotes && nextChar === '"') {
+            current += '"';
+            i += 1;
+          } else {
+            insideQuotes = !insideQuotes;
           }
-
+        } else if (char === "," && !insideQuotes) {
           row.push(current);
+          current = "";
+        } else if ((char === "\n" || char === "\r") && !insideQuotes) {
+          if (char === "\r" && nextChar === "\n") {
+            i += 1;
+          }
+          row.push(current);
+          if (row.some(cell => cell.trim() !== "")) {
+            rows.push(row);
+          }
+          row = [];
+          current = "";
+        } else {
+          current += char;
+        }
+      }
+
+      if (current !== "" || row.length) {
+        row.push(current);
+        if (row.some(cell => cell.trim() !== "")) {
           rows.push(row);
         }
-
-        return rows;
       }
 
-      let currentHash = btoa(csv).length;
+      return rows;
+    }
 
-if(currentHash === lastDataHash){
-  console.log("No change → skip update");
-  return;
-}
+    function renderEmptyRow(targetId, message, colspan) {
+      document.getElementById(targetId).innerHTML = `<tr><td colspan="${colspan}" class="empty-state">${message}</td></tr>`;
+    }
 
-lastDataHash = currentHash;
+    function createTotalAccumulator() {
+      return {
+        done: 0,
+        working: 0,
+        pending: 0,
+        assigned: 0,
+        hold: 0,
+        close: 0,
+        next: 0,
+        priority: 0,
+        open: 0,
+        total: 0
+      };
+    }
 
+    function applyStatusCounters(target, status) {
+      if (status.includes("done")) target.done += 1;
+      else if (status.includes("working")) target.working += 1;
+      else if (status.includes("pending")) target.pending += 1;
+      else if (status.includes("assign")) target.assigned += 1;
+      else if (status.includes("hold")) target.hold += 1;
+      else if (status.includes("close")) target.close += 1;
+      else if (status.includes("next")) target.next += 1;
+      else if (status.includes("priority")) target.priority += 1;
+      else if (status.includes("open")) target.open += 1;
+      else target.open += 1;
+      target.total += 1;
+    }
 
-      const rows = parseCSV(csv); // ✅ IMPORTANT
+    function renderActivityTable(activity) {
+      const names = Object.keys(activity).sort();
+      if (!names.length) {
+        renderEmptyRow("activityTable", "No activity found for the selected date range.", 11);
+        return;
+      }
 
-      const headers = rows[0].map(h => h.trim());
+      const totals = createTotalAccumulator();
+      const html = names.map(name => {
+        const item = activity[name];
+        Object.keys(totals).forEach(key => {
+          totals[key] += item[key];
+        });
 
-      const dateIndex = headers.findIndex(h => h.toLowerCase() === "assign date");
-      const taskIndex = headers.findIndex(h => h.toLowerCase() === "task");
-      const relatedIndex = headers.findIndex(h => h.toLowerCase() === "related to");
-      const assignedIndex = headers.findIndex(h => h.toLowerCase() === "assigned");
-      const statusIndex = headers.findIndex(h => h.toLowerCase() === "status");
+        return `
+          <tr>
+            <td class="name-cell">${name}</td>
+            <td>${item.done}</td>
+            <td class="${item.working > 0 ? "highlight-working" : ""}">${item.working}</td>
+            <td class="${item.pending > 0 ? "highlight-pending" : ""}">${item.pending}</td>
+            <td class="${item.assigned > 0 ? "highlight-assigned" : ""}">${item.assigned}</td>
+            <td>${item.hold}</td>
+            <td>${item.close}</td>
+            <td class="${item.next > 0 ? "highlight-next" : ""}">${item.next}</td>
+            <td>${item.priority}</td>
+            <td>${item.open}</td>
+            <td><strong>${item.total}</strong></td>
+          </tr>
+        `;
+      }).join("");
 
-      const durationIndex = headers.findIndex(h => 
-  h.toLowerCase().includes("duration")
-);
+      document.getElementById("activityTable").innerHTML = `${html}
+        <tr class="total-row">
+          <td class="name-cell">Total</td>
+          <td>${totals.done}</td>
+          <td>${totals.working}</td>
+          <td>${totals.pending}</td>
+          <td>${totals.assigned}</td>
+          <td>${totals.hold}</td>
+          <td>${totals.close}</td>
+          <td>${totals.next}</td>
+          <td>${totals.priority}</td>
+          <td>${totals.open}</td>
+          <td>${totals.total}</td>
+        </tr>`;
+    }
 
-      let total = 0;
-      let inventory = 0;
-      let poc = 0;
-      let recipe = 0;
-      let raw = 0;
-      let Other = 0;
-      let activity = {};
-      let relatedStatus = {};
-      let employeeCategory = {};
+    function renderRelatedTable(relatedStatus) {
+      const relatedKeys = Object.keys(relatedStatus).sort();
+      if (!relatedKeys.length) {
+        renderEmptyRow("relatedTable", "No related-category data found for the selected date range.", 11);
+        return;
+      }
 
-      let yearStatus = { done:0, close:0, hold:0, pending:0 };
-      rows.slice(1).forEach(row => {
+      const totals = createTotalAccumulator();
+      const html = relatedKeys.map(key => {
+        const item = relatedStatus[key];
+        Object.keys(totals).forEach(totalKey => {
+          totals[totalKey] += item[totalKey];
+        });
 
-        let rawDate = row[dateIndex];
-        if(!rawDate) return;
+        return `
+          <tr>
+            <td class="name-cell">${key}</td>
+            <td>${item.done}</td>
+            <td>${item.working}</td>
+            <td>${item.pending}</td>
+            <td>${item.assigned}</td>
+            <td>${item.hold}</td>
+            <td>${item.close}</td>
+            <td>${item.next}</td>
+            <td>${item.priority}</td>
+            <td>${item.open}</td>
+            <td><strong>${item.total}</strong></td>
+          </tr>
+        `;
+      }).join("");
 
-        const parts = rawDate.split('/');
-if(parts.length !== 3) return;
+      document.getElementById("relatedTable").innerHTML = `${html}
+        <tr class="total-row">
+          <td class="name-cell">Total</td>
+          <td>${totals.done}</td>
+          <td>${totals.working}</td>
+          <td>${totals.pending}</td>
+          <td>${totals.assigned}</td>
+          <td>${totals.hold}</td>
+          <td>${totals.close}</td>
+          <td>${totals.next}</td>
+          <td>${totals.priority}</td>
+          <td>${totals.open}</td>
+          <td>${totals.total}</td>
+        </tr>`;
+    }
 
-let relatedName = row[relatedIndex]?.toLowerCase().trim();
-if(!relatedName) relatedName = "Other";
+    function renderEmployeeCategoryTable(employeeCategory) {
+      const employees = Object.keys(employeeCategory).sort();
+      if (!employees.length) {
+        renderEmptyRow("employeeCategoryTable", "No category distribution found for the selected date range.", 6);
+        return;
+      }
 
-// proper format
-if(relatedName === "recipe & material") relatedName = "Recipe & Material";
-else if(relatedName === "raw material") relatedName = "Raw Material";
-else if(relatedName === "rework") relatedName = "Rework";
-else relatedName = "Other";
+      const html = employees.map(name => {
+        const item = employeeCategory[name];
+        return `
+          <tr>
+            <td class="name-cell">${name}</td>
+            <td>${item.raw}</td>
+            <td>${item.recipe}</td>
+            <td>${item.rework}</td>
+            <td>${item.other}</td>
+            <td><strong>${item.total}</strong></td>
+          </tr>
+        `;
+      }).join("");
 
-const formattedDate = new Date(parts[2], parts[1]-1, parts[0]);
+      document.getElementById("employeeCategoryTable").innerHTML = html;
+    }
 
-let status = row[statusIndex]?.toLowerCase().trim().replace(/\s+/g,' ');
-
-// ✅ YEAR FILTER (ONLY FOR STATUS CHART)
-if(formattedDate >= yearStart && formattedDate <= yearEnd){
-
-  if(status.includes("done")) yearStatus.done++;
-  else if(status.includes("close")) yearStatus.close++;
-  else if(status.includes("hold")) yearStatus.hold++;
-  else if(status.includes("pending")) yearStatus.pending++;
-}
-// 🔥 MONTH CALCULATION (MOVE BEFORE FILTER)
-if(formattedDate >= yearStart && formattedDate <= yearEnd){
-
-  let monthKey = `${parts[2]}-${parts[1]}`; // YYYY-MM (IMPORTANT)
-
-  if(!monthData[monthKey]){
-    monthData[monthKey] = {raw:0, recipe:0, other:0, rework:0};
-  }
-
-  if(relatedName === "Raw Material") monthData[monthKey].raw++;
-  else if(relatedName === "Recipe & Material") monthData[monthKey].recipe++;
-  else if(relatedName === "Rework") monthData[monthKey].rework++;
-  else monthData[monthKey].other++;
-}
-// 👉 NOW APPLY FILTER
-if(formattedDate < from || formattedDate > to) return;
-total++;
-
-        let task = row[taskIndex]?.toLowerCase().trim();
-        if(task === "inventory" || task === "purchase" || task === "client standard") inventory++;
-        else if(task === "poc standard") poc++;
-
-        let related = row[relatedIndex]?.toLowerCase().trim();
-        if(related === "recipe & material") recipe++;
-        else if(related === "raw material") raw++;
-        else Other++;
-
-let name = row[assignedIndex]?.trim().toLowerCase();
-if(!name) return;
-
-// remove extra spaces
-name = name.replace(/\s+/g, " ");
-
-// ✅ convert to Proper Case (Yash)
-name = name.split(" ").map(word => 
-  word.charAt(0).toUpperCase() + word.slice(1)
-).join(" ");
-
-// ⏱️ DURATION LOGIC (ADD HERE)
-
-let duration = row[durationIndex];
-if(!duration || !duration.includes(":")){
-  duration = "0:00:00";
-}
-
-if(!hoursData[name]){
-  hoursData[name] = 0;
-}
-hoursData[name] += timeToSeconds(duration);
-
-        if(!name) return;
-
-// ✅ EMPLOYEE CATEGORY COUNT
-
-if(!employeeCategory[name]){
-  employeeCategory[name] = {
-    raw:0,
-    recipe:0,
-    rework:0,
-    other:0,
-    total:0
-  };
-}
-
-if(relatedName === "Raw Material") employeeCategory[name].raw++;
-else if(relatedName === "Recipe & Material") employeeCategory[name].recipe++;
-else if(relatedName === "Rework") employeeCategory[name].rework++;
-else employeeCategory[name].other++;
-
-employeeCategory[name].total++;
-
-if(!relatedStatus[relatedName]){
-  relatedStatus[relatedName] = {
-  done:0, working:0, pending:0, hold:0, close:0, next:0,
-  assigned:0, open:0, priority:0,
-  total:0
-};
-}
-
-// same status logic reuse
-if(status.includes("done")) relatedStatus[relatedName].done++;
-else if(status.includes("working")) relatedStatus[relatedName].working++;
-else if(status.includes("pending")) relatedStatus[relatedName].pending++;
-else if(status.includes("assign")) relatedStatus[relatedName].assigned++;
-else if(status.includes("hold")) relatedStatus[relatedName].hold++;
-else if(status.includes("close")) relatedStatus[relatedName].close++;
-else if(status.includes("next")) relatedStatus[relatedName].next++;
-else if(status.includes("priority")) relatedStatus[relatedName].priority++;
-else if(status.includes("open")) relatedStatus[relatedName].open++;
-else relatedStatus[relatedName].open++;
-
-
-relatedStatus[relatedName].total++;
-
-// CHART LOGIC YAHAN HOGA
-let dateKey = rawDate;
-
-if(!chartData[dateKey]){
-  chartData[dateKey] = {
-    total:0, done:0, working:0, pending:0,
-    hold:0, close:0, next:0
-  };
-}
-
-chartData[dateKey].total++;
-
-if(status.includes("done")) chartData[dateKey].done++;
-else if(status.includes("working")) chartData[dateKey].working++;
-else if(status.includes("pending")) chartData[dateKey].pending++;
-else if(status.includes("hold")) chartData[dateKey].hold++;
-else if(status.includes("close")) chartData[dateKey].close++;
-else if(status.includes("next")) chartData[dateKey].next++;
-
-        if(!activity[name]){
-          activity[name] = {
-            done:0,working:0,pending:0,assigned:0,
-            hold:0,close:0,next:0,priority:0,open:0,total:0
-          };
-        }
-
-        if(status.includes("done")) activity[name].done++;
-        else if(status.includes("working")) activity[name].working++;
-        else if(status.includes("pending")) activity[name].pending++;
-        else if(status.includes("assign")) activity[name].assigned++;
-        else if(status.includes("hold")) activity[name].hold++;
-        else if(status.includes("close")) activity[name].close++;
-        else if(status.includes("next")) activity[name].next++;
-        else if(status.includes("priority")) activity[name].priority++;
-        else if(status.includes("open")) activity[name].open++;
-        else activity[name].open++;
-
-        activity[name].total++;
+    function buildTrendArrays(chartData) {
+      const sortedDates = Object.keys(chartData).sort((a, b) => {
+        const aParts = a.split("/");
+        const bParts = b.split("/");
+        return new Date(aParts[2], aParts[1] - 1, aParts[0]) - new Date(bParts[2], bParts[1] - 1, bParts[0]);
       });
 
-      // TABLE
-      let html="";
-      let grand = {
-        done:0,working:0,pending:0,assigned:0,
-        hold:0,close:0,next:0,priority:0,open:0,total:0
+      return {
+        labels: sortedDates.map(date => {
+          const parts = date.split("/");
+          const dateObj = new Date(parts[2], parts[1] - 1, parts[0]);
+          return dateObj.toLocaleDateString("en-US", { month: "short", day: "numeric" });
+        }),
+        total: sortedDates.map(date => chartData[date].total),
+        done: sortedDates.map(date => chartData[date].done),
+        working: sortedDates.map(date => chartData[date].working),
+        pending: sortedDates.map(date => chartData[date].pending),
+        hold: sortedDates.map(date => chartData[date].hold),
+        close: sortedDates.map(date => chartData[date].close),
+        next: sortedDates.map(date => chartData[date].next)
       };
+    }
 
-      for(let name in activity){
+    function renderTaskChart(chartData) {
+      const ctx = document.getElementById("taskChart").getContext("2d");
+      const trend = buildTrendArrays(chartData);
 
-        let a = activity[name];
-
-html+=`
-<tr>
-<td style="text-align:left;">${name}</td>
-<td>${a.done}</td>
-<td style="${a.working>0 ? 'background:#ffeaa7;font-weight:600;' : ''}">${a.working}</td>
-<td style="${a.pending>0 ? 'background:#fab1a0;font-weight:600;' : ''}">${a.pending}</td>
-<td style="${a.assigned>0 ? 'background:#81ecec;font-weight:600;' : ''}">${a.assigned}</td>
-
-<td>${a.hold}</td>
-<td>${a.close}</td>
-
-<td style="${a.next>0 ? 'background:#dfe6e9;font-weight:600;' : ''}">${a.next}</td>
-
-<td>${a.priority}</td>
-<td>${a.open}</td>
-<td><b>${a.total}</b></td>
-</tr>`;
-
-        for(let key in grand){
-          grand[key] += a[key];
-        }
+      if (window.myChart) {
+        window.myChart.destroy();
       }
 
-      html+=`
-      <tr style="font-weight:bold; background:#dfe6e9;">
-      <td style="text-align:left;">Total</td>
-      <td>${grand.done}</td>
-      <td>${grand.working}</td>
-      <td>${grand.pending}</td>
-      <td>${grand.assigned}</td>
-      <td>${grand.hold}</td>
-      <td>${grand.close}</td>
-      <td>${grand.next}</td>
-      <td>${grand.priority}</td>
-      <td>${grand.open}</td>
-      <td>${grand.total}</td>
-      </tr>`;
+      window.myChart = new Chart(ctx, {
+        type: "line",
+        data: {
+          labels: trend.labels,
+          datasets: [
+            {
+              label: "Total Task",
+              data: trend.total,
+              borderColor: "#2563eb",
+              backgroundColor: "rgba(37, 99, 235, 0.10)",
+              borderWidth: 4,
+              tension: 0.35,
+              pointRadius: 4,
+              pointHoverRadius: 6,
+              fill: true,
+              datalabels: {
+                display: true,
+                align: "top",
+                offset: 6,
+                color: "#2563eb",
+                font: { weight: "bold", size: 10 }
+              }
+            },
+            { label: "Done", data: trend.done, borderColor: "#16a34a", borderWidth: 2, tension: 0.35 },
+            { label: "Working", data: trend.working, borderColor: "#f59e0b", borderWidth: 2, tension: 0.35 },
+            { label: "Pending", data: trend.pending, borderColor: "#ef4444", borderWidth: 2, tension: 0.35 },
+            { label: "Hold", data: trend.hold, borderColor: "#8b5cf6", borderWidth: 2, tension: 0.35 },
+            { label: "Close", data: trend.close, borderColor: "#0891b2", borderWidth: 2, tension: 0.35 },
+            { label: "Next Day", data: trend.next, borderColor: "#f97316", borderWidth: 2, tension: 0.35 }
+          ]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          interaction: { mode: "index", intersect: false },
+          plugins: {
+            legend: {
+              position: "top",
+              labels: {
+                usePointStyle: true,
+                pointStyle: "circle",
+                font: { size: 12, weight: "bold" }
+              }
+            },
+            tooltip: {
+              backgroundColor: "#fff",
+              titleColor: "#111827",
+              bodyColor: "#111827",
+              borderColor: "#d1d5db",
+              borderWidth: 1
+            },
+            datalabels: { display: false }
+          },
+          scales: {
+            x: { grid: { display: false }, ticks: { color: "#64748b" } },
+            y: { beginAtZero: true, grid: { color: "#e5e7eb" }, ticks: { color: "#64748b" } }
+          }
+        },
+        plugins: [ChartDataLabels]
+      });
+    }
 
-      document.getElementById("activityTable").innerHTML = html;
+    function renderStatusChart(yearStatus) {
+      const ctx = document.getElementById("statusChart").getContext("2d");
+      if (window.statusChartObj) {
+        window.statusChartObj.destroy();
+      }
 
-      // 🔥 RELATED TABLE RENDER
-let relatedHTML = "";
+      window.statusChartObj = new Chart(ctx, {
+        type: "bar",
+        data: {
+          labels: ["Done", "Close", "Hold", "Pending"],
+          datasets: [{
+            label: "Status Overview",
+            data: [yearStatus.done, yearStatus.close, yearStatus.hold, yearStatus.pending],
+            backgroundColor: [
+              "rgba(34, 197, 94, 0.88)",
+              "rgba(56, 189, 248, 0.88)",
+              "rgba(168, 85, 247, 0.88)",
+              "rgba(248, 113, 113, 0.90)"
+            ],
+            borderColor: [
+              "#4ade80",
+              "#67e8f9",
+              "#c084fc",
+              "#fda4af"
+            ],
+            borderWidth: 1.5,
+            borderRadius: 14,
+            borderSkipped: false,
+            barThickness: 38,
+            hoverBackgroundColor: [
+              "#22c55e",
+              "#06b6d4",
+              "#a855f7",
+              "#ef4444"
+            ]
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          layout: {
+            padding: { top: 10, right: 16, left: 8, bottom: 0 }
+          },
+          plugins: {
+            legend: { display: false },
+            tooltip: {
+              backgroundColor: "rgba(15, 23, 42, 0.94)",
+              titleColor: "#f8fafc",
+              bodyColor: "#dbeafe",
+              borderColor: "rgba(148, 163, 184, 0.28)",
+              borderWidth: 1,
+              padding: 12,
+              displayColors: true
+            },
+            datalabels: {
+              anchor: "end",
+              align: "end",
+              offset: 4,
+              color: "#f8fafc",
+              font: { weight: "700", size: 11 },
+              formatter: value => value
+            }
+          },
+          scales: {
+            y: {
+              beginAtZero: true,
+              ticks: { color: "rgba(226, 232, 240, 0.78)" },
+              grid: { color: "rgba(148, 163, 184, 0.14)", drawBorder: false }
+            },
+            x: {
+              ticks: { color: "#f8fafc", font: { weight: "600" } },
+              grid: { display: false, drawBorder: false }
+            }
+          }
+        },
+        plugins: [ChartDataLabels]
+      });
+    }
 
-let grandRelated = {
-  done:0, working:0, pending:0, assigned:0,
-  hold:0, close:0, next:0, priority:0, open:0, total:0
-};
+    function renderMonthChart(monthData) {
+      const ctx = document.getElementById("monthChart").getContext("2d");
+      const months = Object.keys(monthData).sort();
 
-for(let r in relatedStatus){
-  let d = relatedStatus[r];
+      if (window.monthChartObj) {
+        window.monthChartObj.destroy();
+      }
 
-relatedHTML += `
-<tr>
-  <td style="text-align:left;">${r}</td>
-  <td>${d.done}</td>
-  <td>${d.working}</td>
-  <td>${d.pending}</td>
-  <td>${d.assigned}</td> 
-  <td>${d.hold}</td>
-  <td>${d.close}</td>
-  <td>${d.next}</td>
-  <td>${d.priority}</td>
-  <td>${d.open}</td>
-  <td><b>${d.total}</b></td>
-</tr>`;
+      if (!months.length) {
+        window.monthChartObj = new Chart(ctx, {
+          type: "bar",
+          data: {
+            labels: ["No Data"],
+            datasets: [{
+              label: "No Data",
+              data: [0],
+              backgroundColor: "#cbd5e1"
+            }]
+          },
+          options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: { legend: { display: false } },
+            scales: {
+              y: { beginAtZero: true, ticks: { color: "#64748b" }, grid: { color: "#e5e7eb" } },
+              x: { ticks: { color: "#64748b" }, grid: { display: false } }
+            }
+          }
+        });
+        return;
+      }
 
-for(let key in grandRelated){
-  grandRelated[key] += d[key];
-}}
+      const labels = months.map(monthKey => {
+        const [year, month] = monthKey.split("-");
+        return new Date(year, month - 1).toLocaleString("en-US", { month: "long" });
+      });
 
-relatedHTML += `
-<tr style="font-weight:bold; background:#dfe6e9;">
-  <td style="text-align:left;">Total</td>
-  <td>${grandRelated.done}</td>
-  <td>${grandRelated.working}</td>
-  <td>${grandRelated.pending}</td>
-  <td>${grandRelated.assigned}</td>
-  <td>${grandRelated.hold}</td>
-  <td>${grandRelated.close}</td>
-  <td>${grandRelated.next}</td>
-  <td>${grandRelated.priority}</td>
-  <td>${grandRelated.open}</td>
-  <td>${grandRelated.total}</td>
-</tr>`;
-
-document.getElementById("relatedTable").innerHTML = relatedHTML;
-
-// CHART BUILD START
-// LABELS (DATE FORMAT + SORT)
-let labels = Object.keys(chartData).sort((a,b)=>{
-  let p1 = a.split('/');
-  let p2 = b.split('/');
-  return new Date(p1[2],p1[1]-1,p1[0]) - new Date(p2[2],p2[1]-1,p2[0]);
-}).map(d => {
-  let parts = d.split('/');
-  let dateObj = new Date(parts[2], parts[1]-1, parts[0]);
-
-  return dateObj.toLocaleDateString('en-US', {
-    month: 'short',
-    day: 'numeric'
-  }); // 👉 Apr 9 format
-});
-
-// 🔥 DATA ARRAYS
-let totalArr = [];
-let doneArr = [];
-let workingArr = [];
-let pendingArr = [];
-let holdArr = [];
-let closeArr = [];
-let nextArr = [];
-
-Object.keys(chartData).sort((a,b)=>{
-  let p1 = a.split('/');
-  let p2 = b.split('/');
-  return new Date(p1[2],p1[1]-1,p1[0]) - new Date(p2[2],p2[1]-1,p2[0]);
-}).forEach(date => {
-  totalArr.push(chartData[date].total);
-  doneArr.push(chartData[date].done);
-  workingArr.push(chartData[date].working);
-  pendingArr.push(chartData[date].pending);
-  holdArr.push(chartData[date].hold);
-  closeArr.push(chartData[date].close);
-  nextArr.push(chartData[date].next);
-});
-
-
-const ctx = document.getElementById('taskChart').getContext('2d');
-
-if(window.myChart){
-  window.myChart.destroy();
-  window.myChart = null;
-}
-
-window.myChart = new Chart(ctx, {
-  type: 'line',
-  data: {
-    labels: labels,
-    datasets: [
-      { 
-        label: 'Total Task', 
-        data: totalArr, 
-        borderWidth: 4,
-        tension: 0.4,
-        pointRadius: 5,
-        pointHoverRadius: 7,
-
-        // 🔥 Highlight (Premium Blue)
-        borderColor: '#007bff',
-        backgroundColor: 'rgba(0,123,255,0.1)',
-        fill: true,
-
-        datalabels: {
-          display: true,
-          align: 'top',
-          offset: 6,
-          color: '#007bff',
-          font: {
-            weight: 'bold',
-            size: 11
+      window.monthChartObj = new Chart(ctx, {
+        type: "bar",
+        data: {
+          labels,
+          datasets: [
+            {
+              label: "Raw Material",
+              data: months.map(m => monthData[m].raw || 0),
+              backgroundColor: "rgba(59, 130, 246, 0.86)",
+              borderColor: "#93c5fd",
+              borderWidth: 1,
+              borderRadius: 10,
+              borderSkipped: false
+            },
+            {
+              label: "Recipe & Material",
+              data: months.map(m => monthData[m].recipe || 0),
+              backgroundColor: "rgba(251, 146, 60, 0.88)",
+              borderColor: "#fdba74",
+              borderWidth: 1,
+              borderRadius: 10,
+              borderSkipped: false
+            },
+            {
+              label: "Other",
+              data: months.map(m => monthData[m].other || 0),
+              backgroundColor: "rgba(217, 70, 239, 0.82)",
+              borderColor: "#e9a8f2",
+              borderWidth: 1,
+              borderRadius: 10,
+              borderSkipped: false
+            },
+            {
+              label: "Rework",
+              data: months.map(m => monthData[m].rework || 0),
+              backgroundColor: "rgba(45, 212, 191, 0.84)",
+              borderColor: "#99f6e4",
+              borderWidth: 1,
+              borderRadius: 10,
+              borderSkipped: false
+            }
+          ]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          layout: {
+            padding: { top: 10, right: 14, left: 8, bottom: 0 }
+          },
+          plugins: {
+            legend: {
+              position: "top",
+              labels: {
+                color: "#f8fafc",
+                usePointStyle: true,
+                pointStyle: "rectRounded",
+                boxWidth: 10,
+                padding: 16,
+                font: { weight: "600" }
+              }
+            },
+            tooltip: {
+              backgroundColor: "rgba(15, 23, 42, 0.94)",
+              titleColor: "#f8fafc",
+              bodyColor: "#dbeafe",
+              borderColor: "rgba(148, 163, 184, 0.28)",
+              borderWidth: 1,
+              padding: 12
+            }
+          },
+          scales: {
+            x: {
+              stacked: true,
+              ticks: { color: "#f8fafc", font: { weight: "600" } },
+              grid: { display: false, drawBorder: false }
+            },
+            y: {
+              stacked: true,
+              beginAtZero: true,
+              ticks: { color: "rgba(226, 232, 240, 0.78)" },
+              grid: { color: "rgba(148, 163, 184, 0.14)", drawBorder: false }
+            }
           }
         }
-      },
+      });
+    }
 
-      { label: 'Done', data: doneArr, borderColor: '#28a745', borderWidth: 2, tension: 0.4 },
-      { label: 'Working', data: workingArr, borderColor: '#ffc107', borderWidth: 2, tension: 0.4 },
-      { label: 'Pending', data: pendingArr, borderColor: '#dc3545', borderWidth: 2, tension: 0.4 },
-      { label: 'Hold', data: holdArr, borderColor: '#6f42c1', borderWidth: 2, tension: 0.4 },
-      { label: 'Close', data: closeArr, borderColor: '#17a2b8', borderWidth: 2, tension: 0.4 },
-      { label: 'Next Day', data: nextArr, borderColor: '#fd7e14', borderWidth: 2, tension: 0.4 }
-    ]
-  },
+    function loadMasterData() {
+      if (!masterDataPromise) {
+        masterDataPromise = fetch(masterURL)
+          .then(response => {
+            if (!response.ok) {
+              throw new Error(`Master sheet request failed with status ${response.status}`);
+            }
+            return response.text();
+          })
+          .then(csv => {
+            const rows = parseCSV(csv);
+            const headers = (rows[0] || []).map(header => header.trim().toLowerCase());
+            const nameIndex = headers.indexOf("employee");
+            const expectedIndex = headers.findIndex(header => header.includes("working"));
+            const expectedMap = {};
 
-  options: {
-    responsive: true,
-    maintainAspectRatio: false,
+            rows.slice(1).forEach(row => {
+              const key = normalizeName(row[nameIndex]);
+              if (key) {
+                expectedMap[key] = row[expectedIndex] || "0:00:00";
+              }
+            });
 
-    interaction: {
-      mode: 'index',
-      intersect: false
-    },
+            return expectedMap;
+          });
+      }
 
-    plugins: {
-      legend: { 
-        position: 'top',
-        labels: {
-          usePointStyle: true,
-          pointStyle: 'circle',
-          font: {
-            size: 12,
-            weight: 'bold'
+      return masterDataPromise;
+    }
+
+    function renderHoursTable(expectedMap) {
+      const people = Object.keys(hoursData).sort();
+      if (!people.length) {
+        renderEmptyRow("hoursTable", "No duration data found for the selected date range.", 4);
+        return;
+      }
+
+      const html = people.map(name => {
+        const actualSeconds = hoursData[name];
+        const expectedRaw = expectedMap[normalizeName(name)] || "0";
+        const expectedSeconds = parseExpectedHours(expectedRaw);
+        const expectedDays = expectedSeconds / 28800;
+        const averageSeconds = expectedDays > 0 ? (actualSeconds / expectedDays) : 0;
+
+        return `
+          <tr>
+            <td class="name-cell">${name}</td>
+            <td>${secondsToTime(actualSeconds)}</td>
+            <td>${formatExpectedHours(expectedRaw)}</td>
+            <td><strong>${secondsToTime(averageSeconds)}</strong></td>
+          </tr>
+        `;
+      }).join("");
+
+      document.getElementById("hoursTable").innerHTML = html;
+    }
+
+    async function loadData(fromDate, toDate, options = {}) {
+      if (isLoading) return;
+      if (!fromDate || !toDate) return;
+
+      isLoading = true;
+      setRefreshStatus("Refreshing...");
+
+      try {
+        clearError();
+
+        const fromParts = fromDate.split("-");
+        const toParts = toDate.split("-");
+        const from = new Date(fromParts[0], fromParts[1] - 1, fromParts[2]);
+        const to = new Date(toParts[0], toParts[1] - 1, toParts[2]);
+        to.setHours(23, 59, 59, 999);
+
+        const today = new Date();
+        const yearStart = new Date(today.getFullYear(), 0, 1);
+        const yearEnd = new Date(today.getFullYear(), 11, 31, 23, 59, 59, 999);
+
+        const response = await fetch(`${sheetURL}&t=${Date.now()}`);
+        if (!response.ok) {
+          throw new Error(`Main sheet request failed with status ${response.status}`);
+        }
+
+        const csv = await response.text();
+        const currentHash = csv;
+
+        if (!options.force && currentHash === lastDataHash) {
+          setRefreshStatus(`Up to date • ${new Date().toLocaleTimeString()}`);
+          isLoading = false;
+          return;
+        }
+
+        lastDataHash = currentHash;
+        hoursData = {};
+
+        const rows = parseCSV(csv);
+        const headers = (rows[0] || []).map(header => header.trim());
+        const dateIndex = headers.findIndex(header => header.toLowerCase() === "assign date");
+        const taskIndex = headers.findIndex(header => header.toLowerCase() === "task");
+        const relatedIndex = headers.findIndex(header => header.toLowerCase() === "related to");
+        const assignedIndex = headers.findIndex(header => header.toLowerCase() === "assigned");
+        const statusIndex = headers.findIndex(header => header.toLowerCase() === "status");
+        const durationIndex = headers.findIndex(header => header.toLowerCase().includes("duration"));
+
+        if ([dateIndex, taskIndex, relatedIndex, assignedIndex, statusIndex].some(index => index === -1)) {
+          throw new Error("One or more required sheet columns are missing. Check the CSV headers.");
+        }
+
+        let total = 0;
+        let inventory = 0;
+        let poc = 0;
+        let recipe = 0;
+        let raw = 0;
+        let other = 0;
+        const activity = {};
+        const relatedStatus = {};
+        const employeeCategory = {};
+        const chartData = {};
+        const monthData = {};
+        const yearStatus = { done: 0, close: 0, hold: 0, pending: 0 };
+
+        rows.slice(1).forEach(row => {
+          const rawDate = row[dateIndex];
+          if (!rawDate) return;
+
+          const parts = rawDate.split("/");
+          if (parts.length !== 3) return;
+
+          const formattedDate = new Date(parts[2], parts[1] - 1, parts[0]);
+          if (Number.isNaN(formattedDate.getTime())) return;
+
+          const relatedName = normalizeRelated(row[relatedIndex]);
+          const status = (row[statusIndex] || "").toLowerCase().trim().replace(/\s+/g, " ");
+
+          if (formattedDate >= yearStart && formattedDate <= yearEnd) {
+            if (status.includes("done")) yearStatus.done += 1;
+            else if (status.includes("close")) yearStatus.close += 1;
+            else if (status.includes("hold")) yearStatus.hold += 1;
+            else if (status.includes("pending")) yearStatus.pending += 1;
+
+            const monthKey = `${parts[2]}-${parts[1]}`;
+            if (!monthData[monthKey]) {
+              monthData[monthKey] = { raw: 0, recipe: 0, other: 0, rework: 0 };
+            }
+
+            if (relatedName === "Raw Material") monthData[monthKey].raw += 1;
+            else if (relatedName === "Recipe & Material") monthData[monthKey].recipe += 1;
+            else if (relatedName === "Rework") monthData[monthKey].rework += 1;
+            else monthData[monthKey].other += 1;
           }
-        }
-      },
 
-      // 🔥 FIXED TOOLTIP (white clean look)
-      tooltip: {
-        backgroundColor: '#fff',
-        titleColor: '#000',
-        bodyColor: '#000',
-        borderColor: '#ddd',
-        borderWidth: 1
-      },
+          if (formattedDate < from || formattedDate > to) return;
 
-      datalabels: {
-        display: false
+          total += 1;
+
+          const task = (row[taskIndex] || "").toLowerCase().trim();
+          if (task === "inventory" || task === "purchase" || task === "client standard") inventory += 1;
+          else if (task === "poc standard") poc += 1;
+
+          if (relatedName === "Recipe & Material") recipe += 1;
+          else if (relatedName === "Raw Material") raw += 1;
+          else other += 1;
+
+          const normalizedName = normalizeName(row[assignedIndex]);
+          if (!normalizedName) return;
+
+          const displayName = toDisplayName(normalizedName);
+          const duration = durationIndex >= 0 ? row[durationIndex] : "0:00:00";
+
+          hoursData[displayName] = (hoursData[displayName] || 0) + timeToSeconds(duration || "0:00:00");
+
+          if (!employeeCategory[displayName]) {
+            employeeCategory[displayName] = { raw: 0, recipe: 0, rework: 0, other: 0, total: 0 };
+          }
+
+          if (relatedName === "Raw Material") employeeCategory[displayName].raw += 1;
+          else if (relatedName === "Recipe & Material") employeeCategory[displayName].recipe += 1;
+          else if (relatedName === "Rework") employeeCategory[displayName].rework += 1;
+          else employeeCategory[displayName].other += 1;
+          employeeCategory[displayName].total += 1;
+
+          if (!relatedStatus[relatedName]) {
+            relatedStatus[relatedName] = createTotalAccumulator();
+          }
+          applyStatusCounters(relatedStatus[relatedName], status);
+
+          if (!chartData[rawDate]) {
+            chartData[rawDate] = { total: 0, done: 0, working: 0, pending: 0, hold: 0, close: 0, next: 0 };
+          }
+          chartData[rawDate].total += 1;
+          if (status.includes("done")) chartData[rawDate].done += 1;
+          else if (status.includes("working")) chartData[rawDate].working += 1;
+          else if (status.includes("pending")) chartData[rawDate].pending += 1;
+          else if (status.includes("hold")) chartData[rawDate].hold += 1;
+          else if (status.includes("close")) chartData[rawDate].close += 1;
+          else if (status.includes("next")) chartData[rawDate].next += 1;
+
+          if (!activity[displayName]) {
+            activity[displayName] = createTotalAccumulator();
+          }
+          applyStatusCounters(activity[displayName], status);
+        });
+
+        renderActivityTable(activity);
+        renderRelatedTable(relatedStatus);
+        renderEmployeeCategoryTable(employeeCategory);
+        renderTaskChart(chartData);
+        renderStatusChart(yearStatus);
+        renderMonthChart(monthData);
+
+        document.getElementById("totalTasks").textContent = total;
+        document.getElementById("inventoryCount").textContent = inventory;
+        document.getElementById("pocCount").textContent = poc;
+        document.getElementById("recipeCount").textContent = recipe;
+        document.getElementById("rawCount").textContent = raw;
+        document.getElementById("otherRelatedCount").textContent = other;
+
+        const expectedMap = await loadMasterData();
+        renderHoursTable(expectedMap);
+
+        setRefreshStatus(`Updated • ${new Date().toLocaleTimeString()}`);
+      } catch (error) {
+        console.error(error);
+        showError(error.message || "Unable to load dashboard data.");
+      } finally {
+        isLoading = false;
       }
-    },
-
-    scales: {
-      x: {
-        ticks: {
-          color: '#666'
-        },
-        grid: {
-          display: false
-        }
-      },
-      y: {
-        beginAtZero: true,
-        ticks: {
-          color: '#666'
-        },
-        grid: {
-          color: '#eee'
-        }
-      }
     }
-  },
 
-  plugins: [ChartDataLabels]
-});
+    fromInput.addEventListener("change", debounceLoad);
+    toInput.addEventListener("change", debounceLoad);
 
-      // CARDS
-      document.getElementById("totalTasks").innerText = total;
-      document.getElementById("inventoryCount").innerText = inventory;
-      document.getElementById("pocCount").innerText = poc;
-      document.getElementById("recipeCount").innerText = recipe;
-      document.getElementById("rawCount").innerText = raw;
-      document.getElementById("OtherRelatedCount").innerText = Other;
-
-let userHTML = "";
-
-for(let u in employeeCategory){
-  let d = employeeCategory[u];
-
-  userHTML += `
-  <tr>
-    <td style="text-align:left;">${u}</td>
-<td>${d.raw}</td>
-<td>${d.recipe}</td>
-<td>${d.other}</td>
-<td>${d.rework}</td>
-    <td><b>${d.total}</b></td>
-  </tr>`;
-}
-
-document.getElementById("employeeCategoryTable").innerHTML = userHTML;
-
-// 🔥 DESTROY OLD
-if(window.statusChartObj){
-  window.statusChartObj.destroy();
-}
-if(window.monthChartObj){
-  window.monthChartObj.destroy();
-}
-
-// 🔥 STATUS CHART
-const statusCtx = document.getElementById('statusChart').getContext('2d');
-
-window.statusChartObj = new Chart(statusCtx, {
-  type: 'bar',
-  data: {
-    labels: ['Done', 'Close', 'Hold', 'Pending'],
-    datasets: [{
-      label: 'Status Overview',
-    data: [
-  yearStatus.done,
-  yearStatus.close,
-  yearStatus.hold,
-  yearStatus.pending
-],
-      backgroundColor: '#3f51b5'
-    }]
-  },
-  options: {
-    plugins:{ legend:{ display:true }},
-    scales:{ y:{ beginAtZero:true }}
-  }
-});
-
-//  MONTH CHART
-
-let months = Object.keys(monthData).sort();
-console.log("months:", months);
-console.log("monthData:", monthData);
-
-// LABELS
-let labelsMonth = months.map(m => {
-  let [y, mo] = m.split("-");
-  return new Date(y, mo-1).toLocaleString('en-US', { month: 'long' });
-});
-// DATA ARRAYS
-let rawArr = [];
-let recipeArr = [];
-let otherArr = [];
-let reworkArr = [];
-
-months.forEach(m => {
-  rawArr.push(monthData[m]?.raw || 0);
-  recipeArr.push(monthData[m]?.recipe || 0);
-  otherArr.push(monthData[m]?.other || 0);
-  reworkArr.push(monthData[m]?.rework || 0);
-});
-
-if(months.length === 0){
-  console.log("No month data available");
-  return;
-}
-const monthCtx = document.getElementById('monthChart').getContext('2d');
-window.monthChartObj = new Chart(monthCtx, {
-  type: 'bar',
-  data: {
-    labels: labelsMonth,
-    datasets: [
-      { label:'Raw Material', data:rawArr, backgroundColor:'#4285F4' },
-      { label:'Recipe & Material', data:recipeArr, backgroundColor:'#FB8C00' },
-      { label:'Other', data:otherArr, backgroundColor:'#AB47BC' },
-      { label:'Rework', data:reworkArr, backgroundColor:'#7CB342' }
-    ]
-  },
-  options: {
-    responsive:true,
-    scales:{
-      x:{ stacked:true },
-      y:{ stacked:true, beginAtZero:true }
-    }
-  }
-});
-
-// HOURS TABLE LOAD
-fetch(masterURL)
-.then(res => res.text())
-.then(masterCSV => {
-
-  const rows2 = masterCSV.split('\n').map(r => r.split(','));
-  const headers2 = rows2[0].map(h => h.trim().toLowerCase());
-
-  const nameIndex2 = headers2.indexOf("employee");
-  const expectedIndex = headers2.findIndex(h => h.includes("working"));
-
-  let expectedMap = {};
-
-  rows2.slice(1).forEach(r => {
-    let n = r[nameIndex2]?.toLowerCase().trim().replace(/\s+/g,' ');
-    if(n){
-      expectedMap[n] = r[expectedIndex] || "0:00:00";
-    }
-  });
-
-let html2 = "";
-
-function secondsToTime(sec){
-  let h = Math.floor(sec/3600);
-  let m = Math.floor((sec%3600)/60);
-  let s = sec%60;
-  return `${h}:${m.toString().padStart(2,'0')}:${s.toString().padStart(2,'0')}`;
-}
-
-for(let key in hoursData){
-
-  let cleanKey = key.toLowerCase().trim().replace(/\s+/g,' ');
-  let displayName = key.charAt(0).toUpperCase() + key.slice(1);
-
-  let actualSec = hoursData[key];
-  let actual = secondsToTime(actualSec);
-
-  let expected = parseFloat(expectedMap[cleanKey]);
-
-if(isNaN(expected)){
-  expected = 0;
-}
- // ✅ FIX
-  let avgSec = 0;
-  if(expected > 0){
-    let expectedDays = expected / 8;
-    avgSec = actualSec / expectedDays;
-  }
-
-  let avgTime = secondsToTime(Math.floor(avgSec));
-
-  html2 += `
-  <tr>
-    <td style="text-align:left;">${displayName}</td>
-    <td>${actual}</td>
-    <td>${expected}</td>
-    <td><b>${avgTime}</b></td>
-  </tr>`;
-}
-
-
-
-document.getElementById("hoursTable").innerHTML = html2;
-
-
-});
-
-
+    window.addEventListener("load", () => {
+      const today = new Date();
+      const firstDay = new Date(today.getFullYear(), today.getMonth(), 1);
+      fromInput.value = formatDate(firstDay);
+      toInput.value = formatDate(today);
+      loadData(fromInput.value, toInput.value, { force: true });
     });
-}
 
-setInterval(async () => {
-  const res = await fetch(sheetURL + "&t=" + new Date().getTime());
-  const csv = await res.text();
-
-  let currentHash = btoa(csv).length;
-
-  if(currentHash !== lastDataHash){
-    console.log("Data changed → updating UI");
-    loadData(fromInput.value, toInput.value);
-  } else {
-    console.log("No change");
-  }
-}, 5000);
-
-
-</script>
+    setInterval(() => {
+      loadData(fromInput.value, toInput.value);
+    }, 30000);
+  </script>
 </body>
 </html>
