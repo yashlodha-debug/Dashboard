@@ -1,0 +1,589 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Recipe and Raw Material Summary</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg: #edf4fb;
+      --surface: #ffffff;
+      --text: #10203a;
+      --muted: #5f728c;
+      --border: #d7e2f1;
+      --shadow: 0 16px 38px rgba(15, 23, 42, 0.10);
+      --blue-header: #78aee0;
+      --total-green: #70c299;
+      --done-yellow: #ffe08c;
+      --close-pink: #f4b7ae;
+      --hold-gray: #eef2f7;
+      --raw-total: #dce6de;
+      --rework-blue: #d8e5ff;
+      --other-red: #e9a29c;
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      font-family: "Poppins", Arial, sans-serif;
+      color: var(--text);
+      background:
+        radial-gradient(circle at top right, rgba(37, 99, 235, 0.10), transparent 24%),
+        linear-gradient(180deg, #f9fbff 0%, var(--bg) 100%);
+    }
+
+    .page {
+      max-width: 1700px;
+      margin: 0 auto;
+      padding: 18px;
+    }
+
+    .header,
+    .toolbar,
+    .panel {
+      background: rgba(255, 255, 255, 0.96);
+      border: 1px solid var(--border);
+      border-radius: 24px;
+      box-shadow: var(--shadow);
+    }
+
+    .header {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      position: relative;
+      padding: 18px 24px;
+    }
+
+    .header img {
+      position: absolute;
+      left: 24px;
+      height: 34px;
+    }
+
+    .header h1 {
+      margin: 0;
+      font-size: clamp(1.3rem, 2.4vw, 1.9rem);
+      font-weight: 700;
+    }
+
+    .toolbar {
+      margin-top: 16px;
+      padding: 16px 18px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 16px;
+      flex-wrap: wrap;
+    }
+
+    .toolbar-left,
+    .toolbar-right {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+
+    label {
+      color: var(--muted);
+      font-size: 0.92rem;
+      font-weight: 500;
+    }
+
+    input[type="date"] {
+      min-height: 42px;
+      padding: 10px 12px;
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      font: inherit;
+      color: var(--text);
+      background: #fff;
+    }
+
+    .button,
+    .link-button {
+      min-height: 42px;
+      padding: 0 16px;
+      border-radius: 999px;
+      font: inherit;
+      font-weight: 600;
+      cursor: pointer;
+      text-decoration: none;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      transition: transform 0.18s ease, box-shadow 0.18s ease, opacity 0.18s ease;
+    }
+
+    .button {
+      border: 0;
+      color: #fff;
+      background: linear-gradient(135deg, #2563eb, #1d4ed8 60%, #1e3a8a);
+      box-shadow: 0 10px 22px rgba(37, 99, 235, 0.24);
+    }
+
+    .button:disabled {
+      opacity: 0.7;
+      cursor: wait;
+      box-shadow: none;
+      transform: none;
+    }
+
+    .link-button {
+      border: 1px solid rgba(37, 99, 235, 0.18);
+      background: linear-gradient(135deg, #ffffff, #eef4ff);
+      color: #1d4ed8;
+      box-shadow: 0 10px 22px rgba(15, 23, 42, 0.08);
+    }
+
+    .button:hover,
+    .link-button:hover {
+      transform: translateY(-1px);
+    }
+
+    .status-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      min-height: 42px;
+      padding: 0 14px;
+      border-radius: 999px;
+      background: rgba(37, 99, 235, 0.10);
+      color: #1d4ed8;
+      font-size: 0.9rem;
+      font-weight: 600;
+    }
+
+    .status-dot {
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      background: currentColor;
+    }
+
+    .error-banner {
+      display: none;
+      margin-top: 16px;
+      padding: 14px 16px;
+      border-radius: 14px;
+      border: 1px solid rgba(239, 68, 68, 0.25);
+      background: rgba(239, 68, 68, 0.08);
+      color: #991b1b;
+      font-size: 0.92rem;
+      font-weight: 500;
+    }
+
+    .panel {
+      margin-top: 18px;
+      overflow: hidden;
+    }
+
+    .panel-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      padding: 14px 18px;
+      background: linear-gradient(135deg, #0f172a, #172554 52%, #1e293b);
+      color: #fff;
+    }
+
+    .panel-header h2 {
+      margin: 0;
+      font-size: 1rem;
+      font-weight: 700;
+    }
+
+    .panel-subtitle {
+      font-size: 0.8rem;
+      color: rgba(255, 255, 255, 0.72);
+    }
+
+    .table-wrap {
+      overflow: auto;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 13px;
+      min-width: 1200px;
+    }
+
+    th,
+    td {
+      padding: 8px 10px;
+      border: 1px solid #2a3547;
+      text-align: center;
+      white-space: nowrap;
+    }
+
+    thead th {
+      position: sticky;
+      top: 0;
+      z-index: 2;
+      font-weight: 700;
+      color: #091426;
+    }
+
+    th.name-col,
+    td.name-col {
+      text-align: left;
+      min-width: 180px;
+      padding-left: 14px;
+    }
+
+    .hdr-blue { background: var(--blue-header); }
+    .cell-total { background: var(--total-green); font-weight: 700; }
+    .cell-done { background: var(--done-yellow); }
+    .cell-close { background: var(--close-pink); }
+    .cell-hold { background: var(--hold-gray); }
+    .cell-raw-total { background: var(--raw-total); font-weight: 700; }
+    .cell-rework { background: var(--rework-blue); }
+    .cell-other { background: var(--other-red); }
+    .name-row { background: #f8fbff; font-weight: 500; }
+    .total-row td { font-weight: 700; }
+
+    .empty-state {
+      padding: 18px;
+      text-align: center;
+      color: var(--muted);
+      font-size: 0.92rem;
+    }
+
+    @media (max-width: 900px) {
+      .page { padding: 12px; }
+      .toolbar { align-items: stretch; }
+      .toolbar-left,
+      .toolbar-right { width: 100%; }
+      .header { justify-content: flex-start; padding-left: 74px; }
+      .header img { left: 20px; }
+      .header h1 { font-size: 1.2rem; }
+    }
+  </style>
+</head>
+<body>
+  <div class="page">
+    <header class="header">
+      <img src="https://d28ewddc5mocr5.cloudfront.net/images/logos-new/pp-logo-new.svg" alt="Petpooja logo">
+      <h1>Recipe and Raw Material Summary</h1>
+    </header>
+
+    <section class="toolbar">
+      <div class="toolbar-left">
+        <label for="fromDate">From</label>
+        <input type="date" id="fromDate">
+        <label for="toDate">To</label>
+        <input type="date" id="toDate">
+      </div>
+      <div class="toolbar-right">
+        <button type="button" class="button" id="refreshButton">Refresh Now</button>
+        <a class="link-button" href="index.html">Back to Dashboard</a>
+        <div class="status-pill" id="refreshStatus">
+          <span class="status-dot"></span>
+          <span>Manual refresh mode</span>
+        </div>
+      </div>
+    </section>
+
+    <div class="error-banner" id="errorBanner"></div>
+
+    <section class="panel">
+      <div class="panel-header">
+        <h2>Employee-wise Recipe and Raw Material Status</h2>
+        <span class="panel-subtitle">Main sheet summary for the selected date range</span>
+      </div>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th class="hdr-blue name-col">Name</th>
+              <th class="hdr-blue">Total Recipes</th>
+              <th class="hdr-blue">Done</th>
+              <th class="hdr-blue">Close</th>
+              <th class="hdr-blue">Hold</th>
+              <th class="hdr-blue">Total Raw Material</th>
+              <th class="hdr-blue">Done</th>
+              <th class="hdr-blue">Close</th>
+              <th class="hdr-blue">Hold</th>
+              <th class="hdr-blue">Rework</th>
+              <th class="hdr-blue">Other</th>
+            </tr>
+          </thead>
+          <tbody id="summaryTable"></tbody>
+        </table>
+      </div>
+    </section>
+  </div>
+
+  <script>
+    const sheetURL = "https://docs.google.com/spreadsheets/d/1-VxbQ_IaRMKtDH--2JDeqvGFrb_Or3D0kG-mGLu7dG8/export?format=csv&gid=1747930222";
+
+    const fromInput = document.getElementById("fromDate");
+    const toInput = document.getElementById("toDate");
+    const refreshButton = document.getElementById("refreshButton");
+    const refreshStatus = document.getElementById("refreshStatus");
+    const errorBanner = document.getElementById("errorBanner");
+    const summaryTable = document.getElementById("summaryTable");
+
+    let isLoading = false;
+    let timer = null;
+
+    function setRefreshStatus(message, isError = false) {
+      refreshStatus.innerHTML = `<span class="status-dot"></span><span>${message}</span>`;
+      refreshStatus.style.background = isError ? "rgba(239,68,68,0.12)" : "rgba(37,99,235,0.10)";
+      refreshStatus.style.color = isError ? "#b91c1c" : "#1d4ed8";
+    }
+
+    function setRefreshButtonState() {
+      refreshButton.disabled = isLoading;
+      refreshButton.textContent = isLoading ? "Refreshing..." : "Refresh Now";
+    }
+
+    function showError(message) {
+      errorBanner.textContent = message;
+      errorBanner.style.display = "block";
+      setRefreshStatus("Refresh failed", true);
+    }
+
+    function clearError() {
+      errorBanner.style.display = "none";
+      errorBanner.textContent = "";
+    }
+
+    function formatDate(date) {
+      const d = String(date.getDate()).padStart(2, "0");
+      const m = String(date.getMonth() + 1).padStart(2, "0");
+      const y = date.getFullYear();
+      return `${y}-${m}-${d}`;
+    }
+
+    function normalizeName(name) {
+      return (name || "").toLowerCase().trim().replace(/\s+/g, " ");
+    }
+
+    function toDisplayName(name) {
+      return normalizeName(name)
+        .split(" ")
+        .filter(Boolean)
+        .map(word => word.charAt(0).toUpperCase() + word.slice(1))
+        .join(" ");
+    }
+
+    function parseCSV(text) {
+      const rows = [];
+      let row = [];
+      let current = "";
+      let insideQuotes = false;
+
+      for (let i = 0; i < text.length; i += 1) {
+        const char = text[i];
+        const nextChar = text[i + 1];
+
+        if (char === '"') {
+          if (insideQuotes && nextChar === '"') {
+            current += '"';
+            i += 1;
+          } else {
+            insideQuotes = !insideQuotes;
+          }
+        } else if (char === "," && !insideQuotes) {
+          row.push(current);
+          current = "";
+        } else if ((char === "\n" || char === "\r") && !insideQuotes) {
+          if (char === "\r" && nextChar === "\n") {
+            i += 1;
+          }
+          row.push(current);
+          if (row.some(cell => cell.trim() !== "")) {
+            rows.push(row);
+          }
+          row = [];
+          current = "";
+        } else {
+          current += char;
+        }
+      }
+
+      if (current !== "" || row.length) {
+        row.push(current);
+        if (row.some(cell => cell.trim() !== "")) {
+          rows.push(row);
+        }
+      }
+
+      return rows;
+    }
+
+    function normalizeRelated(value) {
+      const related = (value || "").toLowerCase().trim();
+      if (related === "recipe & material") return "recipe";
+      if (related === "raw material") return "raw";
+      if (related === "rework") return "rework";
+      return "other";
+    }
+
+    function normalizeStatus(value) {
+      return (value || "").toLowerCase().trim().replace(/\s+/g, " ");
+    }
+
+    function isDone(status) {
+      return status.includes("done");
+    }
+
+    function isClose(status) {
+      return status.includes("close");
+    }
+
+    function isHold(status) {
+      return status.includes("hold");
+    }
+
+    function debounceLoad() {
+      clearTimeout(timer);
+      timer = setTimeout(() => {
+        loadTable();
+      }, 350);
+    }
+
+    function renderTable(summary) {
+      const names = Object.keys(summary).sort();
+      if (!names.length) {
+        summaryTable.innerHTML = `<tr><td colspan="11" class="empty-state">No records found for the selected date range.</td></tr>`;
+        return;
+      }
+
+      const html = names.map(name => {
+        const item = summary[name];
+        return `
+          <tr>
+            <td class="name-col name-row">${name}</td>
+            <td class="cell-total">${item.recipe.total}</td>
+            <td class="cell-done">${item.recipe.done}</td>
+            <td class="cell-close">${item.recipe.close}</td>
+            <td class="cell-hold">${item.recipe.hold}</td>
+            <td class="cell-raw-total">${item.raw.total}</td>
+            <td class="cell-done">${item.raw.done}</td>
+            <td class="cell-close">${item.raw.close}</td>
+            <td class="cell-hold">${item.raw.hold}</td>
+            <td class="cell-rework">${item.rework}</td>
+            <td class="cell-other">${item.other}</td>
+          </tr>
+        `;
+      }).join("");
+
+      summaryTable.innerHTML = html;
+    }
+
+    async function loadTable() {
+      if (isLoading) return;
+      if (!fromInput.value || !toInput.value) return;
+
+      isLoading = true;
+      setRefreshButtonState();
+      setRefreshStatus("Refreshing...");
+
+      try {
+        clearError();
+
+        const fromParts = fromInput.value.split("-");
+        const toParts = toInput.value.split("-");
+        const from = new Date(fromParts[0], fromParts[1] - 1, fromParts[2]);
+        const to = new Date(toParts[0], toParts[1] - 1, toParts[2]);
+        to.setHours(23, 59, 59, 999);
+
+        const response = await fetch(sheetURL, { cache: "no-cache" });
+        if (!response.ok) {
+          throw new Error(`Main sheet request failed with status ${response.status}`);
+        }
+
+        const csv = await response.text();
+        const rows = parseCSV(csv);
+        const headers = (rows[0] || []).map(header => header.trim().toLowerCase());
+
+        const dateIndex = headers.indexOf("assign date");
+        const relatedIndex = headers.indexOf("related to");
+        const assignedIndex = headers.indexOf("assigned");
+        const statusIndex = headers.indexOf("status");
+
+        if ([dateIndex, relatedIndex, assignedIndex, statusIndex].some(index => index === -1)) {
+          throw new Error("One or more required columns are missing in the main sheet.");
+        }
+
+        const summary = {};
+
+        rows.slice(1).forEach(row => {
+          const rawDate = row[dateIndex];
+          if (!rawDate) return;
+
+          const parts = rawDate.split("/");
+          if (parts.length !== 3) return;
+
+          const date = new Date(parts[2], parts[1] - 1, parts[0]);
+          if (Number.isNaN(date.getTime())) return;
+          if (date < from || date > to) return;
+
+          const normalizedEmployee = normalizeName(row[assignedIndex]);
+          if (!normalizedEmployee) return;
+
+          const name = toDisplayName(normalizedEmployee);
+          const related = normalizeRelated(row[relatedIndex]);
+          const status = normalizeStatus(row[statusIndex]);
+
+          if (!summary[name]) {
+            summary[name] = {
+              recipe: { total: 0, done: 0, close: 0, hold: 0 },
+              raw: { total: 0, done: 0, close: 0, hold: 0 },
+              rework: 0,
+              other: 0
+            };
+          }
+
+          if (related === "recipe") {
+            summary[name].recipe.total += 1;
+            if (isDone(status)) summary[name].recipe.done += 1;
+            else if (isClose(status)) summary[name].recipe.close += 1;
+            else if (isHold(status)) summary[name].recipe.hold += 1;
+          } else if (related === "raw") {
+            summary[name].raw.total += 1;
+            if (isDone(status)) summary[name].raw.done += 1;
+            else if (isClose(status)) summary[name].raw.close += 1;
+            else if (isHold(status)) summary[name].raw.hold += 1;
+          } else if (related === "rework") {
+            summary[name].rework += 1;
+          } else {
+            summary[name].other += 1;
+          }
+        });
+
+        renderTable(summary);
+        setRefreshStatus(`Updated • ${new Date().toLocaleTimeString()}`);
+      } catch (error) {
+        console.error(error);
+        showError(error.message || "Unable to load summary table.");
+      } finally {
+        isLoading = false;
+        setRefreshButtonState();
+      }
+    }
+
+    fromInput.addEventListener("change", debounceLoad);
+    toInput.addEventListener("change", debounceLoad);
+    refreshButton.addEventListener("click", () => loadTable());
+
+    window.addEventListener("load", () => {
+      const today = new Date();
+      const firstDay = new Date(today.getFullYear(), today.getMonth(), 1);
+      fromInput.value = formatDate(firstDay);
+      toInput.value = formatDate(today);
+      setRefreshButtonState();
+      loadTable();
+    });
+  </script>
+</body>
+</html>
