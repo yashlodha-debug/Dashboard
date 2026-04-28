@@ -194,17 +194,23 @@
       grid-template-columns: 160px minmax(0, 1fr) 360px;
       gap: 18px;
       margin-top: 18px;
-      align-items: start;
+      align-items: stretch;
     }
 
     .metric-stack {
       display: grid;
+      grid-template-rows: repeat(6, minmax(0, 1fr));
       gap: 10px;
+      height: 100%;
+      align-self: stretch;
     }
 
     .metric-card {
       position: relative;
       overflow: hidden;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
       padding: 12px 12px;
       border-radius: 20px;
       color: #fff;
@@ -212,6 +218,7 @@
       text-align: center;
       border: 1px solid rgba(255, 255, 255, 0.18);
       isolation: isolate;
+      min-height: 0;
     }
 
     .metric-card::before {
@@ -427,10 +434,13 @@
     @media (max-width: 1200px) {
       .top-grid {
         grid-template-columns: 1fr;
+        align-items: start;
       }
 
       .metric-stack {
         grid-template-columns: repeat(3, minmax(0, 1fr));
+        grid-template-rows: none;
+        height: auto;
       }
     }
 
@@ -441,6 +451,7 @@
 
       .metric-stack {
         grid-template-columns: repeat(2, minmax(0, 1fr));
+        grid-template-rows: none;
       }
 
       .header {
@@ -464,6 +475,7 @@
 
       .metric-stack {
         grid-template-columns: 1fr;
+        grid-template-rows: none;
       }
 
       .header h1 {
