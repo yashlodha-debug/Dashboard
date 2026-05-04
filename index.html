@@ -1168,7 +1168,19 @@
 
     function renderMonthChart(monthData) {
       const ctx = document.getElementById("monthChart").getContext("2d");
-      const months = Object.keys(monthData).sort();
+      const today = new Date();
+      const currentYear = today.getFullYear();
+      const currentMonth = today.getMonth() + 1;
+      const months = Object.keys(monthData)
+        .filter(monthKey => {
+          const [year, month] = monthKey.split("-").map(Number);
+          return year === currentYear && month <= currentMonth;
+        })
+        .sort((a, b) => {
+          const [yearA, monthA] = a.split("-").map(Number);
+          const [yearB, monthB] = b.split("-").map(Number);
+          return new Date(yearA, monthA - 1, 1) - new Date(yearB, monthB - 1, 1);
+        });
 
       if (window.monthChartObj) {
         window.monthChartObj.destroy();
