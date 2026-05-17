@@ -1,421 +1,689 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" data-theme="dark">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Live Performance Dashboard</title>
+  <title>Live Performance Dashboard — Petpooja</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;1,9..40,400&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2"></script>
   <style>
+    /* ─── DESIGN TOKENS ──────────────────────────────────────────── */
     :root {
-      --bg: #edf5ff;
-      --surface: #ffffff;
-      --surface-strong: #0b1220;
-      --text: #10203a;
-      --muted: #61738f;
-      --border: rgba(216, 226, 239, 0.88);
-      --shadow: 0 18px 45px rgba(15, 23, 42, 0.12);
-      --shadow-soft: 0 10px 24px rgba(15, 23, 42, 0.08);
-      --radius: 20px;
-      --accent: #2563eb;
-      --accent-soft: rgba(37, 99, 235, 0.1);
-      --success: #16a34a;
-      --warning: #f59e0b;
-      --danger: #ef4444;
-      --info: #06b6d4;
-      --violet: #7c3aed;
+      --font: "DM Sans", system-ui, sans-serif;
+      --font-mono: "DM Mono", monospace;
+      --radius-sm: 10px;
+      --radius: 16px;
+      --radius-lg: 24px;
+      --radius-xl: 32px;
+      --transition: 0.22s cubic-bezier(0.4, 0, 0.2, 1);
+
+      /* Status colors (shared) */
+      --c-done:    #22c55e;
+      --c-working: #f59e0b;
+      --c-pending: #ef4444;
+      --c-assign:  #06b6d4;
+      --c-hold:    #a855f7;
+      --c-close:   #64748b;
+      --c-next:    #fb923c;
+      --c-open:    #3b82f6;
     }
 
-    * {
-      box-sizing: border-box;
+    /* ─── DARK THEME ──────────────────────────────────────── */
+    [data-theme="dark"] {
+      --bg:          #080d14;
+      --bg2:         #0d1421;
+      --bg3:         #111827;
+      --surface:     #141c2b;
+      --surface2:    #1a2336;
+      --surface3:    #1f2d42;
+      --border:      rgba(255,255,255,0.07);
+      --border2:     rgba(255,255,255,0.12);
+      --text:        #f1f5f9;
+      --text2:       #94a3b8;
+      --text3:       #64748b;
+      --accent:      #3b82f6;
+      --accent2:     #1d4ed8;
+      --accent-glow: rgba(59,130,246,0.25);
+      --card-shadow: 0 1px 3px rgba(0,0,0,0.5), 0 8px 24px rgba(0,0,0,0.35);
+      --header-bg:   rgba(8,13,20,0.85);
+      --table-head:  #0d1421;
+      --table-row-alt: rgba(255,255,255,0.025);
+      --table-row-hover: rgba(59,130,246,0.07);
+      --scrollbar-track: #141c2b;
+      --scrollbar-thumb: #2d3f5a;
+      --input-bg:    #0d1421;
     }
+
+    /* ─── LIGHT THEME ──────────────────────────────────────── */
+    [data-theme="light"] {
+      --bg:          #f0f4f8;
+      --bg2:         #e8eef5;
+      --bg3:         #dde5ef;
+      --surface:     #ffffff;
+      --surface2:    #f8fafc;
+      --surface3:    #f1f5f9;
+      --border:      rgba(0,0,0,0.07);
+      --border2:     rgba(0,0,0,0.12);
+      --text:        #0f172a;
+      --text2:       #475569;
+      --text3:       #94a3b8;
+      --accent:      #2563eb;
+      --accent2:     #1d4ed8;
+      --accent-glow: rgba(37,99,235,0.15);
+      --card-shadow: 0 1px 3px rgba(0,0,0,0.08), 0 8px 24px rgba(0,0,0,0.06);
+      --header-bg:   rgba(240,244,248,0.9);
+      --table-head:  #1e293b;
+      --table-row-alt: rgba(0,0,0,0.02);
+      --table-row-hover: rgba(37,99,235,0.05);
+      --scrollbar-track: #f1f5f9;
+      --scrollbar-thumb: #cbd5e1;
+      --input-bg:    #ffffff;
+    }
+
+    /* ─── RESET & BASE ──────────────────────────────────────── */
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    html { scroll-behavior: smooth; }
 
     body {
-      margin: 0;
-      font-family: "Poppins", Arial, sans-serif;
-      background:
-        radial-gradient(circle at 12% 16%, rgba(56, 189, 248, 0.20), transparent 22%),
-        radial-gradient(circle at 88% 14%, rgba(99, 102, 241, 0.18), transparent 24%),
-        radial-gradient(circle at 76% 72%, rgba(236, 72, 153, 0.14), transparent 20%),
-        radial-gradient(circle at 24% 86%, rgba(45, 212, 191, 0.12), transparent 22%),
-        linear-gradient(180deg, #fdfdff 0%, #f3f8ff 36%, var(--bg) 100%);
+      font-family: var(--font);
+      font-size: 14px;
+      line-height: 1.5;
       color: var(--text);
-      background-attachment: fixed;
+      background: var(--bg);
+      min-height: 100vh;
+      overflow-x: hidden;
+      transition: background var(--transition), color var(--transition);
     }
 
-    .page {
-      max-width: 1600px;
-      margin: 0 auto;
-      padding: 18px;
+    /* Scrollbar */
+    ::-webkit-scrollbar { width: 6px; height: 6px; }
+    ::-webkit-scrollbar-track { background: var(--scrollbar-track); }
+    ::-webkit-scrollbar-thumb { background: var(--scrollbar-thumb); border-radius: 99px; }
+
+    /* ─── NOISE OVERLAY ──────────────────────────────────────── */
+    body::before {
+      content: "";
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+      z-index: 0;
+      opacity: 0.025;
+      background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)'/%3E%3C/svg%3E");
+      background-repeat: repeat;
+      background-size: 128px 128px;
     }
 
-    .header {
+    /* ─── LAYOUT ──────────────────────────────────────── */
+    .layout { display: flex; min-height: 100vh; position: relative; z-index: 1; }
+
+    /* ─── SIDEBAR ──────────────────────────────────────── */
+    .sidebar {
+      width: 240px;
+      min-height: 100vh;
+      background: var(--surface);
+      border-right: 1px solid var(--border);
       display: flex;
-      align-items: center;
-      justify-content: center;
-      position: relative;
-      padding: 18px 24px;
-      background:
-        linear-gradient(135deg, rgba(255, 255, 255, 0.88), rgba(245, 249, 255, 0.82));
-      backdrop-filter: blur(10px);
-      border: 1px solid rgba(216, 226, 239, 0.72);
-      border-radius: 26px;
-      box-shadow: var(--shadow);
+      flex-direction: column;
+      position: sticky;
+      top: 0;
+      height: 100vh;
+      overflow-y: auto;
+      flex-shrink: 0;
+      transition: width var(--transition), transform var(--transition), background var(--transition);
+      z-index: 100;
     }
 
-    .header img {
-      position: absolute;
-      left: 24px;
-      height: 34px;
-    }
-
-    .header h1 {
-      margin: 0;
-      font-size: clamp(1.4rem, 2.5vw, 2rem);
-      font-weight: 700;
-      letter-spacing: 0.02em;
-    }
-
-    .toolbar {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      gap: 18px;
-      flex-wrap: wrap;
-      margin-top: 16px;
-      padding: 16px 18px;
-      background:
-        linear-gradient(135deg, rgba(255,255,255,0.90), rgba(244,248,255,0.84));
-      border: 1px solid var(--border);
-      border-radius: var(--radius);
-      box-shadow: var(--shadow-soft);
-      backdrop-filter: blur(10px);
-    }
-
-    .toolbar-left {
-      display: flex;
-      align-items: center;
-      gap: 12px;
-      flex-wrap: wrap;
-    }
-
-    .toolbar label {
-      color: var(--muted);
-      font-size: 0.92rem;
-      font-weight: 500;
-    }
-
-    .toolbar input {
-      min-height: 42px;
-      padding: 10px 12px;
-      border: 1px solid var(--border);
-      border-radius: 12px;
-      font: inherit;
-      color: var(--text);
-      background: #fff;
-    }
-
-    .status-pill {
-      display: inline-flex;
-      align-items: center;
-      gap: 8px;
-      min-height: 42px;
-      padding: 0 14px;
-      border-radius: 999px;
-      background: var(--accent-soft);
-      color: var(--accent);
-      font-size: 0.9rem;
-      font-weight: 600;
-    }
-
-    .toolbar-actions {
+    .sidebar-logo {
       display: flex;
       align-items: center;
       gap: 10px;
-      flex-wrap: wrap;
+      padding: 22px 20px 18px;
+      border-bottom: 1px solid var(--border);
     }
 
-    .refresh-button {
-      min-height: 42px;
-      padding: 0 16px;
-      border: 0;
-      border-radius: 999px;
-      font: inherit;
+    .sidebar-logo img { height: 28px; filter: brightness(1.1); }
+
+    .sidebar-logo-label {
+      font-size: 11px;
       font-weight: 600;
-      color: #fff;
+      color: var(--text3);
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+    }
+
+    .sidebar-section {
+      padding: 16px 12px 8px;
+    }
+
+    .sidebar-section-label {
+      font-size: 10px;
+      font-weight: 700;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: var(--text3);
+      padding: 0 8px;
+      margin-bottom: 6px;
+    }
+
+    .sidebar-nav { display: flex; flex-direction: column; gap: 2px; }
+
+    .nav-item {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 9px 10px;
+      border-radius: var(--radius-sm);
+      color: var(--text2);
+      font-weight: 500;
+      font-size: 13.5px;
       cursor: pointer;
-      background: linear-gradient(135deg, #2563eb, #1d4ed8 60%, #1e3a8a);
-      box-shadow: 0 10px 22px rgba(37, 99, 235, 0.25);
-      transition: transform 0.18s ease, box-shadow 0.18s ease, opacity 0.18s ease;
+      transition: all var(--transition);
+      text-decoration: none;
+      border: 1px solid transparent;
     }
 
-    .refresh-button:hover {
-      transform: translateY(-1px);
-      box-shadow: 0 14px 26px rgba(37, 99, 235, 0.28);
+    .nav-item:hover {
+      background: var(--surface2);
+      color: var(--text);
+      border-color: var(--border);
     }
 
-    .refresh-button:disabled {
+    .nav-item.active {
+      background: linear-gradient(135deg, rgba(59,130,246,0.15), rgba(29,78,216,0.1));
+      color: var(--accent);
+      border-color: rgba(59,130,246,0.2);
+      font-weight: 600;
+    }
+
+    .nav-icon {
+      width: 18px;
+      height: 18px;
+      flex-shrink: 0;
+      opacity: 0.8;
+    }
+
+    .nav-badge {
+      margin-left: auto;
+      background: var(--accent);
+      color: #fff;
+      font-size: 10px;
+      font-weight: 700;
+      padding: 1px 6px;
+      border-radius: 99px;
+    }
+
+    .sidebar-footer {
+      margin-top: auto;
+      padding: 14px 12px;
+      border-top: 1px solid var(--border);
+    }
+
+    /* ─── MAIN CONTENT ──────────────────────────────────────── */
+    .main { flex: 1; min-width: 0; display: flex; flex-direction: column; }
+
+    /* ─── TOPBAR ──────────────────────────────────────── */
+    .topbar {
+      position: sticky;
+      top: 0;
+      z-index: 50;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+      padding: 14px 28px;
+      background: var(--header-bg);
+      backdrop-filter: blur(16px) saturate(180%);
+      -webkit-backdrop-filter: blur(16px) saturate(180%);
+      border-bottom: 1px solid var(--border);
+      transition: background var(--transition);
+    }
+
+    .topbar-left { display: flex; align-items: center; gap: 16px; }
+
+    .menu-toggle {
+      display: none;
+      align-items: center;
+      justify-content: center;
+      width: 38px;
+      height: 38px;
+      border-radius: var(--radius-sm);
+      border: 1px solid var(--border);
+      background: var(--surface2);
+      cursor: pointer;
+      transition: all var(--transition);
+      color: var(--text2);
+    }
+
+    .menu-toggle:hover { background: var(--surface3); color: var(--text); }
+
+    .page-title { font-size: 17px; font-weight: 700; color: var(--text); }
+    .page-subtitle { font-size: 12px; color: var(--text3); margin-top: 1px; }
+
+    .topbar-right { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+
+    /* Date inputs */
+    .date-group {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      padding: 6px 12px;
+      transition: border-color var(--transition);
+    }
+
+    .date-group:focus-within { border-color: var(--accent); }
+
+    .date-group label {
+      font-size: 11px;
+      font-weight: 600;
+      color: var(--text3);
+      white-space: nowrap;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+
+    .date-group input[type="date"] {
+      border: none;
+      outline: none;
+      background: transparent;
+      color: var(--text);
+      font-family: var(--font);
+      font-size: 13px;
+      font-weight: 500;
+      width: 120px;
+      cursor: pointer;
+      color-scheme: dark;
+    }
+
+    [data-theme="light"] .date-group input[type="date"] { color-scheme: light; }
+
+    /* Buttons */
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      height: 38px;
+      padding: 0 16px;
+      border-radius: var(--radius-sm);
+      font-family: var(--font);
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all var(--transition);
+      white-space: nowrap;
+      text-decoration: none;
+      border: 1px solid transparent;
+    }
+
+    .btn-primary {
+      background: var(--accent);
+      color: #fff;
+      box-shadow: 0 0 0 0 var(--accent-glow);
+    }
+
+    .btn-primary:hover {
+      background: var(--accent2);
+      box-shadow: 0 0 0 4px var(--accent-glow);
+    }
+
+    .btn-primary:disabled {
+      opacity: 0.55;
       cursor: wait;
-      opacity: 0.7;
-      transform: none;
       box-shadow: none;
     }
 
-    .secondary-button {
-      min-height: 42px;
-      padding: 0 16px;
-      border-radius: 999px;
-      border: 1px solid rgba(37, 99, 235, 0.18);
-      background: linear-gradient(135deg, #ffffff, #eef4ff);
-      color: #1d4ed8;
-      font: inherit;
-      font-weight: 600;
-      cursor: pointer;
-      text-decoration: none;
+    .btn-ghost {
+      background: var(--surface);
+      color: var(--text2);
+      border-color: var(--border);
+    }
+
+    .btn-ghost:hover { background: var(--surface2); color: var(--text); border-color: var(--border2); }
+
+    .btn-icon-only {
+      width: 38px;
+      height: 38px;
+      padding: 0;
+      flex-shrink: 0;
+    }
+
+    /* Status pill */
+    .status-pill {
       display: inline-flex;
       align-items: center;
-      justify-content: center;
-      box-shadow: 0 10px 22px rgba(15, 23, 42, 0.08);
-      transition: transform 0.18s ease, box-shadow 0.18s ease;
+      gap: 7px;
+      height: 38px;
+      padding: 0 14px;
+      border-radius: var(--radius-sm);
+      background: var(--surface);
+      border: 1px solid var(--border);
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--text2);
+      transition: all var(--transition);
     }
 
-    .secondary-button:hover {
-      transform: translateY(-1px);
-      box-shadow: 0 14px 26px rgba(15, 23, 42, 0.12);
-    }
-
-    .status-dot {
-      width: 10px;
-      height: 10px;
+    .pulse-dot {
+      width: 7px;
+      height: 7px;
       border-radius: 50%;
-      background: currentColor;
+      background: var(--c-done);
+      box-shadow: 0 0 0 0 rgba(34,197,94,0.4);
+      animation: pulse 2s infinite;
+      flex-shrink: 0;
     }
 
-    .top-grid {
-      display: grid;
-      grid-template-columns: 160px minmax(0, 1fr) 360px;
-      gap: 18px;
-      margin-top: 18px;
-      align-items: stretch;
+    @keyframes pulse {
+      0%   { box-shadow: 0 0 0 0 rgba(34,197,94,0.5); }
+      70%  { box-shadow: 0 0 0 6px rgba(34,197,94,0); }
+      100% { box-shadow: 0 0 0 0 rgba(34,197,94,0); }
     }
 
-    .metric-stack {
-      display: grid;
-      grid-template-rows: repeat(6, minmax(0, 1fr));
+    .theme-toggle {
+      width: 38px;
+      height: 38px;
+      border-radius: var(--radius-sm);
+      border: 1px solid var(--border);
+      background: var(--surface);
+      color: var(--text2);
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: all var(--transition);
+    }
+
+    .theme-toggle:hover { background: var(--surface2); color: var(--text); }
+
+    /* ─── PAGE BODY ──────────────────────────────────────── */
+    .page-body { padding: 24px 28px; flex: 1; }
+
+    /* ─── ERROR BANNER ──────────────────────────────────────── */
+    .error-banner {
+      display: none;
+      align-items: center;
       gap: 10px;
-      height: 100%;
-      align-self: stretch;
+      margin-bottom: 20px;
+      padding: 13px 16px;
+      border-radius: var(--radius);
+      border: 1px solid rgba(239,68,68,0.3);
+      background: rgba(239,68,68,0.08);
+      color: #fca5a5;
+      font-size: 13px;
+      font-weight: 500;
+    }
+
+    .error-banner.visible { display: flex; }
+
+    /* ─── METRIC CARDS ──────────────────────────────────────── */
+    .metric-grid {
+      display: grid;
+      grid-template-columns: repeat(6, 1fr);
+      gap: 14px;
+      margin-bottom: 22px;
     }
 
     .metric-card {
       position: relative;
       overflow: hidden;
-      display: flex;
-      flex-direction: column;
-      justify-content: center;
-      padding: 12px 12px;
-      border-radius: 20px;
-      color: #fff;
-      box-shadow: var(--shadow);
-      text-align: center;
-      border: 1px solid rgba(255, 255, 255, 0.18);
+      border-radius: var(--radius);
+      padding: 18px 16px;
+      border: 1px solid rgba(255,255,255,0.08);
+      box-shadow: var(--card-shadow);
+      cursor: default;
+      transition: transform var(--transition), box-shadow var(--transition);
       isolation: isolate;
-      min-height: 0;
     }
+
+    .metric-card:hover { transform: translateY(-3px); box-shadow: 0 2px 6px rgba(0,0,0,0.5), 0 16px 40px rgba(0,0,0,0.5); }
 
     .metric-card::before {
       content: "";
       position: absolute;
       inset: 0;
-      background: linear-gradient(140deg, rgba(255,255,255,0.22), transparent 34%, rgba(255,255,255,0.06));
-      opacity: 0.9;
+      background: linear-gradient(140deg, rgba(255,255,255,0.14) 0%, transparent 50%);
       z-index: -1;
     }
 
     .metric-card::after {
       content: "";
       position: absolute;
-      width: 90px;
-      height: 90px;
-      right: -24px;
-      top: -30px;
+      width: 80px; height: 80px;
+      right: -20px; bottom: -20px;
       border-radius: 50%;
-      background: rgba(255,255,255,0.18);
-      filter: blur(2px);
+      background: rgba(255,255,255,0.1);
       z-index: -1;
     }
 
-    .metric-card strong {
-      display: block;
-      font-size: 0.78rem;
-      font-weight: 600;
-      letter-spacing: 0.04em;
-      text-transform: uppercase;
-      opacity: 0.9;
-    }
-
-    .metric-card span {
-      display: block;
-      margin-top: 6px;
-      font-size: 1.85rem;
+    .metric-label {
+      font-size: 10.5px;
       font-weight: 700;
-      line-height: 1;
-      letter-spacing: -0.04em;
-    }
-
-    .blue { background: linear-gradient(135deg, #2563eb, #1d4ed8 55%, #1e3a8a); }
-    .green { background: linear-gradient(135deg, #22c55e, #15803d 55%, #14532d); }
-    .pink { background: linear-gradient(135deg, #ec4899, #db2777 58%, #9d174d); }
-    .orange { background: linear-gradient(135deg, #fb923c, #ea580c 58%, #9a3412); }
-    .lightgreen { background: linear-gradient(135deg, #14b8a6, #0f766e 58%, #134e4a); }
-    .purple { background: linear-gradient(135deg, #8b5cf6, #7c3aed 58%, #4c1d95); }
-
-    .section {
-      margin-top: 18px;
-    }
-
-    .panel {
-      background:
-        linear-gradient(135deg, rgba(255,255,255,0.92), rgba(248,251,255,0.88));
-      border: 1px solid var(--border);
-      border-radius: 24px;
-      box-shadow: var(--shadow-soft);
-      overflow: hidden;
-      backdrop-filter: blur(10px);
-    }
-
-    .panel-header {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      gap: 12px;
-      padding: 13px 18px;
-      background:
-        linear-gradient(135deg, #0f172a 0%, #172554 54%, #1e293b 100%);
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      opacity: 0.85;
       color: #fff;
     }
 
-    .panel-header h2 {
-      margin: 0;
-      font-size: 1rem;
+    .metric-value {
+      font-size: 2.2rem;
       font-weight: 700;
-      letter-spacing: -0.02em;
+      color: #fff;
+      line-height: 1;
+      margin-top: 10px;
+      font-variant-numeric: tabular-nums;
+      letter-spacing: -0.04em;
     }
 
-    .panel-subtitle {
-      font-size: 0.78rem;
-      color: rgba(255, 255, 255, 0.72);
+    .metric-icon {
+      position: absolute;
+      top: 14px;
+      right: 14px;
+      width: 28px;
+      height: 28px;
+      opacity: 0.3;
     }
 
-    .table-wrap {
-      overflow: auto;
+    .mc-blue   { background: linear-gradient(135deg, #2563eb, #1e40af); }
+    .mc-green  { background: linear-gradient(135deg, #16a34a, #14532d); }
+    .mc-pink   { background: linear-gradient(135deg, #db2777, #9d174d); }
+    .mc-orange { background: linear-gradient(135deg, #ea580c, #7c2d12); }
+    .mc-teal   { background: linear-gradient(135deg, #0d9488, #134e4a); }
+    .mc-violet { background: linear-gradient(135deg, #7c3aed, #4c1d95); }
+
+    /* ─── SECTION GRID ──────────────────────────────────────── */
+    .grid-2 {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 18px;
     }
+
+    .grid-3-2 {
+      display: grid;
+      grid-template-columns: minmax(0,1.6fr) minmax(0,1fr);
+      gap: 18px;
+    }
+
+    /* ─── CARD PANEL ──────────────────────────────────────── */
+    .card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-lg);
+      box-shadow: var(--card-shadow);
+      overflow: hidden;
+      transition: background var(--transition), border-color var(--transition);
+    }
+
+    .card-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 16px 20px;
+      border-bottom: 1px solid var(--border);
+      gap: 12px;
+    }
+
+    .card-header-left { display: flex; flex-direction: column; gap: 2px; }
+
+    .card-title {
+      font-size: 14px;
+      font-weight: 700;
+      color: var(--text);
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .card-title-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 2px;
+      flex-shrink: 0;
+    }
+
+    .card-subtitle { font-size: 11.5px; color: var(--text3); font-weight: 400; }
+
+    .card-badge {
+      display: inline-flex;
+      align-items: center;
+      height: 24px;
+      padding: 0 10px;
+      border-radius: var(--radius-sm);
+      font-size: 11px;
+      font-weight: 700;
+      background: var(--surface2);
+      color: var(--text2);
+      border: 1px solid var(--border);
+    }
+
+    /* ─── TABLES ──────────────────────────────────────── */
+    .table-container { overflow: auto; }
 
     table {
       width: 100%;
       border-collapse: collapse;
       font-size: 12.5px;
-      background: var(--surface);
     }
 
-    thead {
-      background: #1f2937;
-      color: #fff;
-    }
-
+    thead { background: var(--table-head); }
     thead th {
       position: sticky;
       top: 0;
       z-index: 2;
-      background: #1f2937;
-    }
-
-    th, td {
-      padding: 8px 10px;
-      text-align: center;
-      white-space: nowrap;
-      border-bottom: 1px solid #edf2f7;
-    }
-
-    thead th {
-      font-size: 0.76rem;
-      font-weight: 600;
-      letter-spacing: 0.02em;
-    }
-
-    tbody td {
-      font-weight: 500;
-    }
-
-    tbody tr:nth-child(even) {
-      background: #f8fbff;
-    }
-
-    tbody tr:hover {
-      background: #eef6ff;
-    }
-
-    td.name-cell,
-    th.name-cell {
-      text-align: left;
-    }
-
-    .highlight-working { background: #fef3c7; font-weight: 600; }
-    .highlight-pending { background: #fee2e2; font-weight: 600; }
-    .highlight-assigned { background: #cffafe; font-weight: 600; }
-    .highlight-next { background: #e2e8f0; font-weight: 600; }
-
-    .total-row {
+      background: var(--table-head);
+      color: rgba(255,255,255,0.8);
+      font-size: 10px;
       font-weight: 700;
-      background: linear-gradient(135deg, #e0ecff, #dbeafe) !important;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      padding: 10px 12px;
+      white-space: nowrap;
+      border-bottom: 1px solid var(--border);
     }
 
-    .availability-name {
+    [data-theme="light"] thead th {
+      color: rgba(255,255,255,0.85);
+      background: #1e293b;
+    }
+
+    th.name-cell, td.name-cell { text-align: left; }
+
+    td {
+      padding: 9px 12px;
+      text-align: center;
+      color: var(--text);
+      font-weight: 500;
+      white-space: nowrap;
+      border-bottom: 1px solid var(--border);
+      font-variant-numeric: tabular-nums;
+      transition: background var(--transition);
+    }
+
+    tbody tr:nth-child(even) td { background: var(--table-row-alt); }
+    tbody tr:hover td { background: var(--table-row-hover); }
+
+    .total-row td {
+      font-weight: 700;
+      background: rgba(59,130,246,0.08) !important;
+      color: var(--accent);
+      border-top: 1px solid rgba(59,130,246,0.15);
+    }
+
+    /* Status badges in table */
+    .stat-chip {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-width: 28px;
+      height: 22px;
+      padding: 0 7px;
+      border-radius: 6px;
+      font-size: 11px;
+      font-weight: 700;
+    }
+
+    .chip-working  { background: rgba(245,158,11,0.15); color: var(--c-working); }
+    .chip-pending  { background: rgba(239,68,68,0.15);  color: var(--c-pending); }
+    .chip-assigned { background: rgba(6,182,212,0.15);  color: var(--c-assign);  }
+    .chip-next     { background: rgba(251,146,60,0.15); color: var(--c-next);    }
+
+    /* Availability name pills */
+    .name-pill {
       display: inline-flex;
       align-items: center;
       gap: 6px;
-      padding: 3px 8px;
-      border-radius: 999px;
-      cursor: pointer;
-      transition: background-color 0.18s ease, color 0.18s ease;
+      padding: 3px 9px;
+      border-radius: 99px;
+      font-weight: 600;
+      cursor: default;
+      font-size: 12px;
     }
 
-    .availability-name.available {
-      color: #166534;
-      background: rgba(34, 197, 94, 0.12);
-      font-weight: 700;
+    .name-pill.available {
+      background: rgba(34,197,94,0.12);
+      color: #4ade80;
     }
 
-    .availability-name.unavailable {
-      color: inherit;
-      background: transparent;
+    .name-pill.unavailable { color: var(--text2); }
+
+    [data-theme="light"] .name-pill.available {
+      background: rgba(22,163,74,0.12);
+      color: #15803d;
     }
 
-    .chart-panel {
-      padding: 12px;
+    .avail-dot {
+      width: 6px; height: 6px;
+      border-radius: 50%;
+      flex-shrink: 0;
     }
 
-    .chart-box {
+    .name-pill.available .avail-dot { background: var(--c-done); }
+    .name-pill.unavailable .avail-dot { background: var(--text3); }
+
+    /* ─── CHART SECTIONS ──────────────────────────────────────── */
+    .chart-wrap {
+      padding: 16px;
+    }
+
+    .chart-area {
       position: relative;
-      min-height: 320px;
-      padding: 6px;
+      min-height: 260px;
     }
 
+    /* Dark glassmorphism chart shell for the two bottom charts */
     .chart-shell {
-      position: relative;
+      border-radius: var(--radius);
       overflow: hidden;
-      border-radius: 24px;
-      border: 1px solid rgba(148, 163, 184, 0.18);
-      background:
-        radial-gradient(circle at top left, rgba(59, 130, 246, 0.16), transparent 30%),
-        radial-gradient(circle at bottom right, rgba(236, 72, 153, 0.12), transparent 32%),
-        linear-gradient(145deg, #0f172a 0%, #172554 52%, #1e293b 100%);
-      box-shadow:
-        inset 0 1px 0 rgba(255, 255, 255, 0.06),
-        0 18px 40px rgba(15, 23, 42, 0.22);
+      background: linear-gradient(135deg, #0d1830 0%, #0e1f3b 50%, #0d1728 100%);
+      border: 1px solid rgba(255,255,255,0.06);
+      padding: 16px;
+      position: relative;
     }
 
     .chart-shell::before {
@@ -423,1187 +691,1397 @@
       position: absolute;
       inset: 0;
       background:
-        linear-gradient(120deg, rgba(255, 255, 255, 0.06), transparent 28%),
-        linear-gradient(transparent 95%, rgba(255, 255, 255, 0.05) 100%);
+        radial-gradient(circle at 15% 20%, rgba(59,130,246,0.12), transparent 40%),
+        radial-gradient(circle at 85% 80%, rgba(168,85,247,0.1), transparent 40%);
       pointer-events: none;
     }
 
-    .chart-shell .chart-box {
-      padding: 18px 16px 12px;
-      min-height: 300px;
+    /* ─── SECTION SPACER ──────────────────────────────────────── */
+    .section { margin-bottom: 18px; }
+
+    /* ─── EMPTY STATE ──────────────────────────────────────── */
+    .empty-cell {
+      padding: 28px !important;
+      text-align: center !important;
+      color: var(--text3) !important;
+      font-style: italic;
+      background: transparent !important;
+      font-weight: 400 !important;
     }
 
-    .split-grid {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 18px;
-      margin-top: 18px;
+    /* ─── LOADING SKELETON ──────────────────────────────────────── */
+    @keyframes shimmer {
+      0%   { background-position: -600px 0; }
+      100% { background-position:  600px 0; }
     }
 
-    .empty-state {
-      padding: 18px;
-      text-align: center;
-      color: var(--muted);
-      font-size: 0.92rem;
+    .skeleton {
+      background: linear-gradient(90deg, var(--surface2) 25%, var(--surface3) 50%, var(--surface2) 75%);
+      background-size: 600px 100%;
+      animation: shimmer 1.4s infinite;
+      border-radius: 6px;
     }
 
-    .error-banner {
+    /* ─── SIDEBAR OVERLAY (mobile) ──────────────────────────────── */
+    .sidebar-overlay {
       display: none;
-      margin-top: 16px;
-      padding: 14px 16px;
-      border-radius: 14px;
-      border: 1px solid rgba(239, 68, 68, 0.25);
-      background: rgba(239, 68, 68, 0.08);
-      color: #991b1b;
-      font-size: 0.92rem;
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.55);
+      z-index: 99;
+      backdrop-filter: blur(2px);
+    }
+
+    /* ─── RESPONSIVE ──────────────────────────────────────── */
+    @media (max-width: 1400px) {
+      .metric-grid { grid-template-columns: repeat(3, 1fr); }
+    }
+
+    @media (max-width: 1100px) {
+      .grid-3-2 { grid-template-columns: 1fr; }
+      .grid-2   { grid-template-columns: 1fr; }
+    }
+
+    @media (max-width: 960px) {
+      .sidebar {
+        position: fixed;
+        left: 0; top: 0; bottom: 0;
+        transform: translateX(-100%);
+        z-index: 200;
+      }
+
+      .sidebar.open { transform: translateX(0); }
+      .sidebar-overlay { display: block; opacity: 0; pointer-events: none; transition: opacity var(--transition); }
+      .sidebar-overlay.open { opacity: 1; pointer-events: auto; }
+      .menu-toggle { display: flex; }
+
+      .page-body { padding: 16px; }
+      .topbar { padding: 12px 16px; }
+    }
+
+    @media (max-width: 700px) {
+      .metric-grid { grid-template-columns: repeat(2, 1fr); }
+      .topbar-right { gap: 8px; }
+      .date-group { padding: 5px 8px; }
+      .date-group input[type="date"] { width: 100px; }
+    }
+
+    @media (max-width: 480px) {
+      .metric-grid { grid-template-columns: 1fr 1fr; }
+      .metric-value { font-size: 1.7rem; }
+    }
+
+    /* ─── ANIMATIONS ──────────────────────────────────────── */
+    @keyframes fadeUp {
+      from { opacity: 0; transform: translateY(14px); }
+      to   { opacity: 1; transform: translateY(0);    }
+    }
+
+    .fade-up { animation: fadeUp 0.4s ease both; }
+    .fade-up-1 { animation-delay: 0.05s; }
+    .fade-up-2 { animation-delay: 0.10s; }
+    .fade-up-3 { animation-delay: 0.15s; }
+    .fade-up-4 { animation-delay: 0.20s; }
+    .fade-up-5 { animation-delay: 0.25s; }
+
+    /* ─── LINK OVERRIDE ──────────────────────────────────────── */
+    a { color: inherit; text-decoration: none; }
+
+    /* ─── COMPACT TABLE ──────────────────────────────────────── */
+    .table-compact thead th { padding: 7px 10px; font-size: 9.5px; }
+    .table-compact td { padding: 6px 10px; font-size: 12px; }
+    .table-compact .empty-cell { padding: 20px !important; }
+
+    /* ─── ACTIVITY STATS BADGE ──────────────────────────────── */
+    .activity-stats {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      padding: 6px 12px;
+      flex-shrink: 0;
+    }
+    .act-stat {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--text2);
+      white-space: nowrap;
+    }
+    .act-stat-dot {
+      width: 7px; height: 7px;
+      border-radius: 50%;
+      flex-shrink: 0;
+    }
+    .act-divider { color: var(--border2); font-size: 14px; }
+
+    /* ─── DONUT CHART LAYOUT ──────────────────────────────── */
+    .donut-layout {
+      display: flex;
+      align-items: center;
+      gap: 24px;
+      padding: 8px 0;
+      flex-wrap: wrap;
+    }
+    .donut-canvas-wrap {
+      position: relative;
+      width: 200px;
+      height: 200px;
+      flex-shrink: 0;
+      margin: 0 auto;
+    }
+    .donut-center {
+      position: absolute;
+      inset: 0;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      pointer-events: none;
+    }
+    .donut-center-value {
+      font-size: 2rem;
+      font-weight: 700;
+      color: var(--text);
+      line-height: 1;
+      letter-spacing: -0.04em;
+      font-variant-numeric: tabular-nums;
+    }
+    .donut-center-label {
+      font-size: 11px;
+      color: var(--text3);
+      font-weight: 500;
+      margin-top: 4px;
+    }
+    .donut-legend {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      min-width: 140px;
+    }
+    .donut-legend-item {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 8px 12px;
+      border-radius: var(--radius-sm);
+      border: 1px solid var(--border);
+      background: var(--surface2);
+      cursor: pointer;
+      transition: all var(--transition);
+    }
+    .donut-legend-item:hover { border-color: var(--border2); background: var(--surface3); }
+    .donut-legend-swatch {
+      width: 10px; height: 10px;
+      border-radius: 3px;
+      flex-shrink: 0;
+    }
+    .donut-legend-name {
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--text2);
+      flex: 1;
+    }
+    .donut-legend-val {
+      font-size: 13px;
+      font-weight: 700;
+      color: var(--text);
+      font-variant-numeric: tabular-nums;
+    }
+    .donut-legend-pct {
+      font-size: 10px;
+      color: var(--text3);
       font-weight: 500;
     }
 
-    @media (max-width: 1200px) {
-      .top-grid {
-        grid-template-columns: 1fr;
-        align-items: start;
-      }
-
-      .metric-stack {
-        grid-template-columns: repeat(3, minmax(0, 1fr));
-        grid-template-rows: none;
-        height: auto;
-      }
+    /* ─── AREA CHART LEGEND (inline) ──────────────────────── */
+    .area-legend {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 12px;
+      padding: 0 4px 8px;
     }
+    .area-legend-item {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 11.5px;
+      font-weight: 600;
+      color: var(--text2);
+    }
+    .area-legend-line {
+      width: 20px; height: 3px;
+      border-radius: 2px;
+    }
+
+    /* ─── ACTIVITY + HOURS ROW ───────────────────────────── */
+    .activity-hours-row {
+      display: flex;
+      gap: 18px;
+      align-items: flex-start;
+    }
+    /* Activity table grows, hours card stays narrow */
+    .activity-hours-row > .card:first-child { flex: 1; min-width: 0; }
+    .activity-hours-row > .hours-card       { flex-shrink: 0; }
 
     @media (max-width: 900px) {
-      .split-grid {
-        grid-template-columns: 1fr;
-      }
-
-      .metric-stack {
-        grid-template-columns: repeat(2, minmax(0, 1fr));
-        grid-template-rows: none;
-      }
-
-      .header {
-        justify-content: flex-start;
-        padding-left: 72px;
-      }
-
-      .header img {
-        left: 20px;
-      }
+      .activity-hours-row { flex-direction: column; }
+      .hours-card { max-width: 100% !important; }
     }
 
-    @media (max-width: 640px) {
-      .page {
-        padding: 12px;
-      }
+    /* ─── HOURS CARD — narrower width ────────────────────── */
+    .hours-card {
+      /* Constrain width but don't change row height */
+      max-width: 400px;
+      width: 100%;
+      align-self: start;       /* don't stretch to full grid height */
+    }
 
-      .toolbar {
-        align-items: stretch;
-      }
+    /* table-hours: normal row padding, just narrow columns */
+    .table-hours thead th { padding: 9px 10px; font-size: 9.5px; }
+    .table-hours td        { padding: 8px 10px; font-size: 12.5px; }
+    .table-hours .name-cell { min-width: 90px; }
+    .table-hours .empty-cell { padding: 22px !important; }
 
-      .metric-stack {
-        grid-template-columns: 1fr;
-        grid-template-rows: none;
-      }
+    /* Working-days badge chip */
+    .wd-chip {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-width: 36px;
+      height: 22px;
+      padding: 0 7px;
+      border-radius: 6px;
+      font-size: 11px;
+      font-weight: 700;
+      background: rgba(99,102,241,0.14);
+      color: #818cf8;
+    }
+    [data-theme="light"] .wd-chip {
+      background: rgba(99,102,241,0.10);
+      color: #4f46e5;
+    }
 
-      .header h1 {
-        font-size: 1.2rem;
-      }
+    /* ─── COLUMN CHART SHELL ─────────────────────────────── */
+    .col-chart-shell {
+      position: relative;
+      border-radius: var(--radius);
+      overflow: hidden;
+      padding: 16px 16px 10px;
+      background: linear-gradient(160deg, #0d1a2e 0%, #0f1f3a 55%, #0b1525 100%);
+      border: 1px solid rgba(255,255,255,0.06);
+      box-shadow: inset 0 1px 0 rgba(255,255,255,0.05), 0 8px 32px rgba(0,0,0,0.3);
+    }
+    [data-theme="light"] .col-chart-shell {
+      background: linear-gradient(160deg, #f8faff 0%, #eef3ff 55%, #f3f8ff 100%);
+      border-color: rgba(0,0,0,0.06);
+      box-shadow: inset 0 1px 0 rgba(255,255,255,0.8), 0 4px 16px rgba(0,0,0,0.06);
+    }
+    .col-chart-shell::before {
+      content:"";
+      position:absolute;
+      inset:0;
+      background:
+        radial-gradient(ellipse at 20% 0%, rgba(99,102,241,0.12), transparent 50%),
+        radial-gradient(ellipse at 80% 100%, rgba(251,146,60,0.08), transparent 50%);
+      pointer-events:none;
+    }
+    [data-theme="light"] .col-chart-shell::before {
+      background:
+        radial-gradient(ellipse at 20% 0%, rgba(99,102,241,0.07), transparent 50%),
+        radial-gradient(ellipse at 80% 100%, rgba(251,146,60,0.05), transparent 50%);
     }
   </style>
 </head>
 <body>
-  <div class="page">
-    <header class="header">
-      <img src="https://d28ewddc5mocr5.cloudfront.net/images/logos-new/pp-logo-new.svg" alt="Petpooja logo">
-      <h1>Live Performance Dashboard</h1>
+
+<!-- Sidebar overlay -->
+<div class="sidebar-overlay" id="sidebarOverlay" onclick="closeSidebar()"></div>
+
+<div class="layout">
+
+  <!-- ─── SIDEBAR ─────────────────────────────────── -->
+  <aside class="sidebar" id="sidebar">
+    <div class="sidebar-logo">
+      <img src="https://d28ewddc5mocr5.cloudfront.net/images/logos-new/pp-logo-new.svg" alt="Petpooja">
+    </div>
+
+    <div class="sidebar-section">
+      <div class="sidebar-section-label">Overview</div>
+      <nav class="sidebar-nav">
+        <a class="nav-item active" href="#">
+          <svg class="nav-icon" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/></svg>
+          Dashboard
+          <span class="nav-badge">Live</span>
+        </a>
+      </nav>
+    </div>
+
+    <div class="sidebar-section">
+      <div class="sidebar-section-label">Reports</div>
+      <nav class="sidebar-nav">
+        <a class="nav-item" href="category-summary.html">
+          <svg class="nav-icon" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M16 8v8m-4-5v5m-4-2v2m-2 4h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
+          Quarter Performance
+        </a>
+        <a class="nav-item" href="kpi-report.html">
+          <svg class="nav-icon" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/></svg>
+          KPI Report
+        </a>
+      </nav>
+    </div>
+
+    <div class="sidebar-footer">
+      <div class="nav-item" style="cursor:default; gap:8px;">
+        <svg style="width:14px;height:14px;opacity:0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path stroke-linecap="round" stroke-linejoin="round" d="M12 8v4l3 3"/></svg>
+        <span style="font-size:11px; color:var(--text3);" id="sidebarTime">--:--</span>
+      </div>
+    </div>
+  </aside>
+
+  <!-- ─── MAIN ─────────────────────────────────── -->
+  <div class="main">
+
+    <!-- Topbar -->
+    <header class="topbar">
+      <div class="topbar-left">
+        <button class="menu-toggle" onclick="toggleSidebar()" aria-label="Menu">
+          <svg width="18" height="18" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M4 6h16M4 12h16M4 18h16"/></svg>
+        </button>
+        <div>
+          <div class="page-title">Live Performance Dashboard</div>
+          <div class="page-subtitle">Real-time employee activity &amp; task tracking</div>
+        </div>
+      </div>
+
+      <div class="topbar-right">
+        <div class="date-group">
+          <label for="fromDate">From</label>
+          <input type="date" id="fromDate">
+        </div>
+        <div class="date-group">
+          <label for="toDate">To</label>
+          <input type="date" id="toDate">
+        </div>
+        <button class="btn btn-primary" id="refreshButton" onclick="loadData(fromInput.value, toInput.value, {force:true})">
+          <svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>
+          Refresh
+        </button>
+        <div class="status-pill" id="refreshStatus">
+          <span class="pulse-dot"></span>
+          <span id="statusText">Ready</span>
+        </div>
+        <button class="theme-toggle" id="themeToggle" onclick="toggleTheme()" title="Toggle theme">
+          <svg id="themeIcon" width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"/></svg>
+        </button>
+      </div>
     </header>
 
-    <section class="toolbar">
-      <div class="toolbar-left">
-        <label for="fromDate">From</label>
-        <input type="date" id="fromDate">
-        <label for="toDate">To</label>
-        <input type="date" id="toDate">
+    <!-- Page Body -->
+    <div class="page-body">
+
+      <!-- Error Banner -->
+      <div class="error-banner" id="errorBanner">
+        <svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/></svg>
+        <span id="errorText"></span>
       </div>
-      <div class="toolbar-actions">
-        <button type="button" class="refresh-button" id="refreshButton">Refresh Now</button>
-        <a class="secondary-button" href="category-summary.html">Quarter Table</a>
-        <div class="status-pill" id="refreshStatus">
-          <span class="status-dot"></span>
-          <span>Manual refresh mode</span>
+
+      <!-- ── Metric Cards ── -->
+      <div class="metric-grid section fade-up">
+        <div class="metric-card mc-blue fade-up fade-up-1">
+          <svg class="metric-icon" fill="none" viewBox="0 0 24 24" stroke="white" stroke-width="1.5"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/></svg>
+          <div class="metric-label">Total Tasks</div>
+          <div class="metric-value" id="totalTasks">—</div>
         </div>
-      </div>
-    </section>
-
-    <div class="error-banner" id="errorBanner"></div>
-
-    <section class="top-grid">
-      <div class="metric-stack">
-        <div class="metric-card blue"><strong>Total Tasks</strong><span id="totalTasks">0</span></div>
-        <div class="metric-card green"><strong>Inventory</strong><span id="inventoryCount">0</span></div>
-        <div class="metric-card pink"><strong>POC</strong><span id="pocCount">0</span></div>
-        <div class="metric-card orange"><strong>Recipe &amp; Material</strong><span id="recipeCount">0</span></div>
-        <div class="metric-card lightgreen"><strong>Raw Material</strong><span id="rawCount">0</span></div>
-        <div class="metric-card purple"><strong>Other</strong><span id="otherRelatedCount">0</span></div>
-      </div>
-
-      <div class="panel">
-        <div class="panel-header">
-          <h2>Today's Activity</h2>
-          <span class="panel-subtitle">Live employee-wise status summary</span>
+        <div class="metric-card mc-green fade-up fade-up-2">
+          <svg class="metric-icon" fill="none" viewBox="0 0 24 24" stroke="white" stroke-width="1.5"><path stroke-linecap="round" stroke-linejoin="round" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"/></svg>
+          <div class="metric-label">Inventory</div>
+          <div class="metric-value" id="inventoryCount">—</div>
         </div>
-        <div class="table-wrap">
-          <table>
-            <thead>
-              <tr>
-                <th class="name-cell">Name</th>
-                <th>Done</th>
-                <th>Working On</th>
-                <th>Pending</th>
-                <th>Assigned</th>
-                <th>Hold</th>
-                <th>Close</th>
-                <th>Next Day</th>
-                <th>Priority</th>
-                <th>Open</th>
-                <th>Total</th>
-              </tr>
-            </thead>
-            <tbody id="activityTable"></tbody>
-          </table>
+        <div class="metric-card mc-pink fade-up fade-up-3">
+          <svg class="metric-icon" fill="none" viewBox="0 0 24 24" stroke="white" stroke-width="1.5"><path stroke-linecap="round" stroke-linejoin="round" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
+          <div class="metric-label">POC</div>
+          <div class="metric-value" id="pocCount">—</div>
+        </div>
+        <div class="metric-card mc-orange fade-up fade-up-4">
+          <svg class="metric-icon" fill="none" viewBox="0 0 24 24" stroke="white" stroke-width="1.5"><path stroke-linecap="round" stroke-linejoin="round" d="M19.428 15.428a2 2 0 00-1.022-.547l-2.387-.477a6 6 0 00-3.86.517l-.318.158a6 6 0 01-3.86.517L6.05 15.21a2 2 0 00-1.806.547M8 4h8l-1 1v5.172a2 2 0 00.586 1.414l5 5c1.26 1.26.367 3.414-1.415 3.414H4.828c-1.782 0-2.674-2.154-1.414-3.414l5-5A2 2 0 009 10.172V5L8 4z"/></svg>
+          <div class="metric-label">Recipe &amp; Material</div>
+          <div class="metric-value" id="recipeCount">—</div>
+        </div>
+        <div class="metric-card mc-teal fade-up fade-up-5">
+          <svg class="metric-icon" fill="none" viewBox="0 0 24 24" stroke="white" stroke-width="1.5"><path stroke-linecap="round" stroke-linejoin="round" d="M4 7v10c0 2.21 3.582 4 8 4s8-1.79 8-4V7M4 7c0 2.21 3.582 4 8 4s8-1.79 8-4M4 7c0-2.21 3.582-4 8-4s8 1.79 8 4"/></svg>
+          <div class="metric-label">Raw Material</div>
+          <div class="metric-value" id="rawCount">—</div>
+        </div>
+        <div class="metric-card mc-violet fade-up fade-up-5">
+          <svg class="metric-icon" fill="none" viewBox="0 0 24 24" stroke="white" stroke-width="1.5"><path stroke-linecap="round" stroke-linejoin="round" d="M5 12h.01M12 12h.01M19 12h.01M6 12a1 1 0 11-2 0 1 1 0 012 0zm7 0a1 1 0 11-2 0 1 1 0 012 0zm7 0a1 1 0 11-2 0 1 1 0 012 0z"/></svg>
+          <div class="metric-label">Other</div>
+          <div class="metric-value" id="otherRelatedCount">—</div>
         </div>
       </div>
 
-      <div class="panel">
-        <div class="panel-header">
-          <h2>Average Time</h2>
-          <span class="panel-subtitle">Actual vs expected effort</span>
-        </div>
-        <div class="table-wrap">
-          <table>
-            <thead>
-              <tr>
-                <th class="name-cell">Name</th>
-                <th>Actual</th>
-                <th>Expected</th>
-                <th>Avg</th>
-              </tr>
-            </thead>
-            <tbody id="hoursTable"></tbody>
-          </table>
-        </div>
-      </div>
-    </section>
+      <!-- ── Activity Table + Hours Table ── -->
+      <div class="activity-hours-row section fade-up fade-up-2">
 
-    <section class="section panel">
-      <div class="panel-header">
-        <h2>Day-wise Growth Chart</h2>
-        <span class="panel-subtitle">Trend of total and status counts</span>
-      </div>
-      <div class="chart-panel">
-        <div class="chart-box">
-          <canvas id="taskChart"></canvas>
+        <div class="card">
+          <div class="card-header">
+            <div class="card-header-left">
+              <div class="card-title">
+                <span class="card-title-dot" style="background:#3b82f6;"></span>
+                Today's Activity
+              </div>
+              <div class="card-subtitle">Live employee-wise status summary</div>
+            </div>
+            <div class="activity-stats" id="activityBadge">
+              <span class="act-stat">
+                <span class="act-stat-dot" style="background:#64748b;"></span>
+                <span id="actTotalLabel">— Total</span>
+              </span>
+              <span class="act-divider">|</span>
+              <span class="act-stat">
+                <span class="act-stat-dot" style="background:#22c55e; box-shadow:0 0 0 3px rgba(34,197,94,0.2);"></span>
+                <span id="actAvailLabel">— Available</span>
+              </span>
+            </div>
+          </div>
+          <div class="table-container">
+            <table>
+              <thead>
+                <tr>
+                  <th class="name-cell">Employee</th>
+                  <th>Done</th>
+                  <th>Working</th>
+                  <th>Pending</th>
+                  <th>Assigned</th>
+                  <th>Hold</th>
+                  <th>Close</th>
+                  <th>Next Day</th>
+                  <th>Priority</th>
+                  <th>Open</th>
+                  <th>Total</th>
+                </tr>
+              </thead>
+              <tbody id="activityTable">
+                <tr><td colspan="11" class="empty-cell">Loading data…</td></tr>
+              </tbody>
+            </table>
+          </div>
         </div>
-      </div>
-    </section>
 
-    <section class="split-grid">
-      <div class="panel">
-        <div class="panel-header">
-          <h2>Related to Category wise-Status</h2>
-          <span class="panel-subtitle">Grouped by related category</span>
+        <div class="card hours-card">
+          <div class="card-header">
+            <div class="card-header-left">
+              <div class="card-title">
+                <span class="card-title-dot" style="background:#22c55e;"></span>
+                Average Time
+              </div>
+              <div class="card-subtitle">Actual vs expected effort</div>
+            </div>
+          </div>
+          <div class="table-container">
+            <table class="table-hours">
+              <thead>
+                <tr>
+                  <th class="name-cell">Employee</th>
+                  <th>Actual</th>
+                  <th>Expected</th>
+                  <th>Work Days</th>
+                  <th>Avg/Day</th>
+                </tr>
+              </thead>
+              <tbody id="hoursTable">
+                <tr><td colspan="5" class="empty-cell">Loading data…</td></tr>
+              </tbody>
+            </table>
+          </div>
         </div>
-        <div class="table-wrap">
-          <table>
-            <thead>
-              <tr>
-                <th class="name-cell">Related To</th>
-                <th>Done</th>
-                <th>Working</th>
-                <th>Pending</th>
-                <th>Assigned</th>
-                <th>Hold</th>
-                <th>Close</th>
-                <th>Next Day</th>
-                <th>Priority</th>
-                <th>Open</th>
-                <th>Total</th>
-              </tr>
-            </thead>
-            <tbody id="relatedTable"></tbody>
-          </table>
+      </div><!-- /activity-hours-row -->
+
+      <!-- ── Day-wise Growth Chart ── -->
+      <div class="card section fade-up fade-up-3">
+        <div class="card-header">
+          <div class="card-header-left">
+            <div class="card-title">
+              <span class="card-title-dot" style="background:#f59e0b;"></span>
+              Day-wise Growth Chart
+            </div>
+            <div class="card-subtitle">Trend of total and status counts over selected range</div>
+          </div>
+        </div>
+        <div class="chart-wrap">
+          <div class="chart-area" style="min-height:300px;">
+            <canvas id="taskChart"></canvas>
+          </div>
         </div>
       </div>
 
-      <div class="panel">
-        <div class="panel-header">
-          <h2>Category-wise Task Distribution</h2>
-          <span class="panel-subtitle">Employee category totals</span>
+      <!-- ── Related Table + Employee Category Table ── -->
+      <div class="grid-2 section fade-up fade-up-3">
+
+        <div class="card">
+          <div class="card-header">
+            <div class="card-header-left">
+              <div class="card-title">
+                <span class="card-title-dot" style="background:#a855f7;"></span>
+                Category-wise Status
+              </div>
+              <div class="card-subtitle">Grouped by related category</div>
+            </div>
+          </div>
+          <div class="table-container">
+            <table>
+              <thead>
+                <tr>
+                  <th class="name-cell">Category</th>
+                  <th>Done</th>
+                  <th>Working</th>
+                  <th>Pending</th>
+                  <th>Assigned</th>
+                  <th>Hold</th>
+                  <th>Close</th>
+                  <th>Next</th>
+                  <th>Priority</th>
+                  <th>Open</th>
+                  <th>Total</th>
+                </tr>
+              </thead>
+              <tbody id="relatedTable">
+                <tr><td colspan="11" class="empty-cell">Loading…</td></tr>
+              </tbody>
+            </table>
+          </div>
         </div>
-        <div class="table-wrap" style="max-height: 320px;">
-          <table>
-            <thead>
-              <tr>
-                <th class="name-cell">Name</th>
-                <th>Raw Material</th>
-                <th>Recipe &amp; Material</th>
-                <th>Rework</th>
-                <th>Other</th>
-                <th>Total</th>
-              </tr>
-            </thead>
-            <tbody id="employeeCategoryTable"></tbody>
-          </table>
+
+        <div class="card">
+          <div class="card-header">
+            <div class="card-header-left">
+              <div class="card-title">
+                <span class="card-title-dot" style="background:#f59e0b;"></span>
+                Employee Category Distribution
+              </div>
+              <div class="card-subtitle">Task breakdown per employee</div>
+            </div>
+          </div>
+          <div class="table-container" style="max-height:340px;">
+            <table>
+              <thead>
+                <tr>
+                  <th class="name-cell">Employee</th>
+                  <th>Raw Mat.</th>
+                  <th>Recipe</th>
+                  <th>Rework</th>
+                  <th>Other</th>
+                  <th>Total</th>
+                </tr>
+              </thead>
+              <tbody id="employeeCategoryTable">
+                <tr><td colspan="6" class="empty-cell">Loading…</td></tr>
+              </tbody>
+            </table>
+          </div>
         </div>
       </div>
-    </section>
 
-    <section class="split-grid">
-      <div class="panel">
-        <div class="panel-header">
-          <h2>Status Insights Chart</h2>
-          <span class="panel-subtitle">Current year status totals</span>
+      <!-- ── Status Insights + Month Chart ── -->
+      <div class="grid-2 section fade-up fade-up-4">
+
+        <div class="card">
+          <div class="card-header">
+            <div class="card-header-left">
+              <div class="card-title">
+                <span class="card-title-dot" style="background:#06b6d4;"></span>
+                Status Insights
+              </div>
+              <div class="card-subtitle">Current year — task completion breakdown</div>
+            </div>
+          </div>
+          <div class="chart-wrap">
+            <div class="donut-layout">
+              <div class="donut-canvas-wrap">
+                <canvas id="statusChart"></canvas>
+                <div class="donut-center" id="donutCenter">
+                  <div class="donut-center-value" id="donutTotal">—</div>
+                  <div class="donut-center-label">Total Tasks</div>
+                </div>
+              </div>
+              <div class="donut-legend" id="donutLegend"></div>
+            </div>
+          </div>
         </div>
-        <div class="chart-panel">
-          <div class="chart-shell">
-            <div class="chart-box" style="min-height: 280px;">
-              <canvas id="statusChart"></canvas>
+
+        <div class="card">
+          <div class="card-header">
+            <div class="card-header-left">
+              <div class="card-title">
+                <span class="card-title-dot" style="background:#fb923c;"></span>
+                Month-wise Category
+              </div>
+              <div class="card-subtitle">Current year — volume trend by category</div>
+            </div>
+          </div>
+          <div class="chart-wrap">
+            <div class="col-chart-shell">
+              <div class="chart-area" style="min-height:268px; position:relative;">
+                <canvas id="monthChart"></canvas>
+              </div>
             </div>
           </div>
         </div>
       </div>
 
-      <div class="panel">
-        <div class="panel-header">
-          <h2>Month-wise Category Chart</h2>
-          <span class="panel-subtitle">Current year stacked category view</span>
-        </div>
-        <div class="chart-panel">
-          <div class="chart-shell">
-            <div class="chart-box" style="min-height: 280px;">
-              <canvas id="monthChart"></canvas>
-            </div>
-          </div>
-        </div>
-      </div>
-    </section>
-  </div>
+    </div><!-- /page-body -->
+  </div><!-- /main -->
+</div><!-- /layout -->
 
-  <script>
-    const sheetURL = "https://docs.google.com/spreadsheets/d/1-VxbQ_IaRMKtDH--2JDeqvGFrb_Or3D0kG-mGLu7dG8/export?format=csv&gid=1747930222";
-    const masterURL = "https://docs.google.com/spreadsheets/d/1-VxbQ_IaRMKtDH--2JDeqvGFrb_Or3D0kG-mGLu7dG8/export?format=csv&gid=1007217209";
-    const AUTO_REFRESH_MS = 0;
+<script>
+/* ═══════════════════════════════════════════════════
+   THEME
+═══════════════════════════════════════════════════ */
+function toggleTheme() {
+  const html = document.documentElement;
+  const isDark = html.getAttribute("data-theme") === "dark";
+  html.setAttribute("data-theme", isDark ? "light" : "dark");
+  document.getElementById("themeIcon").innerHTML = isDark
+    ? `<path stroke-linecap="round" stroke-linejoin="round" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z"/>`
+    : `<path stroke-linecap="round" stroke-linejoin="round" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"/>`;
+}
 
-    const fromInput = document.getElementById("fromDate");
-    const toInput = document.getElementById("toDate");
-    const errorBanner = document.getElementById("errorBanner");
-    const refreshStatus = document.getElementById("refreshStatus");
-    const refreshButton = document.getElementById("refreshButton");
+/* ═══════════════════════════════════════════════════
+   SIDEBAR MOBILE
+═══════════════════════════════════════════════════ */
+function toggleSidebar() {
+  document.getElementById("sidebar").classList.toggle("open");
+  document.getElementById("sidebarOverlay").classList.toggle("open");
+}
+function closeSidebar() {
+  document.getElementById("sidebar").classList.remove("open");
+  document.getElementById("sidebarOverlay").classList.remove("open");
+}
 
-    let lastDataHash = "";
-    let hoursData = {};
-    let masterDataPromise = null;
-    let timer = null;
-    let isLoading = false;
+/* ═══════════════════════════════════════════════════
+   LIVE CLOCK
+═══════════════════════════════════════════════════ */
+function updateClock() {
+  document.getElementById("sidebarTime").textContent = new Date().toLocaleTimeString("en-IN", { hour: "2-digit", minute: "2-digit", second: "2-digit" });
+}
+setInterval(updateClock, 1000);
+updateClock();
 
-    function setRefreshStatus(message, isError = false) {
-      refreshStatus.innerHTML = `<span class="status-dot"></span><span>${message}</span>`;
-      refreshStatus.style.background = isError ? "rgba(239,68,68,0.12)" : "rgba(29,78,216,0.1)";
-      refreshStatus.style.color = isError ? "#b91c1c" : "#1d4ed8";
-    }
+/* ═══════════════════════════════════════════════════
+   CONFIG
+═══════════════════════════════════════════════════ */
+const sheetURL  = "https://docs.google.com/spreadsheets/d/1-VxbQ_IaRMKtDH--2JDeqvGFrb_Or3D0kG-mGLu7dG8/export?format=csv&gid=1747930222";
+const masterURL = "https://docs.google.com/spreadsheets/d/1-VxbQ_IaRMKtDH--2JDeqvGFrb_Or3D0kG-mGLu7dG8/export?format=csv&gid=1007217209";
 
-    function setRefreshButtonState() {
-      refreshButton.disabled = isLoading;
-      refreshButton.textContent = isLoading ? "Refreshing..." : "Refresh Now";
-    }
+const fromInput  = document.getElementById("fromDate");
+const toInput    = document.getElementById("toDate");
+const errorBanner = document.getElementById("errorBanner");
+const refreshBtn  = document.getElementById("refreshButton");
+const statusText  = document.getElementById("statusText");
 
-    function showError(message) {
-      errorBanner.textContent = message;
-      errorBanner.style.display = "block";
-      setRefreshStatus("Refresh failed", true);
-    }
+let lastDataHash = "";
+let hoursData    = {};
+let masterDataPromise = null;
+let timer  = null;
+let isLoading = false;
 
-    function clearError() {
-      errorBanner.style.display = "none";
-      errorBanner.textContent = "";
-    }
+/* ═══════════════════════════════════════════════════
+   UI HELPERS
+═══════════════════════════════════════════════════ */
+function setStatus(msg) { statusText.textContent = msg; }
+function showError(msg) {
+  document.getElementById("errorText").textContent = msg;
+  errorBanner.classList.add("visible");
+  setStatus("Error");
+}
+function clearError() { errorBanner.classList.remove("visible"); }
+function setBtnState() {
+  refreshBtn.disabled = isLoading;
+  refreshBtn.innerHTML = isLoading
+    ? `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="animation:spin 1s linear infinite"><path stroke-linecap="round" stroke-linejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg> Refreshing…`
+    : `<svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg> Refresh`;
+}
 
-    function debounceLoad() {
-      clearTimeout(timer);
-      timer = setTimeout(() => {
-        loadData(fromInput.value, toInput.value, { force: true });
-      }, 350);
-    }
+const style = document.createElement("style");
+style.textContent = "@keyframes spin { from{transform:rotate(0deg)} to{transform:rotate(360deg)} }";
+document.head.appendChild(style);
 
-    function formatDate(date) {
-      const d = String(date.getDate()).padStart(2, "0");
-      const m = String(date.getMonth() + 1).padStart(2, "0");
-      const y = date.getFullYear();
-      return `${y}-${m}-${d}`;
-    }
+function debounceLoad() {
+  clearTimeout(timer);
+  timer = setTimeout(() => loadData(fromInput.value, toInput.value, { force: true }), 350);
+}
+fromInput.addEventListener("change", debounceLoad);
+toInput.addEventListener("change", debounceLoad);
 
-    function timeToSeconds(value) {
-      if (!value || typeof value !== "string") return 0;
-      const normalized = value.trim();
-      if (!normalized.includes(":")) return 0;
-      const parts = normalized.split(":").map(Number);
-      if (parts.some(Number.isNaN)) return 0;
-      while (parts.length < 3) parts.unshift(0);
-      return (parts[0] * 3600) + (parts[1] * 60) + parts[2];
-    }
+function formatDate(d) {
+  return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,"0")}-${String(d.getDate()).padStart(2,"0")}`;
+}
 
-    function secondsToTime(seconds) {
-      const safeSeconds = Math.max(0, Math.floor(seconds || 0));
-      const h = Math.floor(safeSeconds / 3600);
-      const m = Math.floor((safeSeconds % 3600) / 60);
-      const s = safeSeconds % 60;
-      return `${h}:${String(m).padStart(2, "0")}:${String(s).padStart(2, "0")}`;
-    }
+/* ═══════════════════════════════════════════════════
+   DATA HELPERS
+═══════════════════════════════════════════════════ */
+function timeToSeconds(v) {
+  if (!v || typeof v !== "string") return 0;
+  const p = v.trim().split(":").map(Number);
+  if (p.some(isNaN)) return 0;
+  while (p.length < 3) p.unshift(0);
+  return p[0]*3600 + p[1]*60 + p[2];
+}
 
-    function parseExpectedHours(value) {
-      if (value == null) return 0;
-      const normalized = String(value).trim();
-      if (!normalized) return 0;
-      if (normalized.includes(":")) return timeToSeconds(normalized);
+function secondsToTime(s) {
+  s = Math.max(0, Math.floor(s||0));
+  return `${Math.floor(s/3600)}:${String(Math.floor((s%3600)/60)).padStart(2,"0")}:${String(s%60).padStart(2,"0")}`;
+}
 
-      const numericHours = Number(normalized);
-      if (!Number.isNaN(numericHours) && numericHours >= 0) {
-        return numericHours * 3600;
+function parseExpectedHours(v) {
+  if (v == null) return 0;
+  const n = String(v).trim();
+  if (!n) return 0;
+  if (n.includes(":")) return timeToSeconds(n);
+  const h = Number(n);
+  return isNaN(h) ? 0 : h * 3600;
+}
+
+function formatExpectedHours(v) {
+  if (v == null) return "0";
+  const n = String(v).trim();
+  if (!n) return "0";
+  if (n.includes(":")) return n;
+  return isNaN(Number(n)) ? n : `${Number(n)} hrs`;
+}
+
+function normalizeName(n) { return (n||"").toLowerCase().trim().replace(/\s+/g," "); }
+function toDisplayName(n) { return normalizeName(n).split(" ").filter(Boolean).map(w=>w[0].toUpperCase()+w.slice(1)).join(" "); }
+function normalizeRelated(r) {
+  const v = (r||"").toLowerCase().trim();
+  if (v==="recipe & material") return "Recipe & Material";
+  if (v==="raw material") return "Raw Material";
+  if (v==="rework") return "Rework";
+  return "Other";
+}
+
+function parseCSV(text) {
+  const rows=[]; let row=[]; let cur=""; let inQ=false;
+  for (let i=0; i<text.length; i++) {
+    const c=text[i], nc=text[i+1];
+    if (c==='"') { inQ && nc==='"' ? (cur+='"', i++) : (inQ=!inQ); }
+    else if (c==="," && !inQ) { row.push(cur); cur=""; }
+    else if ((c==="\n"||c==="\r") && !inQ) {
+      if (c==="\r" && nc==="\n") i++;
+      row.push(cur);
+      if (row.some(cell=>cell.trim()!=="")) rows.push(row);
+      row=[]; cur="";
+    } else cur+=c;
+  }
+  if (cur!==""||row.length) { row.push(cur); if(row.some(cell=>cell.trim()!=="")) rows.push(row); }
+  return rows;
+}
+
+function mkAccum() { return {done:0,working:0,pending:0,assigned:0,hold:0,close:0,next:0,priority:0,open:0,total:0}; }
+
+function countStatus(t, s) {
+  if (s.includes("done"))    t.done++;
+  else if (s.includes("working")) t.working++;
+  else if (s.includes("pending")) t.pending++;
+  else if (s.includes("assign"))  t.assigned++;
+  else if (s.includes("hold"))    t.hold++;
+  else if (s.includes("close"))   t.close++;
+  else if (s.includes("next"))    t.next++;
+  else if (s.includes("priority")) t.priority++;
+  else t.open++;
+  t.total++;
+}
+
+function getAvail(att) {
+  const a=(att||"").toUpperCase().trim();
+  return (a==="P"||a==="HD") ? "available" : "unavailable";
+}
+
+function emptyRow(id, msg, span) {
+  document.getElementById(id).innerHTML = `<tr><td colspan="${span}" class="empty-cell">${msg}</td></tr>`;
+}
+
+/* ═══════════════════════════════════════════════════
+   RENDER: ACTIVITY TABLE
+═══════════════════════════════════════════════════ */
+function renderActivityTable(activity, masterMap) {
+  const names = Object.keys(activity).sort((a,b)=>{
+    const sa=getAvail(masterMap[normalizeName(a)]?.attendance);
+    const sb=getAvail(masterMap[normalizeName(b)]?.attendance);
+    return sa!==sb ? (sa==="available"?-1:1) : a.localeCompare(b);
+  });
+
+  if (!names.length) { emptyRow("activityTable","No activity found for selected date range.",11); return; }
+
+  // Count available employees from masterMap using names present in activity
+  const totalEmp = names.length;
+  const availEmp = names.filter(n => getAvail(masterMap[normalizeName(n)]?.attendance) === "available").length;
+  document.getElementById("actTotalLabel").textContent = `${totalEmp} Total`;
+  document.getElementById("actAvailLabel").textContent = `${availEmp} Available`;
+
+  const totals=mkAccum();
+  // Build rows using DocumentFragment for performance
+  const tbody = document.getElementById("activityTable");
+  const fragment = document.createDocumentFragment();
+
+  names.forEach(name=>{
+    const item=activity[name];
+    const att=masterMap[normalizeName(name)]?.attendance||"";
+    const avail=getAvail(att);
+    Object.keys(totals).forEach(k=>totals[k]+=item[k]);
+
+    const tr = document.createElement("tr");
+    tr.innerHTML = `
+      <td class="name-cell"><span class="name-pill ${avail}"><span class="avail-dot"></span>${name}</span></td>
+      <td>${item.done}</td>
+      <td>${item.working>0?`<span class="stat-chip chip-working">${item.working}</span>`:item.working}</td>
+      <td>${item.pending>0?`<span class="stat-chip chip-pending">${item.pending}</span>`:item.pending}</td>
+      <td>${item.assigned>0?`<span class="stat-chip chip-assigned">${item.assigned}</span>`:item.assigned}</td>
+      <td>${item.hold}</td>
+      <td>${item.close}</td>
+      <td>${item.next>0?`<span class="stat-chip chip-next">${item.next}</span>`:item.next}</td>
+      <td>${item.priority}</td>
+      <td>${item.open}</td>
+      <td><strong>${item.total}</strong></td>`;
+    fragment.appendChild(tr);
+  });
+
+  // Total row
+  const totalTr = document.createElement("tr");
+  totalTr.className = "total-row";
+  totalTr.innerHTML = `
+    <td class="name-cell">Σ Total</td>
+    <td>${totals.done}</td><td>${totals.working}</td><td>${totals.pending}</td>
+    <td>${totals.assigned}</td><td>${totals.hold}</td><td>${totals.close}</td>
+    <td>${totals.next}</td><td>${totals.priority}</td><td>${totals.open}</td>
+    <td>${totals.total}</td>`;
+  fragment.appendChild(totalTr);
+
+  tbody.innerHTML = "";
+  tbody.appendChild(fragment);
+}
+
+/* ═══════════════════════════════════════════════════
+   RENDER: RELATED TABLE
+═══════════════════════════════════════════════════ */
+function renderRelatedTable(relatedStatus) {
+  const keys=Object.keys(relatedStatus).sort();
+  if (!keys.length) { emptyRow("relatedTable","No related-category data found.",11); return; }
+  const totals=mkAccum();
+  const tbody=document.getElementById("relatedTable");
+  const frag=document.createDocumentFragment();
+  keys.forEach(k=>{
+    const item=relatedStatus[k];
+    Object.keys(totals).forEach(tk=>totals[tk]+=item[tk]);
+    const tr=document.createElement("tr");
+    tr.innerHTML=`<td class="name-cell"><strong>${k}</strong></td>
+      <td>${item.done}</td><td>${item.working}</td><td>${item.pending}</td>
+      <td>${item.assigned}</td><td>${item.hold}</td><td>${item.close}</td>
+      <td>${item.next}</td><td>${item.priority}</td><td>${item.open}</td>
+      <td><strong>${item.total}</strong></td>`;
+    frag.appendChild(tr);
+  });
+  const tr=document.createElement("tr"); tr.className="total-row";
+  tr.innerHTML=`<td class="name-cell">Σ Total</td>
+    <td>${totals.done}</td><td>${totals.working}</td><td>${totals.pending}</td>
+    <td>${totals.assigned}</td><td>${totals.hold}</td><td>${totals.close}</td>
+    <td>${totals.next}</td><td>${totals.priority}</td><td>${totals.open}</td>
+    <td>${totals.total}</td>`;
+  frag.appendChild(tr);
+  tbody.innerHTML=""; tbody.appendChild(frag);
+}
+
+/* ═══════════════════════════════════════════════════
+   RENDER: EMPLOYEE CATEGORY TABLE
+═══════════════════════════════════════════════════ */
+function renderEmployeeCategoryTable(ec) {
+  const names=Object.keys(ec).sort();
+  if (!names.length) { emptyRow("employeeCategoryTable","No category distribution found.",6); return; }
+  const tbody=document.getElementById("employeeCategoryTable");
+  const frag=document.createDocumentFragment();
+  names.forEach(n=>{
+    const item=ec[n];
+    const tr=document.createElement("tr");
+    tr.innerHTML=`<td class="name-cell">${n}</td>
+      <td>${item.raw}</td><td>${item.recipe}</td><td>${item.rework}</td><td>${item.other}</td>
+      <td><strong>${item.total}</strong></td>`;
+    frag.appendChild(tr);
+  });
+  tbody.innerHTML=""; tbody.appendChild(frag);
+}
+
+/* ═══════════════════════════════════════════════════
+   RENDER: HOURS TABLE  (with Working Days column)
+═══════════════════════════════════════════════════ */
+function renderHoursTable(masterMap) {
+  const people = Object.keys(hoursData).sort();
+  if (!people.length) { emptyRow("hoursTable","No duration data found.", 5); return; }
+  const tbody   = document.getElementById("hoursTable");
+  const fragment = document.createDocumentFragment();
+
+  people.forEach(name => {
+    const actual  = hoursData[name];
+    const expRaw  = masterMap[normalizeName(name)]?.workingHours || "0";
+    const expSec  = parseExpectedHours(expRaw);          // in seconds
+    const expHrs  = expSec / 3600;                       // convert to hours
+    const workDays = expHrs > 0
+      ? (expHrs / 8 % 1 === 0
+          ? (expHrs / 8).toFixed(0)                      // whole number → no decimal
+          : (expHrs / 8).toFixed(1))                     // fractional → 1 decimal
+      : "—";
+    const days    = expSec / 28800;                      // for avg/day calc (8h = 28800s)
+    const avg     = days > 0 ? actual / days : 0;
+
+    const tr = document.createElement("tr");
+    tr.innerHTML = `
+      <td class="name-cell" style="font-size:12.5px;">${name}</td>
+      <td style="font-family:var(--font-mono);font-size:11.5px;">${secondsToTime(actual)}</td>
+      <td style="font-size:12.5px;">${formatExpectedHours(expRaw)}</td>
+      <td><span class="wd-chip">${workDays}</span></td>
+      <td style="font-family:var(--font-mono);font-size:11.5px;"><strong>${secondsToTime(avg)}</strong></td>`;
+    fragment.appendChild(tr);
+  });
+
+  tbody.innerHTML = "";
+  tbody.appendChild(fragment);
+}
+
+/* ═══════════════════════════════════════════════════
+   CHARTS
+═══════════════════════════════════════════════════ */
+function renderTaskChart(chartData) {
+  const ctx = document.getElementById("taskChart").getContext("2d");
+  const sorted = Object.keys(chartData).sort((a,b)=>{
+    const [d1,m1,y1]=a.split("/"); const [d2,m2,y2]=b.split("/");
+    return new Date(y1,m1-1,d1)-new Date(y2,m2-1,d2);
+  });
+  const labels=sorted.map(d=>{const[dd,mm,yy]=d.split("/");return new Date(yy,mm-1,dd).toLocaleDateString("en-US",{month:"short",day:"numeric"});});
+
+  if (window.myChart) window.myChart.destroy();
+
+  const isDark = document.documentElement.getAttribute("data-theme")==="dark";
+  const gridColor = isDark ? "rgba(255,255,255,0.06)" : "rgba(0,0,0,0.06)";
+  const tickColor = isDark ? "#64748b" : "#94a3b8";
+
+  window.myChart = new Chart(ctx, {
+    type: "line",
+    data: {
+      labels,
+      datasets: [
+        { label:"Total",   data:sorted.map(d=>chartData[d].total),   borderColor:"#3b82f6", backgroundColor:"rgba(59,130,246,0.12)", borderWidth:3, tension:0.4, fill:true, pointRadius:4, pointHoverRadius:7, pointBackgroundColor:"#fff", pointBorderColor:"#3b82f6", pointBorderWidth:2,
+          datalabels:{display:true,align:"top",offset:5,color:"#60a5fa",font:{weight:"bold",size:10}} },
+        { label:"Done",    data:sorted.map(d=>chartData[d].done),    borderColor:"#22c55e", borderWidth:2, tension:0.4, pointRadius:0 },
+        { label:"Working", data:sorted.map(d=>chartData[d].working), borderColor:"#f59e0b", borderWidth:2, tension:0.4, pointRadius:0 },
+        { label:"Pending", data:sorted.map(d=>chartData[d].pending), borderColor:"#ef4444", borderWidth:2, tension:0.4, pointRadius:0 },
+        { label:"Hold",    data:sorted.map(d=>chartData[d].hold),    borderColor:"#a855f7", borderWidth:2, tension:0.4, pointRadius:0 },
+        { label:"Close",   data:sorted.map(d=>chartData[d].close),   borderColor:"#06b6d4", borderWidth:2, tension:0.4, pointRadius:0 },
+        { label:"Next Day",data:sorted.map(d=>chartData[d].next),    borderColor:"#fb923c", borderWidth:2, tension:0.4, pointRadius:0 },
+      ]
+    },
+    options: {
+      responsive:true, maintainAspectRatio:false, animation:{duration:600,easing:"easeOutQuart"},
+      interaction:{mode:"index",intersect:false},
+      plugins:{
+        legend:{position:"top",labels:{usePointStyle:true,pointStyle:"circle",boxWidth:8,padding:16,font:{size:11.5,weight:"600"},color:isDark?"#94a3b8":"#64748b"}},
+        tooltip:{backgroundColor:isDark?"rgba(15,23,42,0.95)":"rgba(255,255,255,0.97)",titleColor:isDark?"#f1f5f9":"#0f172a",bodyColor:isDark?"#94a3b8":"#475569",borderColor:isDark?"rgba(255,255,255,0.1)":"rgba(0,0,0,0.08)",borderWidth:1,padding:12,cornerRadius:10},
+        datalabels:{display:false}
+      },
+      scales:{
+        x:{grid:{display:false},ticks:{color:tickColor,maxRotation:0,font:{size:11}}},
+        y:{beginAtZero:true,grid:{color:gridColor,drawBorder:false},ticks:{color:tickColor,precision:0,font:{size:11}}}
       }
+    },
+    plugins:[ChartDataLabels]
+  });
+}
 
-      return 0;
-    }
+function renderStatusChart(ys) {
+  const ctx=document.getElementById("statusChart").getContext("2d");
+  if (window.statusChartObj) { window.statusChartObj.destroy(); window.statusChartObj=null; }
 
-    function formatExpectedHours(value) {
-      if (value == null) return "0";
-      const normalized = String(value).trim();
-      if (!normalized) return "0";
-      if (normalized.includes(":")) return normalized;
-      const numericHours = Number(normalized);
-      if (!Number.isNaN(numericHours)) return `${numericHours} hrs`;
-      return normalized;
-    }
+  const labels  = ["Done",  "Close",  "Hold",   "Pending"];
+  const values  = [ys.done, ys.close, ys.hold,  ys.pending];
+  const colors  = ["#22c55e","#06b6d4","#a855f7","#ef4444"];
+  const bgAlpha = ["rgba(34,197,94,0.85)","rgba(6,182,212,0.85)","rgba(168,85,247,0.85)","rgba(239,68,68,0.85)"];
+  const total   = values.reduce((a,b)=>a+b,0);
 
-    function normalizeName(name) {
-      return (name || "")
-        .toLowerCase()
-        .trim()
-        .replace(/\s+/g, " ");
-    }
+  document.getElementById("donutTotal").textContent = total.toLocaleString();
 
-    function toDisplayName(name) {
-      return normalizeName(name)
-        .split(" ")
-        .filter(Boolean)
-        .map(word => word.charAt(0).toUpperCase() + word.slice(1))
-        .join(" ");
-    }
+  // Build legend cards
+  const legend = document.getElementById("donutLegend");
+  legend.innerHTML = labels.map((lbl,i)=>{
+    const pct = total>0 ? ((values[i]/total)*100).toFixed(1) : "0.0";
+    return `<div class="donut-legend-item">
+      <span class="donut-legend-swatch" style="background:${colors[i]};"></span>
+      <span class="donut-legend-name">${lbl}</span>
+      <span class="donut-legend-val">${values[i].toLocaleString()}</span>
+      <span class="donut-legend-pct">${pct}%</span>
+    </div>`;
+  }).join("");
 
-    function normalizeRelated(related) {
-      const value = (related || "").toLowerCase().trim();
-      if (value === "recipe & material") return "Recipe & Material";
-      if (value === "raw material") return "Raw Material";
-      if (value === "rework") return "Rework";
-      return "Other";
-    }
-
-    function parseCSV(text) {
-      const rows = [];
-      let row = [];
-      let current = "";
-      let insideQuotes = false;
-
-      for (let i = 0; i < text.length; i += 1) {
-        const char = text[i];
-        const nextChar = text[i + 1];
-
-        if (char === '"') {
-          if (insideQuotes && nextChar === '"') {
-            current += '"';
-            i += 1;
-          } else {
-            insideQuotes = !insideQuotes;
-          }
-        } else if (char === "," && !insideQuotes) {
-          row.push(current);
-          current = "";
-        } else if ((char === "\n" || char === "\r") && !insideQuotes) {
-          if (char === "\r" && nextChar === "\n") {
-            i += 1;
-          }
-          row.push(current);
-          if (row.some(cell => cell.trim() !== "")) {
-            rows.push(row);
-          }
-          row = [];
-          current = "";
-        } else {
-          current += char;
-        }
-      }
-
-      if (current !== "" || row.length) {
-        row.push(current);
-        if (row.some(cell => cell.trim() !== "")) {
-          rows.push(row);
-        }
-      }
-
-      return rows;
-    }
-
-    function renderEmptyRow(targetId, message, colspan) {
-      document.getElementById(targetId).innerHTML = `<tr><td colspan="${colspan}" class="empty-state">${message}</td></tr>`;
-    }
-
-    function createTotalAccumulator() {
-      return {
-        done: 0,
-        working: 0,
-        pending: 0,
-        assigned: 0,
-        hold: 0,
-        close: 0,
-        next: 0,
-        priority: 0,
-        open: 0,
-        total: 0
-      };
-    }
-
-    function getAvailabilityStatus(attendanceValue) {
-      const attendance = (attendanceValue || "").toUpperCase().trim();
-      if (attendance === "P" || attendance === "HD") return "available";
-      if (attendance === "AB" || attendance === "O") return "unavailable";
-      return "unavailable";
-    }
-
-    function getAvailabilityLabel(attendanceValue) {
-      return getAvailabilityStatus(attendanceValue) === "available" ? "Available" : "Unavailable";
-    }
-
-    function applyStatusCounters(target, status) {
-      if (status.includes("done")) target.done += 1;
-      else if (status.includes("working")) target.working += 1;
-      else if (status.includes("pending")) target.pending += 1;
-      else if (status.includes("assign")) target.assigned += 1;
-      else if (status.includes("hold")) target.hold += 1;
-      else if (status.includes("close")) target.close += 1;
-      else if (status.includes("next")) target.next += 1;
-      else if (status.includes("priority")) target.priority += 1;
-      else if (status.includes("open")) target.open += 1;
-      else target.open += 1;
-      target.total += 1;
-    }
-
-    function renderActivityTable(activity, masterMap) {
-      const names = Object.keys(activity).sort((a, b) => {
-        const statusA = getAvailabilityStatus(masterMap[normalizeName(a)]?.attendance);
-        const statusB = getAvailabilityStatus(masterMap[normalizeName(b)]?.attendance);
-        if (statusA !== statusB) {
-          return statusA === "available" ? -1 : 1;
-        }
-        return a.localeCompare(b);
-      });
-      if (!names.length) {
-        renderEmptyRow("activityTable", "No activity found for the selected date range.", 11);
-        return;
-      }
-
-      const totals = createTotalAccumulator();
-      const html = names.map(name => {
-        const item = activity[name];
-        const attendance = masterMap[normalizeName(name)]?.attendance || "";
-        const availabilityStatus = getAvailabilityStatus(attendance);
-        const availabilityLabel = getAvailabilityLabel(attendance);
-
-        Object.keys(totals).forEach(key => {
-          totals[key] += item[key];
-        });
-
-        return `
-          <tr>
-            <td class="name-cell"><span class="availability-name ${availabilityStatus}" title="${availabilityLabel}">${name}</span></td>
-            <td>${item.done}</td>
-            <td class="${item.working > 0 ? "highlight-working" : ""}">${item.working}</td>
-            <td class="${item.pending > 0 ? "highlight-pending" : ""}">${item.pending}</td>
-            <td class="${item.assigned > 0 ? "highlight-assigned" : ""}">${item.assigned}</td>
-            <td>${item.hold}</td>
-            <td>${item.close}</td>
-            <td class="${item.next > 0 ? "highlight-next" : ""}">${item.next}</td>
-            <td>${item.priority}</td>
-            <td>${item.open}</td>
-            <td><strong>${item.total}</strong></td>
-          </tr>
-        `;
-      }).join("");
-
-      document.getElementById("activityTable").innerHTML = `${html}
-        <tr class="total-row">
-          <td class="name-cell">Total</td>
-          <td>${totals.done}</td>
-          <td>${totals.working}</td>
-          <td>${totals.pending}</td>
-          <td>${totals.assigned}</td>
-          <td>${totals.hold}</td>
-          <td>${totals.close}</td>
-          <td>${totals.next}</td>
-          <td>${totals.priority}</td>
-          <td>${totals.open}</td>
-          <td>${totals.total}</td>
-        </tr>`;
-    }
-
-    function renderRelatedTable(relatedStatus) {
-      const relatedKeys = Object.keys(relatedStatus).sort();
-      if (!relatedKeys.length) {
-        renderEmptyRow("relatedTable", "No related-category data found for the selected date range.", 11);
-        return;
-      }
-
-      const totals = createTotalAccumulator();
-      const html = relatedKeys.map(key => {
-        const item = relatedStatus[key];
-        Object.keys(totals).forEach(totalKey => {
-          totals[totalKey] += item[totalKey];
-        });
-
-        return `
-          <tr>
-            <td class="name-cell">${key}</td>
-            <td>${item.done}</td>
-            <td>${item.working}</td>
-            <td>${item.pending}</td>
-            <td>${item.assigned}</td>
-            <td>${item.hold}</td>
-            <td>${item.close}</td>
-            <td>${item.next}</td>
-            <td>${item.priority}</td>
-            <td>${item.open}</td>
-            <td><strong>${item.total}</strong></td>
-          </tr>
-        `;
-      }).join("");
-
-      document.getElementById("relatedTable").innerHTML = `${html}
-        <tr class="total-row">
-          <td class="name-cell">Total</td>
-          <td>${totals.done}</td>
-          <td>${totals.working}</td>
-          <td>${totals.pending}</td>
-          <td>${totals.assigned}</td>
-          <td>${totals.hold}</td>
-          <td>${totals.close}</td>
-          <td>${totals.next}</td>
-          <td>${totals.priority}</td>
-          <td>${totals.open}</td>
-          <td>${totals.total}</td>
-        </tr>`;
-    }
-
-    function renderEmployeeCategoryTable(employeeCategory) {
-      const employees = Object.keys(employeeCategory).sort();
-      if (!employees.length) {
-        renderEmptyRow("employeeCategoryTable", "No category distribution found for the selected date range.", 6);
-        return;
-      }
-
-      const html = employees.map(name => {
-        const item = employeeCategory[name];
-        return `
-          <tr>
-            <td class="name-cell">${name}</td>
-            <td>${item.raw}</td>
-            <td>${item.recipe}</td>
-            <td>${item.rework}</td>
-            <td>${item.other}</td>
-            <td><strong>${item.total}</strong></td>
-          </tr>
-        `;
-      }).join("");
-
-      document.getElementById("employeeCategoryTable").innerHTML = html;
-    }
-
-    function buildTrendArrays(chartData) {
-      const sortedDates = Object.keys(chartData).sort((a, b) => {
-        const aParts = a.split("/");
-        const bParts = b.split("/");
-        return new Date(aParts[2], aParts[1] - 1, aParts[0]) - new Date(bParts[2], bParts[1] - 1, bParts[0]);
-      });
-
-      return {
-        labels: sortedDates.map(date => {
-          const parts = date.split("/");
-          const dateObj = new Date(parts[2], parts[1] - 1, parts[0]);
-          return dateObj.toLocaleDateString("en-US", { month: "short", day: "numeric" });
-        }),
-        total: sortedDates.map(date => chartData[date].total),
-        done: sortedDates.map(date => chartData[date].done),
-        working: sortedDates.map(date => chartData[date].working),
-        pending: sortedDates.map(date => chartData[date].pending),
-        hold: sortedDates.map(date => chartData[date].hold),
-        close: sortedDates.map(date => chartData[date].close),
-        next: sortedDates.map(date => chartData[date].next)
-      };
-    }
-
-    function renderTaskChart(chartData) {
-      const ctx = document.getElementById("taskChart").getContext("2d");
-      const trend = buildTrendArrays(chartData);
-
-      if (window.myChart) {
-        window.myChart.destroy();
-      }
-
-      window.myChart = new Chart(ctx, {
-        type: "line",
-        data: {
-          labels: trend.labels,
-          datasets: [
-            {
-              label: "Total Task",
-              data: trend.total,
-              borderColor: "#2563eb",
-              backgroundColor: "rgba(37, 99, 235, 0.16)",
-              borderWidth: 4,
-              tension: 0.35,
-              pointRadius: 4,
-              pointHoverRadius: 6,
-              pointBackgroundColor: "#ffffff",
-              pointBorderColor: "#2563eb",
-              pointBorderWidth: 2,
-              fill: true,
-              datalabels: {
-                display: true,
-                align: "top",
-                offset: 6,
-                color: "#2563eb",
-                font: { weight: "bold", size: 10 }
-              }
-            },
-            { label: "Done", data: trend.done, borderColor: "#16a34a", pointRadius: 0, borderWidth: 2, tension: 0.35 },
-            { label: "Working", data: trend.working, borderColor: "#eab308", pointRadius: 0, borderWidth: 2, tension: 0.35 },
-            { label: "Pending", data: trend.pending, borderColor: "#ef4444", pointRadius: 0, borderWidth: 2, tension: 0.35 },
-            { label: "Hold", data: trend.hold, borderColor: "#8b5cf6", pointRadius: 0, borderWidth: 2, tension: 0.35 },
-            { label: "Close", data: trend.close, borderColor: "#06b6d4", pointRadius: 0, borderWidth: 2, tension: 0.35 },
-            { label: "Next Day", data: trend.next, borderColor: "#fb923c", pointRadius: 0, borderWidth: 2, tension: 0.35 }
-          ]
-        },
-        options: {
-          responsive: true,
-          maintainAspectRatio: false,
-          animation: {
-            duration: 280
-          },
-          interaction: { mode: "index", intersect: false },
-          plugins: {
-            legend: {
-              position: "top",
-              labels: {
-                usePointStyle: true,
-                pointStyle: "circle",
-                boxWidth: 8,
-                padding: 14,
-                font: { size: 11, weight: "600" }
-              }
-            },
-            tooltip: {
-              backgroundColor: "rgba(255,255,255,0.96)",
-              titleColor: "#0f172a",
-              bodyColor: "#334155",
-              borderColor: "#dbe4f0",
-              borderWidth: 1
-            },
-            datalabels: { display: false }
-          },
-          scales: {
-            x: { grid: { display: false }, ticks: { color: "#64748b", maxRotation: 0 } },
-            y: { beginAtZero: true, grid: { color: "#e5e7eb" }, ticks: { color: "#64748b", precision: 0 } }
-          }
-        },
-        plugins: [ChartDataLabels]
-      });
-    }
-
-    function renderStatusChart(yearStatus) {
-      const ctx = document.getElementById("statusChart").getContext("2d");
-      if (window.statusChartObj) {
-        window.statusChartObj.destroy();
-      }
-
-      window.statusChartObj = new Chart(ctx, {
-        type: "bar",
-        data: {
-          labels: ["Done", "Close", "Hold", "Pending"],
-          datasets: [{
-            label: "Status Overview",
-            data: [yearStatus.done, yearStatus.close, yearStatus.hold, yearStatus.pending],
-            backgroundColor: [
-              "rgba(34, 197, 94, 0.88)",
-              "rgba(56, 189, 248, 0.88)",
-              "rgba(168, 85, 247, 0.88)",
-              "rgba(248, 113, 113, 0.90)"
-            ],
-            borderColor: [
-              "#4ade80",
-              "#67e8f9",
-              "#c084fc",
-              "#fda4af"
-            ],
-            borderWidth: 1.5,
-            borderRadius: 14,
-            borderSkipped: false,
-            barThickness: 38,
-            hoverBackgroundColor: [
-              "#22c55e",
-              "#06b6d4",
-              "#a855f7",
-              "#ef4444"
-            ]
-          }]
-        },
-        options: {
-          responsive: true,
-          maintainAspectRatio: false,
-          animation: {
-            duration: 260
-          },
-          layout: {
-            padding: { top: 10, right: 16, left: 8, bottom: 0 }
-          },
-          plugins: {
-            legend: { display: false },
-            tooltip: {
-              backgroundColor: "rgba(15, 23, 42, 0.94)",
-              titleColor: "#f8fafc",
-              bodyColor: "#dbeafe",
-              borderColor: "rgba(148, 163, 184, 0.28)",
-              borderWidth: 1,
-              padding: 12,
-              displayColors: true
-            },
-            datalabels: {
-              anchor: "end",
-              align: "end",
-              offset: 4,
-              color: "#f8fafc",
-              font: { weight: "700", size: 11 },
-              formatter: value => value
-            }
-          },
-          scales: {
-            y: {
-              beginAtZero: true,
-              ticks: { color: "rgba(226, 232, 240, 0.78)" },
-              grid: { color: "rgba(148, 163, 184, 0.14)", drawBorder: false }
-            },
-            x: {
-              ticks: { color: "#f8fafc", font: { weight: "600" } },
-              grid: { display: false, drawBorder: false }
+  window.statusChartObj = new Chart(ctx, {
+    type:"doughnut",
+    data:{
+      labels,
+      datasets:[{
+        data: values,
+        backgroundColor: bgAlpha,
+        borderColor: colors,
+        borderWidth: 2,
+        hoverBackgroundColor: colors,
+        hoverBorderWidth: 0,
+        hoverOffset: 10,
+        spacing: 2,
+        borderRadius: 4
+      }]
+    },
+    options:{
+      responsive:true, maintainAspectRatio:false,
+      cutout:"72%",
+      animation:{ animateRotate:true, animateScale:false, duration:700, easing:"easeOutQuart" },
+      layout:{ padding:8 },
+      plugins:{
+        legend:{ display:false },
+        tooltip:{
+          backgroundColor:"rgba(15,23,42,0.95)",
+          titleColor:"#f8fafc",
+          bodyColor:"#94a3b8",
+          borderColor:"rgba(255,255,255,0.1)",
+          borderWidth:1,
+          padding:12,
+          cornerRadius:10,
+          callbacks:{
+            label: ctx => {
+              const pct = total>0 ? ((ctx.parsed/total)*100).toFixed(1) : "0.0";
+              return `  ${ctx.label}: ${ctx.parsed.toLocaleString()} (${pct}%)`;
             }
           }
         },
-        plugins: [ChartDataLabels]
-      });
-    }
-
-    function renderMonthChart(monthData) {
-      const ctx = document.getElementById("monthChart").getContext("2d");
-      const today = new Date();
-      const currentYear = today.getFullYear();
-      const currentMonth = today.getMonth() + 1;
-      const months = Object.keys(monthData)
-        .filter(monthKey => {
-          const [year, month] = monthKey.split("-").map(Number);
-          return year === currentYear && month <= currentMonth;
-        })
-        .sort((a, b) => {
-          const [yearA, monthA] = a.split("-").map(Number);
-          const [yearB, monthB] = b.split("-").map(Number);
-          return new Date(yearA, monthA - 1, 1) - new Date(yearB, monthB - 1, 1);
-        });
-
-      if (window.monthChartObj) {
-        window.monthChartObj.destroy();
+        datalabels:{ display:false }
       }
+    },
+    plugins:[ChartDataLabels]
+  });
+}
 
-      if (!months.length) {
-        window.monthChartObj = new Chart(ctx, {
-          type: "bar",
-          data: {
-            labels: ["No Data"],
-            datasets: [{
-              label: "No Data",
-              data: [0],
-              backgroundColor: "#cbd5e1"
-            }]
-          },
-          options: {
-            responsive: true,
-            maintainAspectRatio: false,
-            plugins: { legend: { display: false } },
-            scales: {
-              y: { beginAtZero: true, ticks: { color: "#64748b" }, grid: { color: "#e5e7eb" } },
-              x: { ticks: { color: "#64748b" }, grid: { display: false } }
-            }
-          }
-        });
-        return;
-      }
+function renderMonthChart(monthData) {
+  const ctx = document.getElementById("monthChart").getContext("2d");
+  const today = new Date(), yr = today.getFullYear(), cm = today.getMonth() + 1;
 
-      const labels = months.map(monthKey => {
-        const [year, month] = monthKey.split("-");
-        return new Date(year, month - 1).toLocaleString("en-US", { month: "long" });
-      });
-
-      window.monthChartObj = new Chart(ctx, {
-        type: "bar",
-        data: {
-          labels,
-          datasets: [
-            {
-              label: "Raw Material",
-              data: months.map(m => monthData[m].raw || 0),
-              backgroundColor: "rgba(59, 130, 246, 0.86)",
-              borderColor: "#93c5fd",
-              borderWidth: 1,
-              borderRadius: 10,
-              borderSkipped: false
-            },
-            {
-              label: "Recipe & Material",
-              data: months.map(m => monthData[m].recipe || 0),
-              backgroundColor: "rgba(251, 146, 60, 0.88)",
-              borderColor: "#fdba74",
-              borderWidth: 1,
-              borderRadius: 10,
-              borderSkipped: false
-            },
-            {
-              label: "Other",
-              data: months.map(m => monthData[m].other || 0),
-              backgroundColor: "rgba(217, 70, 239, 0.82)",
-              borderColor: "#e9a8f2",
-              borderWidth: 1,
-              borderRadius: 10,
-              borderSkipped: false
-            },
-            {
-              label: "Rework",
-              data: months.map(m => monthData[m].rework || 0),
-              backgroundColor: "rgba(45, 212, 191, 0.84)",
-              borderColor: "#99f6e4",
-              borderWidth: 1,
-              borderRadius: 10,
-              borderSkipped: false
-            }
-          ]
-        },
-        options: {
-          responsive: true,
-          maintainAspectRatio: false,
-          animation: {
-            duration: 260
-          },
-          layout: {
-            padding: { top: 10, right: 14, left: 8, bottom: 0 }
-          },
-          plugins: {
-            legend: {
-              position: "top",
-              labels: {
-                color: "#f8fafc",
-                usePointStyle: true,
-                pointStyle: "rectRounded",
-                boxWidth: 10,
-                padding: 16,
-                font: { weight: "600" }
-              }
-            },
-            tooltip: {
-              backgroundColor: "rgba(15, 23, 42, 0.94)",
-              titleColor: "#f8fafc",
-              bodyColor: "#dbeafe",
-              borderColor: "rgba(148, 163, 184, 0.28)",
-              borderWidth: 1,
-              padding: 12
-            }
-          },
-          scales: {
-            x: {
-              stacked: true,
-              ticks: { color: "#f8fafc", font: { weight: "600" } },
-              grid: { display: false, drawBorder: false }
-            },
-            y: {
-              stacked: true,
-              beginAtZero: true,
-              ticks: { color: "rgba(226, 232, 240, 0.78)" },
-              grid: { color: "rgba(148, 163, 184, 0.14)", drawBorder: false }
-            }
-          }
-        }
-      });
-    }
-
-    function loadMasterData() {
-      if (!masterDataPromise) {
-        masterDataPromise = fetch(masterURL, { cache: "default" })
-          .then(response => {
-            if (!response.ok) {
-              throw new Error(`Master sheet request failed with status ${response.status}`);
-            }
-            return response.text();
-          })
-          .then(csv => {
-            const rows = parseCSV(csv);
-            const headers = (rows[0] || []).map(header => header.trim().toLowerCase());
-            const nameIndex = headers.indexOf("employee");
-            const expectedIndex = headers.findIndex(header => header === "working hours");
-            const attendanceIndex = headers.findIndex(header => header === "attendance");
-
-            if (nameIndex === -1 || expectedIndex === -1 || attendanceIndex === -1) {
-              throw new Error("Employee roster sheet is missing Employee, Working Hours, or Attendance columns.");
-            }
-
-            const masterMap = {};
-
-            rows.slice(1).forEach(row => {
-              const key = normalizeName(row[nameIndex]);
-              if (key) {
-                masterMap[key] = {
-                  workingHours: row[expectedIndex] || "0:00:00",
-                  attendance: row[attendanceIndex] || ""
-                };
-              }
-            });
-
-            return masterMap;
-          })
-          .catch(error => {
-            masterDataPromise = null;
-            throw error;
-          });
-      }
-
-      return masterDataPromise;
-    }
-
-    function renderHoursTable(masterMap) {
-      const people = Object.keys(hoursData).sort();
-      if (!people.length) {
-        renderEmptyRow("hoursTable", "No duration data found for the selected date range.", 4);
-        return;
-      }
-
-      const html = people.map(name => {
-        const actualSeconds = hoursData[name];
-        const expectedRaw = masterMap[normalizeName(name)]?.workingHours || "0";
-        const expectedSeconds = parseExpectedHours(expectedRaw);
-        const expectedDays = expectedSeconds / 28800;
-        const averageSeconds = expectedDays > 0 ? (actualSeconds / expectedDays) : 0;
-
-        return `
-          <tr>
-            <td class="name-cell">${name}</td>
-            <td>${secondsToTime(actualSeconds)}</td>
-            <td>${formatExpectedHours(expectedRaw)}</td>
-            <td><strong>${secondsToTime(averageSeconds)}</strong></td>
-          </tr>
-        `;
-      }).join("");
-
-      document.getElementById("hoursTable").innerHTML = html;
-    }
-
-    async function loadData(fromDate, toDate, options = {}) {
-      if (isLoading) return;
-      if (!fromDate || !toDate) return;
-
-      isLoading = true;
-      setRefreshButtonState();
-      setRefreshStatus("Refreshing...");
-
-      try {
-        clearError();
-
-        const fromParts = fromDate.split("-");
-        const toParts = toDate.split("-");
-        const from = new Date(fromParts[0], fromParts[1] - 1, fromParts[2]);
-        const to = new Date(toParts[0], toParts[1] - 1, toParts[2]);
-        to.setHours(23, 59, 59, 999);
-
-        const today = new Date();
-        const yearStart = new Date(today.getFullYear(), 0, 1);
-        const yearEnd = new Date(today.getFullYear(), 11, 31, 23, 59, 59, 999);
-
-        const response = await fetch(sheetURL, { cache: "no-cache" });
-        if (!response.ok) {
-          throw new Error(`Main sheet request failed with status ${response.status}`);
-        }
-
-        const csv = await response.text();
-        const currentHash = csv;
-
-        if (!options.force && currentHash === lastDataHash) {
-          setRefreshStatus(`Up to date • ${new Date().toLocaleTimeString()}`);
-          return;
-        }
-
-        lastDataHash = currentHash;
-        hoursData = {};
-
-        const rows = parseCSV(csv);
-        const headers = (rows[0] || []).map(header => header.trim());
-        const dateIndex = headers.findIndex(header => header.toLowerCase() === "assign date");
-        const taskIndex = headers.findIndex(header => header.toLowerCase() === "task");
-        const relatedIndex = headers.findIndex(header => header.toLowerCase() === "related to");
-        const assignedIndex = headers.findIndex(header => header.toLowerCase() === "assigned");
-        const statusIndex = headers.findIndex(header => header.toLowerCase() === "status");
-        const durationIndex = headers.findIndex(header => header.toLowerCase().includes("duration"));
-
-        if ([dateIndex, taskIndex, relatedIndex, assignedIndex, statusIndex].some(index => index === -1)) {
-          throw new Error("One or more required sheet columns are missing. Check the CSV headers.");
-        }
-
-        let total = 0;
-        let inventory = 0;
-        let poc = 0;
-        let recipe = 0;
-        let raw = 0;
-        let other = 0;
-        const activity = {};
-        const relatedStatus = {};
-        const employeeCategory = {};
-        const chartData = {};
-        const monthData = {};
-        const yearStatus = { done: 0, close: 0, hold: 0, pending: 0 };
-
-        rows.slice(1).forEach(row => {
-          const rawDate = row[dateIndex];
-          if (!rawDate) return;
-
-          const parts = rawDate.split("/");
-          if (parts.length !== 3) return;
-
-          const formattedDate = new Date(parts[2], parts[1] - 1, parts[0]);
-          if (Number.isNaN(formattedDate.getTime())) return;
-
-          const relatedName = normalizeRelated(row[relatedIndex]);
-          const status = (row[statusIndex] || "").toLowerCase().trim().replace(/\s+/g, " ");
-
-          if (formattedDate >= yearStart && formattedDate <= yearEnd) {
-            if (status.includes("done")) yearStatus.done += 1;
-            else if (status.includes("close")) yearStatus.close += 1;
-            else if (status.includes("hold")) yearStatus.hold += 1;
-            else if (status.includes("pending")) yearStatus.pending += 1;
-
-            const monthKey = `${parts[2]}-${parts[1]}`;
-            if (!monthData[monthKey]) {
-              monthData[monthKey] = { raw: 0, recipe: 0, other: 0, rework: 0 };
-            }
-
-            if (relatedName === "Raw Material") monthData[monthKey].raw += 1;
-            else if (relatedName === "Recipe & Material") monthData[monthKey].recipe += 1;
-            else if (relatedName === "Rework") monthData[monthKey].rework += 1;
-            else monthData[monthKey].other += 1;
-          }
-
-          if (formattedDate < from || formattedDate > to) return;
-
-          total += 1;
-
-          const task = (row[taskIndex] || "").toLowerCase().trim();
-          if (task === "inventory" || task === "purchase" || task === "client standard") inventory += 1;
-          else if (task === "poc standard") poc += 1;
-
-          if (relatedName === "Recipe & Material") recipe += 1;
-          else if (relatedName === "Raw Material") raw += 1;
-          else other += 1;
-
-          const normalizedName = normalizeName(row[assignedIndex]);
-          if (!normalizedName) return;
-
-          const displayName = toDisplayName(normalizedName);
-          const duration = durationIndex >= 0 ? row[durationIndex] : "0:00:00";
-
-          hoursData[displayName] = (hoursData[displayName] || 0) + timeToSeconds(duration || "0:00:00");
-
-          if (!employeeCategory[displayName]) {
-            employeeCategory[displayName] = { raw: 0, recipe: 0, rework: 0, other: 0, total: 0 };
-          }
-
-          if (relatedName === "Raw Material") employeeCategory[displayName].raw += 1;
-          else if (relatedName === "Recipe & Material") employeeCategory[displayName].recipe += 1;
-          else if (relatedName === "Rework") employeeCategory[displayName].rework += 1;
-          else employeeCategory[displayName].other += 1;
-          employeeCategory[displayName].total += 1;
-
-          if (!relatedStatus[relatedName]) {
-            relatedStatus[relatedName] = createTotalAccumulator();
-          }
-          applyStatusCounters(relatedStatus[relatedName], status);
-
-          if (!chartData[rawDate]) {
-            chartData[rawDate] = { total: 0, done: 0, working: 0, pending: 0, hold: 0, close: 0, next: 0 };
-          }
-          chartData[rawDate].total += 1;
-          if (status.includes("done")) chartData[rawDate].done += 1;
-          else if (status.includes("working")) chartData[rawDate].working += 1;
-          else if (status.includes("pending")) chartData[rawDate].pending += 1;
-          else if (status.includes("hold")) chartData[rawDate].hold += 1;
-          else if (status.includes("close")) chartData[rawDate].close += 1;
-          else if (status.includes("next")) chartData[rawDate].next += 1;
-
-          if (!activity[displayName]) {
-            activity[displayName] = createTotalAccumulator();
-          }
-          applyStatusCounters(activity[displayName], status);
-        });
-
-        const masterMap = await loadMasterData();
-        renderActivityTable(activity, masterMap);
-        renderRelatedTable(relatedStatus);
-        renderEmployeeCategoryTable(employeeCategory);
-        renderTaskChart(chartData);
-        renderStatusChart(yearStatus);
-        renderMonthChart(monthData);
-
-        document.getElementById("totalTasks").textContent = total;
-        document.getElementById("inventoryCount").textContent = inventory;
-        document.getElementById("pocCount").textContent = poc;
-        document.getElementById("recipeCount").textContent = recipe;
-        document.getElementById("rawCount").textContent = raw;
-        document.getElementById("otherRelatedCount").textContent = other;
-
-        renderHoursTable(masterMap);
-
-        setRefreshStatus(`Updated • ${new Date().toLocaleTimeString()}`);
-      } catch (error) {
-        console.error(error);
-        showError(error.message || "Unable to load dashboard data.");
-      } finally {
-        isLoading = false;
-        setRefreshButtonState();
-      }
-    }
-
-    fromInput.addEventListener("change", debounceLoad);
-    toInput.addEventListener("change", debounceLoad);
-    refreshButton.addEventListener("click", () => {
-      loadData(fromInput.value, toInput.value, { force: true });
+  const months = Object.keys(monthData)
+    .filter(k => { const [y,m] = k.split("-").map(Number); return y === yr && m <= cm; })
+    .sort((a, b) => {
+      const [ya, ma] = a.split("-").map(Number);
+      const [yb, mb] = b.split("-").map(Number);
+      return new Date(ya, ma-1, 1) - new Date(yb, mb-1, 1);
     });
 
-    window.addEventListener("load", () => {
-      const today = new Date();
-      const firstDay = new Date(today.getFullYear(), today.getMonth(), 1);
-      fromInput.value = formatDate(firstDay);
-      toInput.value = formatDate(today);
-      setRefreshButtonState();
-      loadData(fromInput.value, toInput.value, { force: true });
+  if (window.monthChartObj) { window.monthChartObj.destroy(); window.monthChartObj = null; }
+
+  if (!months.length) {
+    window.monthChartObj = new Chart(ctx, {
+      type:"bar",
+      data:{ labels:["No Data"], datasets:[{ label:"No Data", data:[0], backgroundColor:"#334155" }] },
+      options:{ responsive:true, maintainAspectRatio:false, plugins:{ legend:{ display:false } } }
     });
-  </script>
+    return;
+  }
+
+  const labels = months.map(mk => {
+    const [y, m] = mk.split("-");
+    return new Date(y, m-1).toLocaleString("en-US", { month: "short" });
+  });
+
+  const isDark  = document.documentElement.getAttribute("data-theme") === "dark";
+  const gridC   = isDark ? "rgba(255,255,255,0.06)" : "rgba(0,0,0,0.05)";
+  const tickC   = isDark ? "rgba(200,210,230,0.8)"  : "#64748b";
+  const legendC = isDark ? "rgba(200,210,230,0.85)" : "#475569";
+
+  // Per-category gradient builder
+  function colGrad(ctx, top, bot) {
+    const g = ctx.createLinearGradient(0, 0, 0, 260);
+    g.addColorStop(0, top);
+    g.addColorStop(1, bot);
+    return g;
+  }
+
+  const catDefs = [
+    { key:"raw",    label:"Raw Material",      top:"rgba(99,102,241,0.95)",  bot:"rgba(67,56,202,0.75)"   },
+    { key:"recipe", label:"Recipe & Material", top:"rgba(251,146,60,0.95)",  bot:"rgba(234,88,12,0.75)"   },
+    { key:"other",  label:"Other",             top:"rgba(217,70,239,0.90)",  bot:"rgba(168,0,212,0.70)"   },
+    { key:"rework", label:"Rework",            top:"rgba(45,212,191,0.90)",  bot:"rgba(13,148,136,0.70)"  },
+  ];
+
+  window.monthChartObj = new Chart(ctx, {
+    type: "bar",
+    data: {
+      labels,
+      datasets: catDefs.map(c => ({
+        label:           c.label,
+        data:            months.map(m => monthData[m][c.key] || 0),
+        backgroundColor: colGrad(ctx, c.top, c.bot),
+        borderColor:     c.top,
+        borderWidth:     0,
+        borderRadius:    { topLeft:6, topRight:6 },
+        borderSkipped:   false,
+        hoverBackgroundColor: c.top,
+        barPercentage:   0.72,
+        categoryPercentage: 0.78,
+      }))
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      animation: { duration: 550, easing: "easeOutQuart" },
+      interaction: { mode: "index", intersect: false },
+      layout: { padding: { top: 10, right: 8, left: 4, bottom: 0 } },
+      plugins: {
+        legend: {
+          position: "top",
+          align: "start",
+          labels: {
+            color: legendC,
+            usePointStyle: true,
+            pointStyle: "rectRounded",
+            boxWidth: 10,
+            padding: 16,
+            font: { weight: "600", size: 11 }
+          }
+        },
+        tooltip: {
+          backgroundColor: isDark ? "rgba(6,11,20,0.97)" : "rgba(255,255,255,0.97)",
+          titleColor:       isDark ? "#e2e8f0" : "#0f172a",
+          bodyColor:        isDark ? "#94a3b8"  : "#475569",
+          borderColor:      isDark ? "rgba(255,255,255,0.09)" : "rgba(0,0,0,0.08)",
+          borderWidth: 1,
+          padding: 12,
+          cornerRadius: 10,
+          boxPadding: 5,
+          callbacks: {
+            title: items => `📅 ${items[0].label}`,
+            label: item  => {
+              const total = catDefs.reduce((s, c, i) =>
+                s + (item.chart.data.datasets[i].data[item.dataIndex] || 0), 0);
+              const pct = total > 0 ? ` (${((item.parsed.y / total)*100).toFixed(0)}%)` : "";
+              return `  ${item.dataset.label}: ${item.parsed.y}${pct}`;
+            }
+          }
+        },
+        datalabels: { display: false }
+      },
+      scales: {
+        x: {
+          grid:  { display: false, drawBorder: false },
+          ticks: { color: tickC, font: { weight: "600", size: 11 } }
+        },
+        y: {
+          beginAtZero: true,
+          grid:  { color: gridC, drawBorder: false },
+          ticks: { color: tickC, font: { size: 11 }, precision: 0 }
+        }
+      }
+    },
+    plugins: [ChartDataLabels]
+  });
+}
+
+/* ═══════════════════════════════════════════════════
+   MASTER DATA
+═══════════════════════════════════════════════════ */
+function loadMasterData() {
+  if (!masterDataPromise) {
+    masterDataPromise = fetch(masterURL,{cache:"default"}).then(r=>{
+      if(!r.ok) throw new Error(`Master sheet error: ${r.status}`);
+      return r.text();
+    }).then(csv=>{
+      const rows=parseCSV(csv);
+      const headers=(rows[0]||[]).map(h=>h.trim().toLowerCase());
+      const ni=headers.indexOf("employee");
+      const ei=headers.findIndex(h=>h==="working hours");
+      const ai=headers.findIndex(h=>h==="attendance");
+      if(ni===-1||ei===-1||ai===-1) throw new Error("Master sheet missing required columns.");
+      const map={};
+      rows.slice(1).forEach(row=>{
+        const key=normalizeName(row[ni]);
+        if(key) map[key]={workingHours:row[ei]||"0",attendance:row[ai]||""};
+      });
+      return map;
+    }).catch(e=>{masterDataPromise=null;throw e;});
+  }
+  return masterDataPromise;
+}
+
+/* ═══════════════════════════════════════════════════
+   MAIN LOAD  — optimized
+═══════════════════════════════════════════════════ */
+// Skeleton loader helper
+function showSkeletons() {
+  const skRow = (cols) => `<tr>${Array(cols).fill('<td><div class="skeleton" style="height:12px;border-radius:4px;"></div></td>').join("")}</tr>`;
+  document.getElementById("activityTable").innerHTML        = Array(5).fill(skRow(11)).join("");
+  document.getElementById("hoursTable").innerHTML           = Array(5).fill(skRow(5)).join("");
+  document.getElementById("relatedTable").innerHTML         = Array(4).fill(skRow(11)).join("");
+  document.getElementById("employeeCategoryTable").innerHTML= Array(5).fill(skRow(6)).join("");
+  document.getElementById("actTotalLabel").textContent  = "— Total";
+  document.getElementById("actAvailLabel").textContent  = "— Available";
+  document.getElementById("donutTotal").textContent     = "—";
+}
+
+// Defer non-critical renders to idle time
+function scheduleIdle(fn) {
+  if (typeof requestIdleCallback === "function") {
+    requestIdleCallback(fn, { timeout: 1200 });
+  } else {
+    setTimeout(fn, 0);
+  }
+}
+
+async function loadData(fromDate, toDate, options={}) {
+  if (isLoading||!fromDate||!toDate) return;
+  isLoading=true; setBtnState(); setStatus("Refreshing…"); clearError();
+  showSkeletons();
+
+  try {
+    const [fy,fm,fd]=fromDate.split("-"); const from=new Date(fy,fm-1,fd);
+    const [ty,tm,td]=toDate.split("-");   const to=new Date(ty,tm-1,td); to.setHours(23,59,59,999);
+    const today=new Date(), yearStart=new Date(today.getFullYear(),0,1), yearEnd=new Date(today.getFullYear(),11,31,23,59,59,999);
+
+    // Fetch both sheets in parallel for speed
+    const [sheetRes, masterMap] = await Promise.all([
+      fetch(sheetURL,{cache:"no-cache"}),
+      loadMasterData()
+    ]);
+    if(!sheetRes.ok) throw new Error(`Sheet fetch failed: ${sheetRes.status}`);
+    const csv=await sheetRes.text();
+    if (!options.force && csv===lastDataHash) { setStatus(`Up to date · ${new Date().toLocaleTimeString()}`); isLoading=false; setBtnState(); return; }
+    lastDataHash=csv; hoursData={};
+
+    const rows=parseCSV(csv);
+    const headers=(rows[0]||[]).map(h=>h.trim());
+    const idx={
+      date:    headers.findIndex(h=>h.toLowerCase()==="assign date"),
+      task:    headers.findIndex(h=>h.toLowerCase()==="task"),
+      related: headers.findIndex(h=>h.toLowerCase()==="related to"),
+      assigned:headers.findIndex(h=>h.toLowerCase()==="assigned"),
+      status:  headers.findIndex(h=>h.toLowerCase()==="status"),
+      dur:     headers.findIndex(h=>h.toLowerCase().includes("duration"))
+    };
+    if ([idx.date,idx.task,idx.related,idx.assigned,idx.status].some(i=>i===-1))
+      throw new Error("Missing required sheet columns.");
+
+    let total=0,inventory=0,poc=0,recipe=0,raw=0,other=0;
+    const activity={}, relatedStatus={}, employeeCategory={}, chartData={}, monthData={};
+    const yearStatus={done:0,close:0,hold:0,pending:0};
+
+    // Single-pass data processing
+    const dataLen=rows.length;
+    for(let i=1;i<dataLen;i++){
+      const row=rows[i];
+      const rawDate=row[idx.date]; if(!rawDate) continue;
+      const parts=rawDate.split("/"); if(parts.length!==3) continue;
+      const fd=new Date(parts[2],parts[1]-1,parts[0]); if(isNaN(fd.getTime())) continue;
+      const rel=normalizeRelated(row[idx.related]);
+      const status=(row[idx.status]||"").toLowerCase().trim().replace(/\s+/g," ");
+
+      if (fd>=yearStart&&fd<=yearEnd) {
+        if(status.includes("done"))    yearStatus.done++;
+        else if(status.includes("close"))  yearStatus.close++;
+        else if(status.includes("hold"))   yearStatus.hold++;
+        else if(status.includes("pending"))yearStatus.pending++;
+        const mk=`${parts[2]}-${parts[1]}`;
+        if(!monthData[mk]) monthData[mk]={raw:0,recipe:0,other:0,rework:0};
+        if(rel==="Raw Material") monthData[mk].raw++;
+        else if(rel==="Recipe & Material") monthData[mk].recipe++;
+        else if(rel==="Rework") monthData[mk].rework++;
+        else monthData[mk].other++;
+      }
+
+      if(fd<from||fd>to) continue;
+      total++;
+      const task=(row[idx.task]||"").toLowerCase().trim();
+      if(task==="inventory"||task==="purchase"||task==="client standard") inventory++;
+      else if(task==="poc standard") poc++;
+      if(rel==="Recipe & Material") recipe++;
+      else if(rel==="Raw Material") raw++;
+      else other++;
+
+      const nname=normalizeName(row[idx.assigned]); if(!nname) continue;
+      const dname=toDisplayName(nname);
+      const dur=idx.dur>=0?row[idx.dur]:"0:00:00";
+      hoursData[dname]=(hoursData[dname]||0)+timeToSeconds(dur||"0:00:00");
+
+      if(!employeeCategory[dname]) employeeCategory[dname]={raw:0,recipe:0,rework:0,other:0,total:0};
+      if(rel==="Raw Material") employeeCategory[dname].raw++;
+      else if(rel==="Recipe & Material") employeeCategory[dname].recipe++;
+      else if(rel==="Rework") employeeCategory[dname].rework++;
+      else employeeCategory[dname].other++;
+      employeeCategory[dname].total++;
+
+      if(!relatedStatus[rel]) relatedStatus[rel]=mkAccum();
+      countStatus(relatedStatus[rel],status);
+
+      if(!chartData[rawDate]) chartData[rawDate]={total:0,done:0,working:0,pending:0,hold:0,close:0,next:0};
+      chartData[rawDate].total++;
+      if(status.includes("done"))    chartData[rawDate].done++;
+      else if(status.includes("working")) chartData[rawDate].working++;
+      else if(status.includes("pending")) chartData[rawDate].pending++;
+      else if(status.includes("hold"))    chartData[rawDate].hold++;
+      else if(status.includes("close"))   chartData[rawDate].close++;
+      else if(status.includes("next"))    chartData[rawDate].next++;
+
+      if(!activity[dname]) activity[dname]=mkAccum();
+      countStatus(activity[dname],status);
+    }
+
+    // Render critical tables immediately (above fold)
+    renderActivityTable(activity, masterMap);
+    renderHoursTable(masterMap);
+
+    // Update metric cards
+    document.getElementById("totalTasks").textContent        = total;
+    document.getElementById("inventoryCount").textContent    = inventory;
+    document.getElementById("pocCount").textContent          = poc;
+    document.getElementById("recipeCount").textContent       = recipe;
+    document.getElementById("rawCount").textContent          = raw;
+    document.getElementById("otherRelatedCount").textContent = other;
+
+    setStatus(`Updated · ${new Date().toLocaleTimeString()}`);
+
+    // Defer below-fold renders to idle time — keeps main thread free
+    scheduleIdle(()=>{
+      renderRelatedTable(relatedStatus);
+      renderEmployeeCategoryTable(employeeCategory);
+    });
+    scheduleIdle(()=>{
+      renderTaskChart(chartData);
+    });
+    scheduleIdle(()=>{
+      renderStatusChart(yearStatus);
+      renderMonthChart(monthData);
+    });
+
+  } catch(e) {
+    console.error(e);
+    showError(e.message || "Unable to load dashboard data.");
+  } finally {
+    isLoading=false; setBtnState();
+  }
+}
+
+/* ═══════════════════════════════════════════════════
+   INIT
+═══════════════════════════════════════════════════ */
+window.addEventListener("load", ()=>{
+  const today=new Date(), first=new Date(today.getFullYear(),today.getMonth(),1);
+  fromInput.value=formatDate(first);
+  toInput.value=formatDate(today);
+  setBtnState();
+  loadData(fromInput.value, toInput.value, {force:true});
+});
+</script>
 </body>
 </html>
