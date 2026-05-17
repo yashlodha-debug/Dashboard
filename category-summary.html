@@ -1,833 +1,1027 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" data-theme="dark">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Recipe and Raw Material Summary</title>
+  <title>Quarter Performance — Petpooja</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
-  <script defer src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;1,9..40,400&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <style>
-    :root {
-      --bg: #edf4fb;
-      --surface: #ffffff;
-      --text: #10203a;
-      --muted: #5f728c;
-      --border: #d7e2f1;
-      --shadow: 0 12px 28px rgba(15, 23, 42, 0.08);
-      --blue-header: #78aee0;
-      --total-green: #70c299;
-      --done-yellow: #ffe08c;
-      --close-pink: #f4b7ae;
-      --hold-gray: #eef2f7;
-      --raw-total: #dce6de;
-      --rework-blue: #d8e5ff;
-      --other-red: #e9a29c;
-    }
+  /* ═══════════════════════════════════════════════════════
+     DESIGN TOKENS — identical to index.html & kpi-report.html
+  ═══════════════════════════════════════════════════════ */
+  :root {
+    --font:       "DM Sans", system-ui, sans-serif;
+    --font-mono:  "DM Mono", monospace;
+    --radius-sm:  10px;
+    --radius:     16px;
+    --radius-lg:  24px;
+    --transition: 0.22s cubic-bezier(0.4,0,0.2,1);
+    --c-done:     #22c55e;
+    --c-working:  #f59e0b;
+    --c-pending:  #ef4444;
+    --c-assign:   #06b6d4;
+    --c-hold:     #a855f7;
+    --c-close:    #64748b;
+  }
 
-    * { box-sizing: border-box; }
+  /* ── DARK ── */
+  [data-theme="dark"] {
+    --bg:              #080d14;
+    --bg2:             #0d1421;
+    --surface:         #141c2b;
+    --surface2:        #1a2336;
+    --surface3:        #1f2d42;
+    --border:          rgba(255,255,255,0.07);
+    --border2:         rgba(255,255,255,0.12);
+    --text:            #f1f5f9;
+    --text2:           #94a3b8;
+    --text3:           #64748b;
+    --accent:          #3b82f6;
+    --accent2:         #1d4ed8;
+    --accent-glow:     rgba(59,130,246,0.25);
+    --card-shadow:     0 1px 3px rgba(0,0,0,.5),0 8px 24px rgba(0,0,0,.35);
+    --header-bg:       rgba(8,13,20,0.88);
+    --table-head:      #0d1421;
+    --table-alt:       rgba(255,255,255,0.025);
+    --table-hover:     rgba(59,130,246,0.07);
+    --scrollbar-track: #141c2b;
+    --scrollbar-thumb: #2d3f5a;
+    /* category cell colours for dark */
+    --cell-recipe-bg:  rgba(59,130,246,0.12);
+    --cell-recipe-txt: #93c5fd;
+    --cell-raw-bg:     rgba(34,197,94,0.10);
+    --cell-raw-txt:    #86efac;
+    --cell-done-bg:    rgba(34,197,94,0.08);
+    --cell-done-txt:   #4ade80;
+    --cell-close-bg:   rgba(6,182,212,0.08);
+    --cell-close-txt:  #22d3ee;
+    --cell-hold-bg:    rgba(168,85,247,0.08);
+    --cell-hold-txt:   #c084fc;
+    --cell-rework-bg:  rgba(251,146,60,0.08);
+    --cell-rework-txt: #fdba74;
+    --cell-other-bg:   rgba(239,68,68,0.08);
+    --cell-other-txt:  #fca5a5;
+    --cell-total-bg:   rgba(59,130,246,0.14);
+    --cell-total-txt:  #60a5fa;
+  }
 
-    body {
-      margin: 0;
-      font-family: "Poppins", Arial, sans-serif;
-      color: var(--text);
-      background:
-        radial-gradient(circle at top right, rgba(37, 99, 235, 0.10), transparent 24%),
-        linear-gradient(180deg, #f9fbff 0%, var(--bg) 100%);
-    }
+  /* ── LIGHT ── */
+  [data-theme="light"] {
+    --bg:              #f0f4f8;
+    --bg2:             #e8eef5;
+    --surface:         #ffffff;
+    --surface2:        #f8fafc;
+    --surface3:        #f1f5f9;
+    --border:          rgba(0,0,0,0.07);
+    --border2:         rgba(0,0,0,0.12);
+    --text:            #0f172a;
+    --text2:           #475569;
+    --text3:           #94a3b8;
+    --accent:          #2563eb;
+    --accent2:         #1d4ed8;
+    --accent-glow:     rgba(37,99,235,0.15);
+    --card-shadow:     0 1px 3px rgba(0,0,0,.08),0 8px 24px rgba(0,0,0,.06);
+    --header-bg:       rgba(240,244,248,0.92);
+    --table-head:      #1e293b;
+    --table-alt:       rgba(0,0,0,0.02);
+    --table-hover:     rgba(37,99,235,0.05);
+    --scrollbar-track: #f1f5f9;
+    --scrollbar-thumb: #cbd5e1;
+    --cell-recipe-bg:  rgba(37,99,235,0.08);
+    --cell-recipe-txt: #1d4ed8;
+    --cell-raw-bg:     rgba(22,163,74,0.07);
+    --cell-raw-txt:    #15803d;
+    --cell-done-bg:    rgba(22,163,74,0.06);
+    --cell-done-txt:   #16a34a;
+    --cell-close-bg:   rgba(8,145,178,0.07);
+    --cell-close-txt:  #0e7490;
+    --cell-hold-bg:    rgba(126,34,206,0.06);
+    --cell-hold-txt:   #7e22ce;
+    --cell-rework-bg:  rgba(194,65,12,0.07);
+    --cell-rework-txt: #c2410c;
+    --cell-other-bg:   rgba(185,28,28,0.06);
+    --cell-other-txt:  #b91c1c;
+    --cell-total-bg:   rgba(37,99,235,0.08);
+    --cell-total-txt:  #1d4ed8;
+  }
 
-    .page {
-      max-width: 1700px;
-      margin: 0 auto;
-      padding: 18px;
-    }
+  /* ═══════════════════════════════════════════════════════
+     RESET & BASE
+  ═══════════════════════════════════════════════════════ */
+  *,*::before,*::after { box-sizing:border-box; margin:0; padding:0; }
+  html { scroll-behavior:smooth; }
+  body {
+    font-family:var(--font); font-size:14px; line-height:1.5;
+    color:var(--text); background:var(--bg); min-height:100vh;
+    overflow-x:hidden; transition:background var(--transition),color var(--transition);
+  }
+  a { color:inherit; text-decoration:none; }
+  ::-webkit-scrollbar { width:6px; height:6px; }
+  ::-webkit-scrollbar-track  { background:var(--scrollbar-track); }
+  ::-webkit-scrollbar-thumb  { background:var(--scrollbar-thumb); border-radius:99px; }
 
-    .header,
-    .toolbar,
-    .panel {
-      background: rgba(255, 255, 255, 0.97);
-      border: 1px solid var(--border);
-      border-radius: 24px;
-      box-shadow: var(--shadow);
-    }
+  /* noise */
+  body::before {
+    content:""; position:fixed; inset:0; pointer-events:none; z-index:0; opacity:.025;
+    background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+    background-repeat:repeat; background-size:128px;
+  }
 
-    .header {
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      position: relative;
-      padding: 18px 24px;
-    }
+  /* ═══════════════════════════════════════════════════════
+     LAYOUT
+  ═══════════════════════════════════════════════════════ */
+  .layout { display:flex; min-height:100vh; position:relative; z-index:1; }
 
-    .header img {
-      position: absolute;
-      left: 24px;
-      height: 34px;
-    }
+  /* ── SIDEBAR ── */
+  .sidebar {
+    width:240px; min-height:100vh;
+    background:var(--surface); border-right:1px solid var(--border);
+    display:flex; flex-direction:column;
+    position:sticky; top:0; height:100vh; overflow-y:auto;
+    flex-shrink:0; z-index:100;
+    transition:transform var(--transition),background var(--transition);
+  }
+  .sidebar-logo {
+    display:flex; align-items:center; gap:10px;
+    padding:22px 20px 18px; border-bottom:1px solid var(--border);
+  }
+  .sidebar-logo img { height:28px; filter:brightness(1.1); }
+  .sidebar-logo-label { font-size:11px; font-weight:600; color:var(--text3); text-transform:uppercase; letter-spacing:.08em; }
+  .sidebar-section { padding:16px 12px 8px; }
+  .sidebar-section-label { font-size:10px; font-weight:700; letter-spacing:.1em; text-transform:uppercase; color:var(--text3); padding:0 8px; margin-bottom:6px; }
+  .sidebar-nav { display:flex; flex-direction:column; gap:2px; }
+  .nav-item {
+    display:flex; align-items:center; gap:10px;
+    padding:9px 10px; border-radius:var(--radius-sm);
+    color:var(--text2); font-weight:500; font-size:13.5px;
+    cursor:pointer; transition:all var(--transition); border:1px solid transparent;
+  }
+  .nav-item:hover { background:var(--surface2); color:var(--text); border-color:var(--border); }
+  .nav-item.active {
+    background:linear-gradient(135deg,rgba(59,130,246,.15),rgba(29,78,216,.1));
+    color:var(--accent); border-color:rgba(59,130,246,.2); font-weight:600;
+  }
+  .nav-icon { width:18px; height:18px; flex-shrink:0; opacity:.8; }
+  .nav-badge { margin-left:auto; background:var(--accent); color:#fff; font-size:10px; font-weight:700; padding:1px 6px; border-radius:99px; }
+  .sidebar-footer { margin-top:auto; padding:14px 12px; border-top:1px solid var(--border); }
+  .sidebar-overlay {
+    display:none; position:fixed; inset:0;
+    background:rgba(0,0,0,.55); z-index:99;
+    backdrop-filter:blur(2px); opacity:0; pointer-events:none;
+    transition:opacity var(--transition);
+  }
+  .sidebar-overlay.open { opacity:1; pointer-events:auto; }
 
-    .header h1 {
-      margin: 0;
-      font-size: clamp(1.3rem, 2.4vw, 1.9rem);
-      font-weight: 700;
-    }
+  /* ── MAIN ── */
+  .main { flex:1; min-width:0; display:flex; flex-direction:column; }
 
-    .toolbar {
-      margin-top: 16px;
-      padding: 16px 18px;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      gap: 16px;
-      flex-wrap: wrap;
-    }
+  /* ── TOPBAR ── */
+  .topbar {
+    position:sticky; top:0; z-index:50;
+    display:flex; align-items:center; justify-content:space-between; gap:16px;
+    padding:14px 28px;
+    background:var(--header-bg);
+    backdrop-filter:blur(16px) saturate(180%); -webkit-backdrop-filter:blur(16px) saturate(180%);
+    border-bottom:1px solid var(--border);
+    transition:background var(--transition);
+  }
+  .topbar-left  { display:flex; align-items:center; gap:16px; }
+  .topbar-right { display:flex; align-items:center; gap:10px; flex-wrap:wrap; }
+  .page-title    { font-size:17px; font-weight:700; color:var(--text); }
+  .page-subtitle { font-size:12px; color:var(--text3); margin-top:1px; }
+  .menu-toggle {
+    display:none; align-items:center; justify-content:center;
+    width:38px; height:38px; border-radius:var(--radius-sm);
+    border:1px solid var(--border); background:var(--surface2);
+    cursor:pointer; transition:all var(--transition); color:var(--text2);
+  }
+  .menu-toggle:hover { background:var(--surface3); color:var(--text); }
 
-    .toolbar-left,
-    .toolbar-right {
-      display: flex;
-      align-items: center;
-      gap: 12px;
-      flex-wrap: wrap;
-    }
+  /* ── BUTTONS ── */
+  .btn {
+    display:inline-flex; align-items:center; justify-content:center; gap:6px;
+    height:38px; padding:0 16px; border-radius:var(--radius-sm);
+    font-family:var(--font); font-size:13px; font-weight:600;
+    cursor:pointer; transition:all var(--transition);
+    white-space:nowrap; border:1px solid transparent;
+  }
+  .btn-primary { background:var(--accent); color:#fff; }
+  .btn-primary:hover { background:var(--accent2); box-shadow:0 0 0 4px var(--accent-glow); }
+  .btn-primary:disabled { opacity:.55; cursor:wait; box-shadow:none; }
+  .btn-ghost { background:var(--surface); color:var(--text2); border-color:var(--border); }
+  .btn-ghost:hover { background:var(--surface2); color:var(--text); border-color:var(--border2); }
 
-    label {
-      color: var(--muted);
-      font-size: 0.92rem;
-      font-weight: 500;
-    }
+  /* Date group */
+  .date-group {
+    display:flex; align-items:center; gap:6px;
+    background:var(--surface); border:1px solid var(--border);
+    border-radius:var(--radius-sm); padding:6px 12px;
+    transition:border-color var(--transition);
+  }
+  .date-group:focus-within { border-color:var(--accent); }
+  .date-group label { font-size:11px; font-weight:600; color:var(--text3); white-space:nowrap; text-transform:uppercase; letter-spacing:.05em; }
+  .date-group input[type="date"] {
+    border:none; outline:none; background:transparent;
+    color:var(--text); font-family:var(--font); font-size:13px; font-weight:500;
+    width:120px; cursor:pointer; color-scheme:dark;
+  }
+  [data-theme="light"] .date-group input[type="date"] { color-scheme:light; }
 
-    input[type="date"] {
-      min-height: 42px;
-      padding: 10px 12px;
-      border: 1px solid var(--border);
-      border-radius: 12px;
-      font: inherit;
-      color: var(--text);
-      background: #fff;
-    }
+  /* Status pill */
+  .status-pill {
+    display:inline-flex; align-items:center; gap:7px;
+    height:38px; padding:0 14px; border-radius:var(--radius-sm);
+    background:var(--surface); border:1px solid var(--border);
+    font-size:12px; font-weight:600; color:var(--text2);
+  }
+  .pulse-dot {
+    width:7px; height:7px; border-radius:50%; background:var(--c-done);
+    animation:pulse 2s infinite; flex-shrink:0;
+  }
+  @keyframes pulse {
+    0%  { box-shadow:0 0 0 0 rgba(34,197,94,.5); }
+    70% { box-shadow:0 0 0 6px rgba(34,197,94,0); }
+    100%{ box-shadow:0 0 0 0 rgba(34,197,94,0); }
+  }
+  .theme-toggle {
+    width:38px; height:38px; border-radius:var(--radius-sm);
+    border:1px solid var(--border); background:var(--surface); color:var(--text2);
+    cursor:pointer; display:flex; align-items:center; justify-content:center;
+    transition:all var(--transition);
+  }
+  .theme-toggle:hover { background:var(--surface2); color:var(--text); }
 
-    .button,
-    .link-button {
-      min-height: 42px;
-      padding: 0 16px;
-      border-radius: 999px;
-      font: inherit;
-      font-weight: 600;
-      cursor: pointer;
-      text-decoration: none;
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      transition: transform 0.18s ease, box-shadow 0.18s ease, opacity 0.18s ease;
-    }
+  /* ═══════════════════════════════════════════════════════
+     PAGE BODY
+  ═══════════════════════════════════════════════════════ */
+  .page-body { padding:24px 28px; flex:1; }
 
-    .button {
-      border: 0;
-      color: #fff;
-      background: linear-gradient(135deg, #2563eb, #1d4ed8 60%, #1e3a8a);
-      box-shadow: 0 8px 18px rgba(37, 99, 235, 0.18);
-    }
+  /* Error */
+  .error-banner {
+    display:none; align-items:center; gap:10px; margin-bottom:20px;
+    padding:13px 16px; border-radius:var(--radius);
+    border:1px solid rgba(239,68,68,.3); background:rgba(239,68,68,.08);
+    color:#fca5a5; font-size:13px; font-weight:500;
+  }
+  .error-banner.visible { display:flex; }
 
-    .button:disabled {
-      opacity: 0.7;
-      cursor: wait;
-      box-shadow: none;
-      transform: none;
-    }
+  /* ═══════════════════════════════════════════════════════
+     SUMMARY KPI CARDS
+  ═══════════════════════════════════════════════════════ */
+  .summary-cards {
+    display:grid; grid-template-columns:repeat(4,1fr); gap:16px; margin-bottom:22px;
+  }
+  .sum-card {
+    background:var(--surface); border:1px solid var(--border);
+    border-radius:var(--radius-lg); padding:18px 20px;
+    box-shadow:var(--card-shadow); position:relative; overflow:hidden;
+    transition:transform var(--transition),box-shadow var(--transition);
+  }
+  .sum-card:hover { transform:translateY(-3px); box-shadow:0 2px 8px rgba(0,0,0,.4),0 14px 36px rgba(0,0,0,.38); }
+  .sum-card::before {
+    content:""; position:absolute; inset:0;
+    background:linear-gradient(140deg,rgba(255,255,255,.04) 0%,transparent 60%);
+    pointer-events:none;
+  }
+  .sum-card-label { font-size:11px; font-weight:700; color:var(--text3); text-transform:uppercase; letter-spacing:.06em; }
+  .sum-card-value { font-size:2rem; font-weight:700; color:var(--text); line-height:1.15; margin-top:8px; letter-spacing:-.04em; font-variant-numeric:tabular-nums; }
+  .sum-card-sub   { font-size:11.5px; color:var(--text3); margin-top:5px; }
+  .sum-card-icon  {
+    position:absolute; top:16px; right:16px;
+    width:36px; height:36px; border-radius:10px;
+    display:flex; align-items:center; justify-content:center;
+  }
 
-    .link-button {
-      border: 1px solid rgba(37, 99, 235, 0.18);
-      background: linear-gradient(135deg, #ffffff, #eef4ff);
-      color: #1d4ed8;
-      box-shadow: 0 8px 18px rgba(15, 23, 42, 0.06);
-    }
+  /* ═══════════════════════════════════════════════════════
+     CARD PANEL  (reused from dashboard)
+  ═══════════════════════════════════════════════════════ */
+  .card {
+    background:var(--surface); border:1px solid var(--border);
+    border-radius:var(--radius-lg); box-shadow:var(--card-shadow); overflow:hidden;
+    transition:background var(--transition),border-color var(--transition);
+  }
+  .card-header {
+    display:flex; align-items:center; justify-content:space-between;
+    padding:15px 20px; border-bottom:1px solid var(--border); gap:12px;
+  }
+  .card-header-left { display:flex; flex-direction:column; gap:3px; }
+  .card-title {
+    font-size:14px; font-weight:700; color:var(--text);
+    display:flex; align-items:center; gap:8px;
+  }
+  .card-title-dot { width:8px; height:8px; border-radius:2px; flex-shrink:0; }
+  .card-subtitle  { font-size:11.5px; color:var(--text3); }
 
-    .button:hover,
-    .link-button:hover {
-      transform: translateY(-1px);
-    }
+  .section { margin-bottom:20px; }
 
-    .status-pill {
-      display: inline-flex;
-      align-items: center;
-      gap: 8px;
-      min-height: 42px;
-      padding: 0 14px;
-      border-radius: 999px;
-      background: rgba(37, 99, 235, 0.10);
-      color: #1d4ed8;
-      font-size: 0.9rem;
-      font-weight: 600;
-    }
+  /* ═══════════════════════════════════════════════════════
+     TABLE — summary
+  ═══════════════════════════════════════════════════════ */
+  .table-container { overflow:auto; }
 
-    .status-dot {
-      width: 10px;
-      height: 10px;
-      border-radius: 50%;
-      background: currentColor;
-    }
+  table { width:100%; border-collapse:collapse; font-size:12.5px; }
 
-    .error-banner {
-      display: none;
-      margin-top: 16px;
-      padding: 14px 16px;
-      border-radius: 14px;
-      border: 1px solid rgba(239, 68, 68, 0.25);
-      background: rgba(239, 68, 68, 0.08);
-      color: #991b1b;
-      font-size: 0.92rem;
-      font-weight: 500;
-    }
+  thead { background:var(--table-head); }
+  thead th {
+    position:sticky; top:0; z-index:2;
+    background:var(--table-head); color:rgba(255,255,255,.82);
+    font-size:10px; font-weight:700; text-transform:uppercase; letter-spacing:.06em;
+    padding:10px 12px; white-space:nowrap; border-bottom:1px solid var(--border);
+  }
+  [data-theme="light"] thead th { color:rgba(255,255,255,.88); background:#1e293b; }
 
-    .panel {
-      margin-top: 18px;
-      overflow: hidden;
-    }
+  /* Group header rows */
+  .thead-group th {
+    font-size:9px; font-weight:800; text-transform:uppercase; letter-spacing:.08em;
+    padding:7px 12px; border-bottom:none;
+    position:sticky; top:0; z-index:2;
+  }
+  .thead-group .gh-recipe { background:#1e3a5f; color:#93c5fd; }
+  .thead-group .gh-raw    { background:#14532d; color:#86efac; }
+  .thead-group .gh-other  { background:#1a1a2e; color:#c4b5fd; }
 
-    .panel-header {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      gap: 12px;
-      padding: 14px 18px;
-      background: linear-gradient(135deg, #0f172a, #172554 52%, #1e293b);
-      color: #fff;
-    }
+  .thead-sub th {
+    position:sticky; top:28px; z-index:2;
+    background:var(--table-head);
+  }
+  [data-theme="light"] .thead-sub th { background:#1e293b; }
 
-    .panel-header h2 {
-      margin: 0;
-      font-size: 1rem;
-      font-weight: 700;
-    }
+  td {
+    padding:9px 12px; color:var(--text); font-weight:500;
+    white-space:nowrap; border-bottom:1px solid var(--border);
+    text-align:center; font-variant-numeric:tabular-nums;
+    transition:background var(--transition);
+  }
+  td.name-cell, th.name-cell { text-align:left; min-width:140px; }
+  tbody tr:nth-child(even) td { background:var(--table-alt); }
+  tbody tr:hover td { background:var(--table-hover); }
 
-    .panel-subtitle {
-      font-size: 0.8rem;
-      color: rgba(255, 255, 255, 0.72);
-    }
+  /* Coloured category cells */
+  .c-recipe  { background:var(--cell-recipe-bg) !important; color:var(--cell-recipe-txt) !important; font-weight:700; }
+  .c-raw     { background:var(--cell-raw-bg)    !important; color:var(--cell-raw-txt)    !important; font-weight:700; }
+  .c-done    { background:var(--cell-done-bg)   !important; color:var(--cell-done-txt)   !important; }
+  .c-close   { background:var(--cell-close-bg)  !important; color:var(--cell-close-txt)  !important; }
+  .c-hold    { background:var(--cell-hold-bg)   !important; color:var(--cell-hold-txt)   !important; }
+  .c-rework  { background:var(--cell-rework-bg) !important; color:var(--cell-rework-txt) !important; }
+  .c-other   { background:var(--cell-other-bg)  !important; color:var(--cell-other-txt)  !important; }
+  .c-total   { background:var(--cell-total-bg)  !important; color:var(--cell-total-txt)  !important; font-weight:700; border-top:1px solid rgba(59,130,246,.2); }
+  .c-total td { color:var(--accent) !important; font-weight:700 !important; }
 
-    .table-wrap {
-      overflow: auto;
-    }
+  .empty-cell { padding:36px !important; text-align:center !important; color:var(--text3) !important; font-style:italic; font-weight:400 !important; }
 
-    .chart-panel {
-      padding: 14px;
-    }
+  /* Total row */
+  .total-row td { font-weight:700; background:rgba(59,130,246,.08) !important; color:var(--accent) !important; border-top:1px solid rgba(59,130,246,.15); }
 
-    .chart-shell {
-      border-radius: 22px;
-      overflow: hidden;
-      border: 1px solid rgba(148, 163, 184, 0.18);
-      background:
-        radial-gradient(circle at top right, rgba(56, 189, 248, 0.18), transparent 28%),
-        radial-gradient(circle at bottom left, rgba(217, 70, 239, 0.14), transparent 32%),
-        linear-gradient(145deg, #14213d 0%, #1d2951 58%, #2d1f4f 100%);
-      box-shadow: inset 0 1px 0 rgba(255,255,255,0.06);
-    }
+  /* ═══════════════════════════════════════════════════════
+     CHART SHELL
+  ═══════════════════════════════════════════════════════ */
+  .chart-wrap { padding:16px; }
+  .col-chart-shell {
+    position:relative; border-radius:var(--radius); overflow:hidden;
+    padding:16px 16px 10px;
+    background:linear-gradient(160deg,#0d1a2e 0%,#0f1f3a 55%,#0b1525 100%);
+    border:1px solid rgba(255,255,255,.06);
+    box-shadow:inset 0 1px 0 rgba(255,255,255,.05),0 8px 32px rgba(0,0,0,.3);
+  }
+  [data-theme="light"] .col-chart-shell {
+    background:linear-gradient(160deg,#f8faff 0%,#eef3ff 55%,#f3f8ff 100%);
+    border-color:rgba(0,0,0,.06);
+    box-shadow:inset 0 1px 0 rgba(255,255,255,.8),0 4px 16px rgba(0,0,0,.06);
+  }
+  .col-chart-shell::before {
+    content:""; position:absolute; inset:0; pointer-events:none;
+    background:
+      radial-gradient(ellipse at 15% 20%,rgba(59,130,246,.12),transparent 50%),
+      radial-gradient(ellipse at 85% 80%,rgba(251,146,60,.08),transparent 50%);
+  }
+  [data-theme="light"] .col-chart-shell::before {
+    background:
+      radial-gradient(ellipse at 15% 20%,rgba(59,130,246,.06),transparent 50%),
+      radial-gradient(ellipse at 85% 80%,rgba(251,146,60,.04),transparent 50%);
+  }
+  .chart-area { position:relative; min-height:300px; }
 
-    .chart-box {
-      position: relative;
-      min-height: 320px;
-      padding: 18px 16px 12px;
-    }
+  /* ═══════════════════════════════════════════════════════
+     SKELETON
+  ═══════════════════════════════════════════════════════ */
+  @keyframes shimmer { 0%{background-position:-600px 0} 100%{background-position:600px 0} }
+  .skeleton {
+    background:linear-gradient(90deg,var(--surface2) 25%,var(--surface3) 50%,var(--surface2) 75%);
+    background-size:600px 100%; animation:shimmer 1.4s infinite; border-radius:4px;
+  }
 
-    table {
-      width: 100%;
-      border-collapse: collapse;
-      font-size: 13px;
-      min-width: 1080px;
-    }
+  /* ═══════════════════════════════════════════════════════
+     ANIMATIONS
+  ═══════════════════════════════════════════════════════ */
+  @keyframes spin    { from{transform:rotate(0deg)} to{transform:rotate(360deg)} }
+  @keyframes fadeUp  { from{opacity:0;transform:translateY(14px)} to{opacity:1;transform:translateY(0)} }
+  .fade-up   { animation:fadeUp .4s ease both; }
+  .fade-up-1 { animation-delay:.05s; }
+  .fade-up-2 { animation-delay:.10s; }
+  .fade-up-3 { animation-delay:.15s; }
 
-    th,
-    td {
-      padding: 8px 10px;
-      border: 1px solid #2a3547;
-      text-align: center;
-      white-space: nowrap;
-    }
+  /* ═══════════════════════════════════════════════════════
+     RESPONSIVE
+  ═══════════════════════════════════════════════════════ */
+  @media (max-width:1100px) { .summary-cards { grid-template-columns:repeat(2,1fr); } }
 
-    thead th {
-      position: sticky;
-      top: 0;
-      z-index: 2;
-      font-weight: 700;
-      color: #091426;
-    }
-
-    th.name-col,
-    td.name-col {
-      text-align: left;
-      min-width: 180px;
-      padding-left: 14px;
-    }
-
-    .hdr-blue { background: var(--blue-header); }
-    .cell-total { background: var(--total-green); font-weight: 700; }
-    .cell-done { background: var(--done-yellow); }
-    .cell-close { background: var(--close-pink); }
-    .cell-hold { background: var(--hold-gray); }
-    .cell-raw-total { background: var(--raw-total); font-weight: 700; }
-    .cell-rework { background: var(--rework-blue); }
-    .cell-other { background: var(--other-red); }
-    .name-row { background: #f8fbff; font-weight: 500; }
-    .total-row td { font-weight: 700; }
-
-    .empty-state {
-      padding: 18px;
-      text-align: center;
-      color: var(--muted);
-      font-size: 0.92rem;
-    }
-
-    @media (max-width: 900px) {
-      .page { padding: 12px; }
-      .toolbar { align-items: stretch; }
-      .toolbar-left,
-      .toolbar-right { width: 100%; }
-      .header { justify-content: flex-start; padding-left: 74px; }
-      .header img { left: 20px; }
-      .header h1 { font-size: 1.2rem; }
-    }
+  @media (max-width:960px) {
+    .sidebar { position:fixed; left:0; top:0; bottom:0; transform:translateX(-100%); z-index:200; }
+    .sidebar.open { transform:translateX(0); }
+    .sidebar-overlay { display:block; }
+    .menu-toggle { display:flex; }
+    .page-body { padding:16px; }
+    .topbar { padding:12px 16px; }
+  }
+  @media (max-width:640px) {
+    .summary-cards { grid-template-columns:1fr 1fr; }
+    .topbar-right { gap:8px; }
+    .date-group input[type="date"] { width:100px; }
+  }
+  @media (max-width:480px) {
+    .summary-cards { grid-template-columns:1fr; }
+  }
   </style>
 </head>
 <body>
-  <div class="page">
-    <header class="header">
-      <img src="https://d28ewddc5mocr5.cloudfront.net/images/logos-new/pp-logo-new.svg" alt="Petpooja logo">
-      <h1>Recipe and Raw Material Summary</h1>
-    </header>
 
-    <section class="toolbar">
-      <div class="toolbar-left">
-        <label for="fromDate">From</label>
-        <input type="date" id="fromDate">
-        <label for="toDate">To</label>
-        <input type="date" id="toDate">
+<div class="sidebar-overlay" id="sidebarOverlay" onclick="closeSidebar()"></div>
+
+<div class="layout">
+
+  <!-- ════════════════════════════════════
+       SIDEBAR
+  ════════════════════════════════════ -->
+  <aside class="sidebar" id="sidebar">
+    <div class="sidebar-logo">
+      <img src="https://d28ewddc5mocr5.cloudfront.net/images/logos-new/pp-logo-new.svg" alt="Petpooja">
+    </div>
+
+    <div class="sidebar-section">
+      <div class="sidebar-section-label">Overview</div>
+      <nav class="sidebar-nav">
+        <a class="nav-item" href="index.html">
+          <svg class="nav-icon" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/></svg>
+          Dashboard
+        </a>
+      </nav>
+    </div>
+
+    <div class="sidebar-section">
+      <div class="sidebar-section-label">Reports</div>
+      <nav class="sidebar-nav">
+        <a class="nav-item active" href="category-summary.html">
+          <svg class="nav-icon" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M16 8v8m-4-5v5m-4-2v2m-2 4h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
+          Quarter Performance
+        </a>
+        <a class="nav-item" href="kpi-report.html">
+          <svg class="nav-icon" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/></svg>
+          KPI Report
+        </a>
+      </nav>
+    </div>
+
+    <div class="sidebar-footer">
+      <div class="nav-item" style="cursor:default;gap:8px;">
+        <svg style="width:14px;height:14px;opacity:.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path stroke-linecap="round" stroke-linejoin="round" d="M12 8v4l3 3"/></svg>
+        <span style="font-size:11px;color:var(--text3)" id="sidebarTime">--:--</span>
       </div>
-      <div class="toolbar-right">
-        <button type="button" class="button" id="refreshButton">Refresh Now</button>
-        <a class="link-button" href="index.html">Back to Dashboard</a>
-        <div class="status-pill" id="refreshStatus">
-          <span class="status-dot"></span>
-          <span>Manual refresh mode</span>
+    </div>
+  </aside>
+
+  <!-- ════════════════════════════════════
+       MAIN
+  ════════════════════════════════════ -->
+  <div class="main">
+
+    <!-- TOPBAR -->
+    <header class="topbar">
+      <div class="topbar-left">
+        <button class="menu-toggle" onclick="toggleSidebar()" aria-label="Menu">
+          <svg width="18" height="18" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M4 6h16M4 12h16M4 18h16"/></svg>
+        </button>
+        <div>
+          <div class="page-title">Quarter Performance</div>
+          <div class="page-subtitle">Recipe &amp; Raw Material summary by employee</div>
         </div>
       </div>
-    </section>
-
-    <div class="error-banner" id="errorBanner"></div>
-
-    <section class="panel">
-      <div class="panel-header">
-        <h2>Employee-wise Recipe and Raw Material Status</h2>
-        <span class="panel-subtitle">Main sheet summary for the selected date range</span>
+      <div class="topbar-right">
+        <div class="date-group">
+          <label for="fromDate">From</label>
+          <input type="date" id="fromDate">
+        </div>
+        <div class="date-group">
+          <label for="toDate">To</label>
+          <input type="date" id="toDate">
+        </div>
+        <button class="btn btn-primary" id="refreshButton">
+          <svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>
+          Refresh
+        </button>
+        <div class="status-pill">
+          <span class="pulse-dot"></span>
+          <span id="statusText">Ready</span>
+        </div>
+        <button class="theme-toggle" onclick="toggleTheme()" title="Toggle theme">
+          <svg id="themeIcon" width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"/></svg>
+        </button>
       </div>
-      <div class="table-wrap">
-        <table>
-          <thead>
-            <tr>
-              <th class="hdr-blue name-col">Name</th>
-              <th class="hdr-blue">Total Recipes</th>
-              <th class="hdr-blue">Done</th>
-              <th class="hdr-blue">Close</th>
-              <th class="hdr-blue">Hold</th>
-              <th class="hdr-blue">Total Raw Material</th>
-              <th class="hdr-blue">Done</th>
-              <th class="hdr-blue">Close</th>
-              <th class="hdr-blue">Hold</th>
-              <th class="hdr-blue">Rework</th>
-              <th class="hdr-blue">Other</th>
-            </tr>
-          </thead>
-          <tbody id="summaryTable"></tbody>
-        </table>
-      </div>
-    </section>
+    </header>
 
-    <section class="panel">
-      <div class="panel-header">
-        <h2>Month-wise Category Chart</h2>
-        <span class="panel-subtitle">Dynamic for the selected date range</span>
+    <!-- PAGE BODY -->
+    <div class="page-body">
+
+      <!-- Error -->
+      <div class="error-banner" id="errorBanner">
+        <svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/></svg>
+        <span id="errorText"></span>
       </div>
-      <div class="chart-panel">
-        <div class="chart-shell">
-          <div class="chart-box">
-            <canvas id="monthChart"></canvas>
+
+      <!-- ── Summary KPI Cards ── -->
+      <div class="summary-cards fade-up">
+
+        <div class="sum-card fade-up fade-up-1">
+          <div class="sum-card-label">Total Employees</div>
+          <div class="sum-card-value" id="cTotalEmp">—</div>
+          <div class="sum-card-sub">In selected range</div>
+          <div class="sum-card-icon" style="background:rgba(59,130,246,.12);">
+            <svg width="18" height="18" fill="none" viewBox="0 0 24 24" stroke="#3b82f6" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
+          </div>
+        </div>
+
+        <div class="sum-card fade-up fade-up-1">
+          <div class="sum-card-label">Total Recipe Tasks</div>
+          <div class="sum-card-value" id="cTotalRecipe">—</div>
+          <div class="sum-card-sub" id="cRecipeDone">— done</div>
+          <div class="sum-card-icon" style="background:rgba(99,102,241,.12);">
+            <svg width="18" height="18" fill="none" viewBox="0 0 24 24" stroke="#818cf8" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M19.428 15.428a2 2 0 00-1.022-.547l-2.387-.477a6 6 0 00-3.86.517l-.318.158a6 6 0 01-3.86.517L6.05 15.21a2 2 0 00-1.806.547M8 4h8l-1 1v5.172a2 2 0 00.586 1.414l5 5c1.26 1.26.367 3.414-1.415 3.414H4.828c-1.782 0-2.674-2.154-1.414-3.414l5-5A2 2 0 009 10.172V5L8 4z"/></svg>
+          </div>
+        </div>
+
+        <div class="sum-card fade-up fade-up-2">
+          <div class="sum-card-label">Total Raw Material</div>
+          <div class="sum-card-value" id="cTotalRaw">—</div>
+          <div class="sum-card-sub" id="cRawDone">— done</div>
+          <div class="sum-card-icon" style="background:rgba(34,197,94,.12);">
+            <svg width="18" height="18" fill="none" viewBox="0 0 24 24" stroke="#22c55e" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M4 7v10c0 2.21 3.582 4 8 4s8-1.79 8-4V7M4 7c0 2.21 3.582 4 8 4s8-1.79 8-4M4 7c0-2.21 3.582-4 8-4s8 1.79 8 4"/></svg>
+          </div>
+        </div>
+
+        <div class="sum-card fade-up fade-up-2">
+          <div class="sum-card-label">Rework + Other</div>
+          <div class="sum-card-value" id="cTotalOther">—</div>
+          <div class="sum-card-sub" id="cOtherSub">rework + other tasks</div>
+          <div class="sum-card-icon" style="background:rgba(251,146,60,.12);">
+            <svg width="18" height="18" fill="none" viewBox="0 0 24 24" stroke="#fb923c" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- ── Summary Table ── -->
+      <div class="card section fade-up fade-up-2">
+        <div class="card-header">
+          <div class="card-header-left">
+            <div class="card-title">
+              <span class="card-title-dot" style="background:#3b82f6;"></span>
+              Employee-wise Recipe &amp; Raw Material Status
+            </div>
+            <div class="card-subtitle">Grouped by category and status for selected date range</div>
+          </div>
+          <span id="tableRowCount" style="font-size:12px;font-weight:600;color:var(--text3);">— employees</span>
+        </div>
+        <div class="table-container">
+          <table>
+            <thead>
+              <tr class="thead-group">
+                <th class="name-cell" rowspan="2" style="background:var(--table-head);color:rgba(255,255,255,.8);vertical-align:bottom;padding-bottom:10px;">Employee</th>
+                <th colspan="4" class="gh-recipe">Recipe &amp; Material</th>
+                <th colspan="4" class="gh-raw">Raw Material</th>
+                <th colspan="2" class="gh-other">Others</th>
+              </tr>
+              <tr class="thead-sub">
+                <!-- Recipe columns -->
+                <th>Total</th><th>Done</th><th>Close</th><th>Hold</th>
+                <!-- Raw columns -->
+                <th>Total</th><th>Done</th><th>Close</th><th>Hold</th>
+                <!-- Other columns -->
+                <th>Rework</th><th>Other</th>
+              </tr>
+            </thead>
+            <tbody id="summaryTable">
+              <tr><td colspan="11" class="empty-cell">Loading data…</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- ── Month-wise Chart ── -->
+      <div class="card section fade-up fade-up-3">
+        <div class="card-header">
+          <div class="card-header-left">
+            <div class="card-title">
+              <span class="card-title-dot" style="background:#fb923c;"></span>
+              Month-wise Category Chart
+            </div>
+            <div class="card-subtitle">Stacked volume trend for selected date range</div>
+          </div>
+        </div>
+        <div class="chart-wrap">
+          <div class="col-chart-shell">
+            <div class="chart-area">
+              <canvas id="monthChart"></canvas>
+            </div>
           </div>
         </div>
       </div>
-    </section>
-  </div>
 
-  <script>
-    const sheetURL = "https://docs.google.com/spreadsheets/d/1-VxbQ_IaRMKtDH--2JDeqvGFrb_Or3D0kG-mGLu7dG8/export?format=csv&gid=1747930222";
-    const SHEET_CACHE_KEY = "rr-summary-main-sheet-cache-v2";
-    const SHEET_CACHE_TTL_MS = 120000;
+    </div><!-- /page-body -->
+  </div><!-- /main -->
+</div><!-- /layout -->
 
-    const fromInput = document.getElementById("fromDate");
-    const toInput = document.getElementById("toDate");
-    const refreshButton = document.getElementById("refreshButton");
-    const refreshStatus = document.getElementById("refreshStatus");
-    const errorBanner = document.getElementById("errorBanner");
-    const summaryTable = document.getElementById("summaryTable");
-    const monthChartCanvas = document.getElementById("monthChart");
+<script>
+/* ══════════════════════════════════════════════════════
+   THEME / SIDEBAR / CLOCK
+══════════════════════════════════════════════════════ */
+function toggleTheme() {
+  const h = document.documentElement;
+  const d = h.getAttribute("data-theme") === "dark";
+  h.setAttribute("data-theme", d ? "light" : "dark");
+  document.getElementById("themeIcon").innerHTML = d
+    ? `<path stroke-linecap="round" stroke-linejoin="round" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z"/>`
+    : `<path stroke-linecap="round" stroke-linejoin="round" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"/>`;
+  // Rebuild chart with new theme colours
+  if (window._lastMonthData) renderMonthChart(window._lastMonthData);
+}
 
-    let isLoading = false;
-    let timer = null;
+function toggleSidebar()  { document.getElementById("sidebar").classList.toggle("open");  document.getElementById("sidebarOverlay").classList.toggle("open");  }
+function closeSidebar()   { document.getElementById("sidebar").classList.remove("open");   document.getElementById("sidebarOverlay").classList.remove("open");   }
 
-    function setRefreshStatus(message, isError = false) {
-      refreshStatus.innerHTML = `<span class="status-dot"></span><span>${message}</span>`;
-      refreshStatus.style.background = isError ? "rgba(239,68,68,0.12)" : "rgba(37,99,235,0.10)";
-      refreshStatus.style.color = isError ? "#b91c1c" : "#1d4ed8";
-    }
+const _spinStyle = document.createElement("style");
+_spinStyle.textContent = "@keyframes spin{from{transform:rotate(0deg)}to{transform:rotate(360deg)}}";
+document.head.appendChild(_spinStyle);
 
-    function setRefreshButtonState() {
-      refreshButton.disabled = isLoading;
-      refreshButton.textContent = isLoading ? "Refreshing..." : "Refresh Now";
-    }
+function tick() { document.getElementById("sidebarTime").textContent = new Date().toLocaleTimeString("en-IN",{hour:"2-digit",minute:"2-digit",second:"2-digit"}); }
+setInterval(tick, 1000); tick();
 
-    function showError(message) {
-      errorBanner.textContent = message;
-      errorBanner.style.display = "block";
-      setRefreshStatus("Refresh failed", true);
-    }
+/* ══════════════════════════════════════════════════════
+   CONFIG
+══════════════════════════════════════════════════════ */
+const SHEET_URL       = "https://docs.google.com/spreadsheets/d/1-VxbQ_IaRMKtDH--2JDeqvGFrb_Or3D0kG-mGLu7dG8/export?format=csv&gid=1747930222";
+const CACHE_KEY       = "pp-quarter-cache-v3";
+const CACHE_TTL_MS    = 120_000;
 
-    function clearError() {
-      errorBanner.style.display = "none";
-      errorBanner.textContent = "";
-    }
+/* ══════════════════════════════════════════════════════
+   STATE
+══════════════════════════════════════════════════════ */
+let isLoading = false;
+let debTimer  = null;
 
-    function readCachedSheet() {
-      try {
-        const raw = sessionStorage.getItem(SHEET_CACHE_KEY);
-        if (!raw) return null;
-        const cached = JSON.parse(raw);
-        if (!cached || !cached.csv || !cached.savedAt) return null;
-        if ((Date.now() - cached.savedAt) > SHEET_CACHE_TTL_MS) return null;
-        return cached.csv;
-      } catch {
-        return null;
-      }
-    }
+const fromInput     = document.getElementById("fromDate");
+const toInput       = document.getElementById("toDate");
+const refreshButton = document.getElementById("refreshButton");
+const statusText    = document.getElementById("statusText");
+const errorBanner   = document.getElementById("errorBanner");
+const summaryTbody  = document.getElementById("summaryTable");
 
-    function writeCachedSheet(csv) {
-      try {
-        sessionStorage.setItem(SHEET_CACHE_KEY, JSON.stringify({
-          csv,
-          savedAt: Date.now()
-        }));
-      } catch {
-        // Ignore storage quota and privacy-mode failures.
-      }
-    }
+/* ══════════════════════════════════════════════════════
+   UI HELPERS
+══════════════════════════════════════════════════════ */
+function setStatus(msg) { statusText.textContent = msg; }
+function showError(msg) {
+  document.getElementById("errorText").textContent = msg;
+  errorBanner.classList.add("visible");
+  setStatus("Error");
+}
+function clearError() { errorBanner.classList.remove("visible"); }
 
-    async function getSheetCsv(forceNetwork = false) {
-      if (!forceNetwork) {
-        const cachedCsv = readCachedSheet();
-        if (cachedCsv) return cachedCsv;
-      }
+function setBtnState() {
+  refreshButton.disabled = isLoading;
+  refreshButton.innerHTML = isLoading
+    ? `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="animation:spin 1s linear infinite"><path stroke-linecap="round" stroke-linejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg> Loading…`
+    : `<svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg> Refresh`;
+}
 
-      const response = await fetch(sheetURL, { cache: forceNetwork ? "no-cache" : "default" });
-      if (!response.ok) {
-        throw new Error(`Main sheet request failed with status ${response.status}`);
-      }
+function showSkeletons() {
+  const sk = `<tr>${Array(11).fill(`<td><div class="skeleton" style="height:11px;margin:auto;width:80%;"></div></td>`).join("")}</tr>`;
+  summaryTbody.innerHTML = Array(6).fill(sk).join("");
+  ["cTotalEmp","cTotalRecipe","cTotalRaw","cTotalOther"].forEach(id => { document.getElementById(id).textContent = "—"; });
+}
 
-      const csv = await response.text();
-      writeCachedSheet(csv);
-      return csv;
-    }
+function formatDate(d) {
+  return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,"0")}-${String(d.getDate()).padStart(2,"0")}`;
+}
 
-    function formatDate(date) {
-      const d = String(date.getDate()).padStart(2, "0");
-      const m = String(date.getMonth() + 1).padStart(2, "0");
-      const y = date.getFullYear();
-      return `${y}-${m}-${d}`;
-    }
+/* ══════════════════════════════════════════════════════
+   CACHE
+══════════════════════════════════════════════════════ */
+function readCache() {
+  try {
+    const raw = sessionStorage.getItem(CACHE_KEY);
+    if (!raw) return null;
+    const c = JSON.parse(raw);
+    if (!c?.csv || !c?.savedAt) return null;
+    if (Date.now() - c.savedAt > CACHE_TTL_MS) return null;
+    return c.csv;
+  } catch { return null; }
+}
+function writeCache(csv) {
+  try { sessionStorage.setItem(CACHE_KEY, JSON.stringify({ csv, savedAt: Date.now() })); } catch { /**/ }
+}
 
-    function normalizeName(name) {
-      return (name || "").toLowerCase().trim().replace(/\s+/g, " ");
-    }
+/* ══════════════════════════════════════════════════════
+   DATA HELPERS
+══════════════════════════════════════════════════════ */
+function normalizeName(n)  { return (n||"").toLowerCase().trim().replace(/\s+/g," "); }
+function toDisplayName(n)  { return normalizeName(n).split(" ").filter(Boolean).map(w=>w[0].toUpperCase()+w.slice(1)).join(" "); }
 
-    function toDisplayName(name) {
-      return normalizeName(name)
-        .split(" ")
-        .filter(Boolean)
-        .map(word => word.charAt(0).toUpperCase() + word.slice(1))
-        .join(" ");
-    }
+function normalizeRelated(v) {
+  const r = (v||"").toLowerCase().trim();
+  if (r==="recipe & material") return "recipe";
+  if (r==="raw material")      return "raw";
+  if (r==="rework")            return "rework";
+  return "other";
+}
+function normalizeStatus(v) { return (v||"").toLowerCase().trim().replace(/\s+/g," "); }
 
-    function parseCSV(text) {
-      const rows = [];
-      let row = [];
-      let current = "";
-      let insideQuotes = false;
+function parseCSV(text) {
+  const rows=[]; let row=[],cur="",inQ=false;
+  for(let i=0;i<text.length;i++){
+    const c=text[i],nc=text[i+1];
+    if(c==='"'){ inQ&&nc==='"'?(cur+='"',i++):(inQ=!inQ); }
+    else if(c===","&&!inQ){ row.push(cur);cur=""; }
+    else if((c==="\n"||c==="\r")&&!inQ){
+      if(c==="\r"&&nc==="\n")i++;
+      row.push(cur);
+      if(row.some(x=>x.trim()!==""))rows.push(row);
+      row=[];cur="";
+    } else cur+=c;
+  }
+  if(cur!==""||row.length){ row.push(cur); if(row.some(x=>x.trim()!==""))rows.push(row); }
+  return rows;
+}
 
-      for (let i = 0; i < text.length; i += 1) {
-        const char = text[i];
-        const nextChar = text[i + 1];
+/* ══════════════════════════════════════════════════════
+   RENDER: SUMMARY TABLE
+══════════════════════════════════════════════════════ */
+function renderTable(summary) {
+  const names = Object.keys(summary).sort();
+  document.getElementById("tableRowCount").textContent = `${names.length} employee${names.length!==1?"s":""}`;
 
-        if (char === '"') {
-          if (insideQuotes && nextChar === '"') {
-            current += '"';
-            i += 1;
-          } else {
-            insideQuotes = !insideQuotes;
-          }
-        } else if (char === "," && !insideQuotes) {
-          row.push(current);
-          current = "";
-        } else if ((char === "\n" || char === "\r") && !insideQuotes) {
-          if (char === "\r" && nextChar === "\n") {
-            i += 1;
-          }
-          row.push(current);
-          if (row.some(cell => cell.trim() !== "")) {
-            rows.push(row);
-          }
-          row = [];
-          current = "";
-        } else {
-          current += char;
-        }
-      }
+  if(!names.length){
+    summaryTbody.innerHTML = `<tr><td colspan="11" class="empty-cell">No records found for the selected date range.</td></tr>`;
+    return;
+  }
 
-      if (current !== "" || row.length) {
-        row.push(current);
-        if (row.some(cell => cell.trim() !== "")) {
-          rows.push(row);
-        }
-      }
+  // Accumulate totals
+  const totals = { recipe:{total:0,done:0,close:0,hold:0}, raw:{total:0,done:0,close:0,hold:0}, rework:0, other:0 };
+  const frag = document.createDocumentFragment();
 
-      return rows;
-    }
+  names.forEach(name => {
+    const d = summary[name];
+    totals.recipe.total += d.recipe.total; totals.recipe.done  += d.recipe.done;
+    totals.recipe.close += d.recipe.close; totals.recipe.hold  += d.recipe.hold;
+    totals.raw.total    += d.raw.total;    totals.raw.done     += d.raw.done;
+    totals.raw.close    += d.raw.close;    totals.raw.hold     += d.raw.hold;
+    totals.rework       += d.rework;       totals.other        += d.other;
 
-    function normalizeRelated(value) {
-      const related = (value || "").toLowerCase().trim();
-      if (related === "recipe & material") return "recipe";
-      if (related === "raw material") return "raw";
-      if (related === "rework") return "rework";
-      return "other";
-    }
+    const tr = document.createElement("tr");
+    tr.innerHTML = `
+      <td class="name-cell" style="font-weight:600;">${name}</td>
+      <td class="c-recipe">${d.recipe.total}</td>
+      <td class="c-done">${d.recipe.done}</td>
+      <td class="c-close">${d.recipe.close}</td>
+      <td class="c-hold">${d.recipe.hold}</td>
+      <td class="c-raw">${d.raw.total}</td>
+      <td class="c-done">${d.raw.done}</td>
+      <td class="c-close">${d.raw.close}</td>
+      <td class="c-hold">${d.raw.hold}</td>
+      <td class="c-rework">${d.rework}</td>
+      <td class="c-other">${d.other}</td>`;
+    frag.appendChild(tr);
+  });
 
-    function normalizeStatus(value) {
-      return (value || "").toLowerCase().trim().replace(/\s+/g, " ");
-    }
+  // Total row
+  const totalTr = document.createElement("tr");
+  totalTr.className = "total-row";
+  totalTr.innerHTML = `
+    <td class="name-cell">Σ Total</td>
+    <td>${totals.recipe.total}</td><td>${totals.recipe.done}</td>
+    <td>${totals.recipe.close}</td><td>${totals.recipe.hold}</td>
+    <td>${totals.raw.total}</td><td>${totals.raw.done}</td>
+    <td>${totals.raw.close}</td><td>${totals.raw.hold}</td>
+    <td>${totals.rework}</td><td>${totals.other}</td>`;
+  frag.appendChild(totalTr);
 
-    function isDone(status) {
-      return status.includes("done");
-    }
+  summaryTbody.innerHTML = "";
+  summaryTbody.appendChild(frag);
 
-    function isClose(status) {
-      return status.includes("close");
-    }
+  // Update KPI cards
+  document.getElementById("cTotalEmp").textContent     = names.length;
+  document.getElementById("cTotalRecipe").textContent  = totals.recipe.total;
+  document.getElementById("cRecipeDone").textContent   = `${totals.recipe.done} done`;
+  document.getElementById("cTotalRaw").textContent     = totals.raw.total;
+  document.getElementById("cRawDone").textContent      = `${totals.raw.done} done`;
+  document.getElementById("cTotalOther").textContent   = totals.rework + totals.other;
+  document.getElementById("cOtherSub").textContent     = `${totals.rework} rework · ${totals.other} other`;
+}
 
-    function isHold(status) {
-      return status.includes("hold");
-    }
+/* ══════════════════════════════════════════════════════
+   RENDER: MONTH CHART  (modern gradient column)
+══════════════════════════════════════════════════════ */
+function renderMonthChart(monthData) {
+  window._lastMonthData = monthData;   // store for theme toggle re-render
+  const ctx = document.getElementById("monthChart").getContext("2d");
+  const months = Object.keys(monthData).sort((a,b)=>{
+    const [ya,ma]=a.split("-").map(Number);
+    const [yb,mb]=b.split("-").map(Number);
+    return new Date(ya,ma-1,1)-new Date(yb,mb-1,1);
+  });
+  if (window.summaryChart) { window.summaryChart.destroy(); window.summaryChart=null; }
 
-    function debounceLoad() {
-      clearTimeout(timer);
-      timer = setTimeout(() => {
-        loadTable();
-      }, 350);
-    }
+  if(!months.length){
+    window.summaryChart = new Chart(ctx,{type:"bar",data:{labels:["No Data"],datasets:[{label:"No Data",data:[0],backgroundColor:"#334155"}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}}}});
+    return;
+  }
 
-    function renderTable(summary) {
-      const names = Object.keys(summary).sort();
-      if (!names.length) {
-        summaryTable.innerHTML = `<tr><td colspan="11" class="empty-state">No records found for the selected date range.</td></tr>`;
-        return;
-      }
+  const isDark  = document.documentElement.getAttribute("data-theme")==="dark";
+  const gridC   = isDark ? "rgba(255,255,255,0.06)" : "rgba(0,0,0,0.05)";
+  const tickC   = isDark ? "rgba(200,210,230,0.8)"  : "#64748b";
+  const legendC = isDark ? "rgba(200,210,230,0.85)" : "#475569";
+  const labels  = months.map(mk=>{const[y,m]=mk.split("-");return new Date(y,m-1).toLocaleString("en-US",{month:"short"});});
 
-      const html = names.map(name => {
-        const item = summary[name];
-        return `
-          <tr>
-            <td class="name-col name-row">${name}</td>
-            <td class="cell-total">${item.recipe.total}</td>
-            <td class="cell-done">${item.recipe.done}</td>
-            <td class="cell-close">${item.recipe.close}</td>
-            <td class="cell-hold">${item.recipe.hold}</td>
-            <td class="cell-raw-total">${item.raw.total}</td>
-            <td class="cell-done">${item.raw.done}</td>
-            <td class="cell-close">${item.raw.close}</td>
-            <td class="cell-hold">${item.raw.hold}</td>
-            <td class="cell-rework">${item.rework}</td>
-            <td class="cell-other">${item.other}</td>
-          </tr>
-        `;
-      }).join("");
+  function colGrad(ctx, top, bot) {
+    const g = ctx.createLinearGradient(0,0,0,280);
+    g.addColorStop(0,top); g.addColorStop(1,bot); return g;
+  }
 
-      summaryTable.innerHTML = html;
-    }
+  const cats = [
+    {key:"recipe",label:"Recipe & Material",top:"rgba(99,102,241,0.95)",  bot:"rgba(67,56,202,0.75)"},
+    {key:"raw",   label:"Raw Material",      top:"rgba(34,197,94,0.90)",   bot:"rgba(22,101,52,0.70)"},
+    {key:"rework",label:"Rework",            top:"rgba(251,146,60,0.90)",  bot:"rgba(180,65,0,0.70)"},
+    {key:"other", label:"Other",             top:"rgba(239,68,68,0.85)",   bot:"rgba(153,27,27,0.65)"},
+  ];
 
-    function renderMonthChart(monthData) {
-      const ctx = monthChartCanvas.getContext("2d");
-      const months = Object.keys(monthData).sort((a, b) => {
-        const [yearA, monthA] = a.split("-").map(Number);
-        const [yearB, monthB] = b.split("-").map(Number);
-        return new Date(yearA, monthA - 1, 1) - new Date(yearB, monthB - 1, 1);
-      });
-
-      const totalValuePlugin = {
-        id: "totalValuePlugin",
-        afterDatasetsDraw(chart) {
-          const { ctx: chartCtx, scales } = chart;
-          const xScale = scales.x;
-          const yScale = scales.y;
-          const totals = chart.data.labels.map((_, index) => {
-            return chart.data.datasets.reduce((sum, dataset) => {
-              return sum + (Number(dataset.data[index]) || 0);
-            }, 0);
-          });
-
-          chartCtx.save();
-          chartCtx.fillStyle = "#f8fafc";
-          chartCtx.font = "600 11px Poppins";
-          chartCtx.textAlign = "center";
-          chartCtx.textBaseline = "bottom";
-
-          totals.forEach((total, index) => {
-            if (!total) return;
-            const x = xScale.getPixelForValue(index);
-            const y = yScale.getPixelForValue(total) - 6;
-            chartCtx.fillText(String(total), x, y);
-          });
-
-          chartCtx.restore();
-        }
-      };
-
-      if (window.summaryMonthChart) {
-        window.summaryMonthChart.destroy();
-      }
-
-      if (!months.length) {
-        window.summaryMonthChart = new Chart(ctx, {
-          type: "bar",
-          data: {
-            labels: ["No Data"],
-            datasets: [{
-              label: "No Data",
-              data: [0],
-              backgroundColor: "#cbd5e1"
-            }]
-          },
-          options: {
-            responsive: true,
-            maintainAspectRatio: false,
-            plugins: { legend: { display: false } },
-            scales: {
-              y: { beginAtZero: true, ticks: { color: "#dbeafe" }, grid: { color: "rgba(148, 163, 184, 0.14)" } },
-              x: { ticks: { color: "#f8fafc" }, grid: { display: false } }
-            }
-          }
-        });
-        return;
-      }
-
-      const labels = months.map(monthKey => {
-        const [year, month] = monthKey.split("-").map(Number);
-        return new Date(year, month - 1, 1).toLocaleString("en-US", { month: "long" });
-      });
-
-      window.summaryMonthChart = new Chart(ctx, {
-        type: "bar",
-        data: {
-          labels,
-          datasets: [
-            {
-              label: "Raw Material",
-              data: months.map(month => monthData[month].raw || 0),
-              backgroundColor: "rgba(59, 130, 246, 0.86)",
-              borderColor: "#93c5fd",
-              borderWidth: 1,
-              borderRadius: 10,
-              borderSkipped: false
-            },
-            {
-              label: "Recipe & Material",
-              data: months.map(month => monthData[month].recipe || 0),
-              backgroundColor: "rgba(251, 146, 60, 0.88)",
-              borderColor: "#fdba74",
-              borderWidth: 1,
-              borderRadius: 10,
-              borderSkipped: false
-            },
-            {
-              label: "Other",
-              data: months.map(month => monthData[month].other || 0),
-              backgroundColor: "rgba(217, 70, 239, 0.82)",
-              borderColor: "#e9a8f2",
-              borderWidth: 1,
-              borderRadius: 10,
-              borderSkipped: false
-            },
-            {
-              label: "Rework",
-              data: months.map(month => monthData[month].rework || 0),
-              backgroundColor: "rgba(45, 212, 191, 0.84)",
-              borderColor: "#99f6e4",
-              borderWidth: 1,
-              borderRadius: 10,
-              borderSkipped: false
-            }
-          ]
-        },
-        options: {
-          responsive: true,
-          maintainAspectRatio: false,
-          animation: { duration: 260 },
-          layout: {
-            padding: { top: 28, right: 14, left: 8, bottom: 0 }
-          },
-          plugins: {
-            legend: {
-              position: "top",
-              labels: {
-                color: "#f8fafc",
-                usePointStyle: true,
-                pointStyle: "rectRounded",
-                boxWidth: 10,
-                padding: 16,
-                font: { weight: "600" }
-              }
-            },
-            tooltip: {
-              backgroundColor: "rgba(15, 23, 42, 0.94)",
-              titleColor: "#f8fafc",
-              bodyColor: "#dbeafe",
-              borderColor: "rgba(148, 163, 184, 0.28)",
-              borderWidth: 1,
-              padding: 12
-            }
-          },
-          scales: {
-            x: {
-              stacked: true,
-              ticks: { color: "#f8fafc", font: { weight: "600" } },
-              grid: { display: false, drawBorder: false }
-            },
-            y: {
-              stacked: true,
-              beginAtZero: true,
-              ticks: { color: "rgba(226, 232, 240, 0.78)", precision: 0 },
-              grid: { color: "rgba(148, 163, 184, 0.14)", drawBorder: false }
+  window.summaryChart = new Chart(ctx,{
+    type:"bar",
+    data:{
+      labels,
+      datasets: cats.map(c=>({
+        label:c.label,
+        data:months.map(m=>monthData[m][c.key]||0),
+        backgroundColor:colGrad(ctx,c.top,c.bot),
+        borderColor:c.top,
+        borderWidth:0,
+        borderRadius:{topLeft:6,topRight:6},
+        borderSkipped:false,
+        hoverBackgroundColor:c.top,
+        barPercentage:0.72,
+        categoryPercentage:0.78,
+      }))
+    },
+    options:{
+      responsive:true, maintainAspectRatio:false,
+      animation:{duration:550,easing:"easeOutQuart"},
+      interaction:{mode:"index",intersect:false},
+      layout:{padding:{top:10,right:8,left:4,bottom:0}},
+      plugins:{
+        legend:{position:"top",align:"start",labels:{color:legendC,usePointStyle:true,pointStyle:"rectRounded",boxWidth:10,padding:16,font:{weight:"600",size:11}}},
+        tooltip:{
+          backgroundColor:isDark?"rgba(6,11,20,0.97)":"rgba(255,255,255,0.97)",
+          titleColor:isDark?"#e2e8f0":"#0f172a",
+          bodyColor:isDark?"#94a3b8":"#475569",
+          borderColor:isDark?"rgba(255,255,255,0.09)":"rgba(0,0,0,0.08)",
+          borderWidth:1, padding:12, cornerRadius:10, boxPadding:5,
+          callbacks:{
+            title:items=>`📅 ${items[0].label}`,
+            label:item=>{
+              const tot=cats.reduce((s,_,i)=>s+(item.chart.data.datasets[i].data[item.dataIndex]||0),0);
+              const pct=tot>0?` (${((item.parsed.y/tot)*100).toFixed(0)}%)`:"";
+              return `  ${item.dataset.label}: ${item.parsed.y}${pct}`;
             }
           }
         },
-        plugins: [totalValuePlugin]
-      });
+        datalabels:{display:false}
+      },
+      scales:{
+        x:{grid:{display:false,drawBorder:false},ticks:{color:tickC,font:{weight:"600",size:11}}},
+        y:{beginAtZero:true,grid:{color:gridC,drawBorder:false},ticks:{color:tickC,font:{size:11},precision:0}}
+      }
+    }
+  });
+}
+
+/* ══════════════════════════════════════════════════════
+   MAIN LOAD
+══════════════════════════════════════════════════════ */
+async function loadTable(opts={}) {
+  if(isLoading) return;
+  if(!fromInput.value||!toInput.value) return;
+  isLoading=true; setBtnState(); setStatus("Loading…"); clearError();
+  showSkeletons();
+
+  try {
+    const [fy,fm,fd]=fromInput.value.split("-");
+    const from=new Date(fy,fm-1,fd);
+    const [ty,tm,td]=toInput.value.split("-");
+    const to=new Date(ty,tm-1,td); to.setHours(23,59,59,999);
+
+    // Cache logic
+    let csv = opts.forceNetwork ? null : readCache();
+    if(!csv){
+      const res = await fetch(SHEET_URL,{cache:opts.forceNetwork?"no-cache":"default"});
+      if(!res.ok) throw new Error(`Sheet fetch failed: ${res.status}`);
+      csv = await res.text();
+      writeCache(csv);
     }
 
-    async function loadTable(options = {}) {
-      if (isLoading) return;
-      if (!fromInput.value || !toInput.value) return;
+    const rows    = parseCSV(csv);
+    const headers = (rows[0]||[]).map(h=>h.trim().toLowerCase());
+    const idx     = {
+      date:     headers.indexOf("assign date"),
+      related:  headers.indexOf("related to"),
+      assigned: headers.indexOf("assigned"),
+      status:   headers.indexOf("status"),
+    };
+    if([idx.date,idx.related,idx.assigned,idx.status].some(i=>i===-1))
+      throw new Error("Missing required columns (Assign Date / Related To / Assigned / Status).");
 
-      isLoading = true;
-      setRefreshButtonState();
-      setRefreshStatus("Refreshing...");
+    const summary   = {};
+    const monthData = {};
+    const len = rows.length;
 
-      try {
-        clearError();
+    for(let i=1;i<len;i++){
+      const row=rows[i];
+      const rawDt=row[idx.date]; if(!rawDt) continue;
+      const parts=rawDt.split("/"); if(parts.length!==3) continue;
+      const date=new Date(parts[2],parts[1]-1,parts[0]); if(isNaN(date.getTime())) continue;
+      if(date<from||date>to) continue;
 
-        const fromParts = fromInput.value.split("-");
-        const toParts = toInput.value.split("-");
-        const from = new Date(fromParts[0], fromParts[1] - 1, fromParts[2]);
-        const to = new Date(toParts[0], toParts[1] - 1, toParts[2]);
-        to.setHours(23, 59, 59, 999);
+      const nname=normalizeName(row[idx.assigned]); if(!nname) continue;
+      const name=toDisplayName(nname);
+      const related=normalizeRelated(row[idx.related]);
+      const status=normalizeStatus(row[idx.status]);
+      const monthKey=`${date.getFullYear()}-${String(date.getMonth()+1).padStart(2,"0")}`;
 
-        const csv = await getSheetCsv(Boolean(options.forceNetwork));
-        const rows = parseCSV(csv);
-        const headers = (rows[0] || []).map(header => header.trim().toLowerCase());
+      if(!summary[name]) summary[name]={recipe:{total:0,done:0,close:0,hold:0},raw:{total:0,done:0,close:0,hold:0},rework:0,other:0};
+      if(!monthData[monthKey]) monthData[monthKey]={recipe:0,raw:0,rework:0,other:0};
 
-        const dateIndex = headers.indexOf("assign date");
-        const relatedIndex = headers.indexOf("related to");
-        const assignedIndex = headers.indexOf("assigned");
-        const statusIndex = headers.indexOf("status");
-
-        if ([dateIndex, relatedIndex, assignedIndex, statusIndex].some(index => index === -1)) {
-          throw new Error("One or more required columns are missing in the main sheet.");
-        }
-
-        const summary = {};
-        const monthData = {};
-
-        rows.slice(1).forEach(row => {
-          const rawDate = row[dateIndex];
-          if (!rawDate) return;
-
-          const parts = rawDate.split("/");
-          if (parts.length !== 3) return;
-
-          const date = new Date(parts[2], parts[1] - 1, parts[0]);
-          if (Number.isNaN(date.getTime())) return;
-          if (date < from || date > to) return;
-
-          const normalizedEmployee = normalizeName(row[assignedIndex]);
-          if (!normalizedEmployee) return;
-
-          const name = toDisplayName(normalizedEmployee);
-          const related = normalizeRelated(row[relatedIndex]);
-          const status = normalizeStatus(row[statusIndex]);
-          const monthKey = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}`;
-
-          if (!summary[name]) {
-            summary[name] = {
-              recipe: { total: 0, done: 0, close: 0, hold: 0 },
-              raw: { total: 0, done: 0, close: 0, hold: 0 },
-              rework: 0,
-              other: 0
-            };
-          }
-
-          if (!monthData[monthKey]) {
-            monthData[monthKey] = { recipe: 0, raw: 0, rework: 0, other: 0 };
-          }
-
-          if (related === "recipe") {
-            summary[name].recipe.total += 1;
-            monthData[monthKey].recipe += 1;
-            if (isDone(status)) summary[name].recipe.done += 1;
-            else if (isClose(status)) summary[name].recipe.close += 1;
-            else if (isHold(status)) summary[name].recipe.hold += 1;
-          } else if (related === "raw") {
-            summary[name].raw.total += 1;
-            monthData[monthKey].raw += 1;
-            if (isDone(status)) summary[name].raw.done += 1;
-            else if (isClose(status)) summary[name].raw.close += 1;
-            else if (isHold(status)) summary[name].raw.hold += 1;
-          } else if (related === "rework") {
-            summary[name].rework += 1;
-            monthData[monthKey].rework += 1;
-          } else {
-            summary[name].other += 1;
-            monthData[monthKey].other += 1;
-          }
-        });
-
-        renderTable(summary);
-        renderMonthChart(monthData);
-        setRefreshStatus(`Updated • ${new Date().toLocaleTimeString()}`);
-      } catch (error) {
-        console.error(error);
-        showError(error.message || "Unable to load summary table.");
-      } finally {
-        isLoading = false;
-        setRefreshButtonState();
+      if(related==="recipe"){
+        summary[name].recipe.total++; monthData[monthKey].recipe++;
+        if(status.includes("done"))  summary[name].recipe.done++;
+        else if(status.includes("close")) summary[name].recipe.close++;
+        else if(status.includes("hold"))  summary[name].recipe.hold++;
+      } else if(related==="raw"){
+        summary[name].raw.total++; monthData[monthKey].raw++;
+        if(status.includes("done"))  summary[name].raw.done++;
+        else if(status.includes("close")) summary[name].raw.close++;
+        else if(status.includes("hold"))  summary[name].raw.hold++;
+      } else if(related==="rework"){
+        summary[name].rework++; monthData[monthKey].rework++;
+      } else {
+        summary[name].other++; monthData[monthKey].other++;
       }
     }
 
-    fromInput.addEventListener("change", debounceLoad);
-    toInput.addEventListener("change", debounceLoad);
-    refreshButton.addEventListener("click", () => loadTable({ forceNetwork: true }));
+    renderTable(summary);
 
-    window.addEventListener("load", () => {
-      const today = new Date();
-      const firstDay = new Date(today.getFullYear(), today.getMonth(), 1);
-      fromInput.value = formatDate(firstDay);
-      toInput.value = formatDate(today);
-      setRefreshButtonState();
-      loadTable();
-    });
-  </script>
+    // Defer chart — non-critical
+    if(typeof requestIdleCallback==="function")
+      requestIdleCallback(()=>renderMonthChart(monthData),{timeout:1200});
+    else setTimeout(()=>renderMonthChart(monthData),0);
+
+    setStatus(`Updated · ${new Date().toLocaleTimeString()}`);
+
+  } catch(e) {
+    console.error(e);
+    showError(e.message||"Unable to load Quarter Performance data.");
+  } finally {
+    isLoading=false; setBtnState();
+  }
+}
+
+/* ══════════════════════════════════════════════════════
+   EVENTS & INIT
+══════════════════════════════════════════════════════ */
+refreshButton.addEventListener("click", ()=>loadTable({forceNetwork:true}));
+
+function debounceLoad() {
+  clearTimeout(debTimer);
+  debTimer = setTimeout(()=>loadTable({forceNetwork:false}), 350);
+}
+fromInput.addEventListener("change", debounceLoad);
+toInput.addEventListener("change", debounceLoad);
+
+window.addEventListener("load", ()=>{
+  const today=new Date(), first=new Date(today.getFullYear(),today.getMonth(),1);
+  fromInput.value=formatDate(first);
+  toInput.value=formatDate(today);
+  setBtnState();
+  loadTable();
+});
+</script>
 </body>
 </html>
