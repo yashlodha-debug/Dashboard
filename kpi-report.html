@@ -1,0 +1,1281 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>KPI Report — Petpooja</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;1,9..40,400&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <style>
+  /* ══════════════════════════════════════════════════════
+     DESIGN TOKENS  (identical to dashboard.html)
+  ══════════════════════════════════════════════════════ */
+  :root {
+    --font:       "DM Sans", system-ui, sans-serif;
+    --font-mono:  "DM Mono", monospace;
+    --radius-sm:  10px;
+    --radius:     16px;
+    --radius-lg:  24px;
+    --transition: 0.22s cubic-bezier(0.4,0,0.2,1);
+    --c-done:    #22c55e;
+    --c-working: #f59e0b;
+    --c-pending: #ef4444;
+    --daily-target: 2;          /* tasks / day — adjust as needed */
+  }
+
+  /* ── DARK ── */
+  [data-theme="dark"] {
+    --bg:               #080d14;
+    --bg2:              #0d1421;
+    --surface:          #141c2b;
+    --surface2:         #1a2336;
+    --surface3:         #1f2d42;
+    --border:           rgba(255,255,255,0.07);
+    --border2:          rgba(255,255,255,0.12);
+    --text:             #f1f5f9;
+    --text2:            #94a3b8;
+    --text3:            #64748b;
+    --accent:           #3b82f6;
+    --accent2:          #1d4ed8;
+    --accent-glow:      rgba(59,130,246,0.25);
+    --card-shadow:      0 1px 3px rgba(0,0,0,0.5), 0 8px 24px rgba(0,0,0,0.35);
+    --header-bg:        rgba(8,13,20,0.88);
+    --table-head:       #0d1421;
+    --table-alt:        rgba(255,255,255,0.025);
+    --table-hover:      rgba(59,130,246,0.07);
+    --scrollbar-track:  #141c2b;
+    --scrollbar-thumb:  #2d3f5a;
+    --input-bg:         #0d1421;
+    --kpi-green-bg:     rgba(34,197,94,0.10);
+    --kpi-yellow-bg:    rgba(245,158,11,0.10);
+    --kpi-red-bg:       rgba(239,68,68,0.10);
+  }
+
+  /* ── LIGHT ── */
+  [data-theme="light"] {
+    --bg:               #f0f4f8;
+    --bg2:              #e8eef5;
+    --surface:          #ffffff;
+    --surface2:         #f8fafc;
+    --surface3:         #f1f5f9;
+    --border:           rgba(0,0,0,0.07);
+    --border2:          rgba(0,0,0,0.12);
+    --text:             #0f172a;
+    --text2:            #475569;
+    --text3:            #94a3b8;
+    --accent:           #2563eb;
+    --accent2:          #1d4ed8;
+    --accent-glow:      rgba(37,99,235,0.15);
+    --card-shadow:      0 1px 3px rgba(0,0,0,0.08), 0 8px 24px rgba(0,0,0,0.06);
+    --header-bg:        rgba(240,244,248,0.92);
+    --table-head:       #1e293b;
+    --table-alt:        rgba(0,0,0,0.02);
+    --table-hover:      rgba(37,99,235,0.05);
+    --scrollbar-track:  #f1f5f9;
+    --scrollbar-thumb:  #cbd5e1;
+    --input-bg:         #ffffff;
+    --kpi-green-bg:     rgba(22,163,74,0.08);
+    --kpi-yellow-bg:    rgba(234,179,8,0.08);
+    --kpi-red-bg:       rgba(239,68,68,0.08);
+  }
+
+  /* ══════════════════════════════════════════════════════
+     RESET & BASE
+  ══════════════════════════════════════════════════════ */
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  html { scroll-behavior: smooth; }
+  body {
+    font-family: var(--font);
+    font-size: 14px;
+    line-height: 1.5;
+    color: var(--text);
+    background: var(--bg);
+    min-height: 100vh;
+    overflow-x: hidden;
+    transition: background var(--transition), color var(--transition);
+  }
+  a { color: inherit; text-decoration: none; }
+  ::-webkit-scrollbar { width: 6px; height: 6px; }
+  ::-webkit-scrollbar-track  { background: var(--scrollbar-track); }
+  ::-webkit-scrollbar-thumb  { background: var(--scrollbar-thumb); border-radius: 99px; }
+
+  /* noise overlay */
+  body::before {
+    content:""; position:fixed; inset:0; pointer-events:none; z-index:0;
+    opacity:.025;
+    background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+    background-repeat:repeat; background-size:128px;
+  }
+
+  /* ══════════════════════════════════════════════════════
+     LAYOUT
+  ══════════════════════════════════════════════════════ */
+  .layout { display:flex; min-height:100vh; position:relative; z-index:1; }
+
+  /* ── SIDEBAR ── */
+  .sidebar {
+    width:240px; min-height:100vh;
+    background:var(--surface); border-right:1px solid var(--border);
+    display:flex; flex-direction:column;
+    position:sticky; top:0; height:100vh; overflow-y:auto;
+    flex-shrink:0; z-index:100;
+    transition:transform var(--transition), background var(--transition);
+  }
+  .sidebar-logo {
+    display:flex; align-items:center; gap:10px;
+    padding:22px 20px 18px; border-bottom:1px solid var(--border);
+  }
+  .sidebar-logo img { height:28px; filter:brightness(1.1); }
+  .sidebar-logo-label { font-size:11px; font-weight:600; color:var(--text3); text-transform:uppercase; letter-spacing:.08em; }
+  .sidebar-section { padding:16px 12px 8px; }
+  .sidebar-section-label { font-size:10px; font-weight:700; letter-spacing:.1em; text-transform:uppercase; color:var(--text3); padding:0 8px; margin-bottom:6px; }
+  .sidebar-nav { display:flex; flex-direction:column; gap:2px; }
+  .nav-item {
+    display:flex; align-items:center; gap:10px;
+    padding:9px 10px; border-radius:var(--radius-sm);
+    color:var(--text2); font-weight:500; font-size:13.5px;
+    cursor:pointer; transition:all var(--transition); border:1px solid transparent;
+  }
+  .nav-item:hover { background:var(--surface2); color:var(--text); border-color:var(--border); }
+  .nav-item.active {
+    background:linear-gradient(135deg,rgba(59,130,246,.15),rgba(29,78,216,.1));
+    color:var(--accent); border-color:rgba(59,130,246,.2); font-weight:600;
+  }
+  .nav-icon { width:18px; height:18px; flex-shrink:0; opacity:.8; }
+  .nav-badge { margin-left:auto; background:var(--accent); color:#fff; font-size:10px; font-weight:700; padding:1px 6px; border-radius:99px; }
+  .sidebar-footer { margin-top:auto; padding:14px 12px; border-top:1px solid var(--border); }
+  .sidebar-overlay {
+    display:none; position:fixed; inset:0;
+    background:rgba(0,0,0,.55); z-index:99;
+    backdrop-filter:blur(2px); opacity:0; pointer-events:none;
+    transition:opacity var(--transition);
+  }
+  .sidebar-overlay.open { opacity:1; pointer-events:auto; }
+
+  /* ── MAIN ── */
+  .main { flex:1; min-width:0; display:flex; flex-direction:column; }
+
+  /* ── TOPBAR ── */
+  .topbar {
+    position:sticky; top:0; z-index:50;
+    display:flex; align-items:center; justify-content:space-between; gap:16px;
+    padding:14px 28px;
+    background:var(--header-bg);
+    backdrop-filter:blur(16px) saturate(180%);
+    -webkit-backdrop-filter:blur(16px) saturate(180%);
+    border-bottom:1px solid var(--border);
+    transition:background var(--transition);
+  }
+  .topbar-left  { display:flex; align-items:center; gap:16px; }
+  .topbar-right { display:flex; align-items:center; gap:10px; flex-wrap:wrap; }
+  .page-title    { font-size:17px; font-weight:700; color:var(--text); }
+  .page-subtitle { font-size:12px; color:var(--text3); margin-top:1px; }
+  .menu-toggle {
+    display:none; align-items:center; justify-content:center;
+    width:38px; height:38px; border-radius:var(--radius-sm);
+    border:1px solid var(--border); background:var(--surface2);
+    cursor:pointer; transition:all var(--transition); color:var(--text2);
+  }
+  .menu-toggle:hover { background:var(--surface3); color:var(--text); }
+
+  /* ── BUTTONS ── */
+  .btn {
+    display:inline-flex; align-items:center; justify-content:center; gap:6px;
+    height:38px; padding:0 16px; border-radius:var(--radius-sm);
+    font-family:var(--font); font-size:13px; font-weight:600;
+    cursor:pointer; transition:all var(--transition);
+    white-space:nowrap; border:1px solid transparent;
+  }
+  .btn-primary { background:var(--accent); color:#fff; }
+  .btn-primary:hover { background:var(--accent2); box-shadow:0 0 0 4px var(--accent-glow); }
+  .btn-primary:disabled { opacity:.55; cursor:wait; box-shadow:none; }
+  .btn-ghost { background:var(--surface); color:var(--text2); border-color:var(--border); }
+  .btn-ghost:hover { background:var(--surface2); color:var(--text); border-color:var(--border2); }
+  .btn-success { background:linear-gradient(135deg,#16a34a,#15803d); color:#fff; }
+  .btn-success:hover { box-shadow:0 0 0 4px rgba(34,197,94,.2); }
+
+  /* Date group */
+  .date-group {
+    display:flex; align-items:center; gap:6px;
+    background:var(--surface); border:1px solid var(--border);
+    border-radius:var(--radius-sm); padding:6px 12px;
+    transition:border-color var(--transition);
+  }
+  .date-group:focus-within { border-color:var(--accent); }
+  .date-group label { font-size:11px; font-weight:600; color:var(--text3); white-space:nowrap; text-transform:uppercase; letter-spacing:.05em; }
+  .date-group input[type="date"] {
+    border:none; outline:none; background:transparent;
+    color:var(--text); font-family:var(--font); font-size:13px; font-weight:500;
+    width:120px; cursor:pointer; color-scheme:dark;
+  }
+  [data-theme="light"] .date-group input[type="date"] { color-scheme:light; }
+
+  /* Status pill */
+  .status-pill {
+    display:inline-flex; align-items:center; gap:7px;
+    height:38px; padding:0 14px; border-radius:var(--radius-sm);
+    background:var(--surface); border:1px solid var(--border);
+    font-size:12px; font-weight:600; color:var(--text2);
+  }
+  .pulse-dot {
+    width:7px; height:7px; border-radius:50%; background:var(--c-done);
+    animation:pulse 2s infinite; flex-shrink:0;
+  }
+  @keyframes pulse {
+    0%  { box-shadow:0 0 0 0 rgba(34,197,94,.5); }
+    70% { box-shadow:0 0 0 6px rgba(34,197,94,0); }
+    100%{ box-shadow:0 0 0 0 rgba(34,197,94,0); }
+  }
+  .theme-toggle {
+    width:38px; height:38px; border-radius:var(--radius-sm);
+    border:1px solid var(--border); background:var(--surface);
+    color:var(--text2); cursor:pointer;
+    display:flex; align-items:center; justify-content:center;
+    transition:all var(--transition);
+  }
+  .theme-toggle:hover { background:var(--surface2); color:var(--text); }
+
+  /* ══════════════════════════════════════════════════════
+     PAGE BODY
+  ══════════════════════════════════════════════════════ */
+  .page-body { padding:24px 28px; flex:1; }
+
+  /* ── ERROR BANNER ── */
+  .error-banner {
+    display:none; align-items:center; gap:10px;
+    margin-bottom:20px; padding:13px 16px;
+    border-radius:var(--radius); border:1px solid rgba(239,68,68,.3);
+    background:rgba(239,68,68,.08); color:#fca5a5;
+    font-size:13px; font-weight:500;
+  }
+  .error-banner.visible { display:flex; }
+
+  /* ══════════════════════════════════════════════════════
+     KPI SUMMARY CARDS
+  ══════════════════════════════════════════════════════ */
+  .kpi-summary-grid {
+    display:grid;
+    grid-template-columns:repeat(4,1fr);
+    gap:16px;
+    margin-bottom:22px;
+  }
+  .kpi-sum-card {
+    background:var(--surface);
+    border:1px solid var(--border);
+    border-radius:var(--radius-lg);
+    padding:20px 22px;
+    box-shadow:var(--card-shadow);
+    display:flex; flex-direction:column; gap:10px;
+    position:relative; overflow:hidden;
+    transition:transform var(--transition), box-shadow var(--transition);
+  }
+  .kpi-sum-card:hover { transform:translateY(-3px); box-shadow:0 2px 8px rgba(0,0,0,.45),0 16px 40px rgba(0,0,0,.4); }
+  .kpi-sum-card::before {
+    content:""; position:absolute; inset:0;
+    background:linear-gradient(140deg,rgba(255,255,255,.04) 0%,transparent 60%);
+    pointer-events:none;
+  }
+  .kpi-sum-icon {
+    width:40px; height:40px; border-radius:12px;
+    display:flex; align-items:center; justify-content:center;
+    flex-shrink:0;
+  }
+  .kpi-sum-top { display:flex; align-items:flex-start; justify-content:space-between; }
+  .kpi-sum-label { font-size:11.5px; font-weight:600; color:var(--text3); text-transform:uppercase; letter-spacing:.06em; }
+  .kpi-sum-value { font-size:2rem; font-weight:700; color:var(--text); line-height:1.1; letter-spacing:-.04em; font-variant-numeric:tabular-nums; }
+  .kpi-sum-sub { font-size:11.5px; color:var(--text3); font-weight:500; }
+  .kpi-sum-badge {
+    display:inline-flex; align-items:center; gap:4px;
+    padding:2px 8px; border-radius:99px;
+    font-size:10.5px; font-weight:700;
+  }
+  .badge-green  { background:rgba(34,197,94,.15);  color:#4ade80; }
+  .badge-yellow { background:rgba(245,158,11,.15); color:#fbbf24; }
+  .badge-blue   { background:rgba(59,130,246,.15); color:#60a5fa; }
+
+  /* ── BEST PERFORMER CARD ── */
+  .best-card { border-color:rgba(250,204,21,.2) !important; }
+  .best-card::after {
+    content:""; position:absolute; bottom:-18px; right:-18px;
+    width:80px; height:80px; border-radius:50%;
+    background:rgba(250,204,21,.08);
+    pointer-events:none;
+  }
+
+  /* ══════════════════════════════════════════════════════
+     TOOLBAR (search + target + export)
+  ══════════════════════════════════════════════════════ */
+  .kpi-toolbar {
+    display:flex; align-items:center; justify-content:space-between;
+    gap:12px; flex-wrap:wrap;
+    margin-bottom:16px;
+  }
+  .kpi-toolbar-left  { display:flex; align-items:center; gap:10px; flex-wrap:wrap; }
+  .kpi-toolbar-right { display:flex; align-items:center; gap:10px; flex-wrap:wrap; }
+
+  .search-box {
+    display:flex; align-items:center; gap:8px;
+    background:var(--surface); border:1px solid var(--border);
+    border-radius:var(--radius-sm); padding:0 14px;
+    height:38px; transition:border-color var(--transition);
+    min-width:220px;
+  }
+  .search-box:focus-within { border-color:var(--accent); }
+  .search-box svg { color:var(--text3); flex-shrink:0; }
+  .search-box input {
+    border:none; outline:none; background:transparent;
+    color:var(--text); font-family:var(--font); font-size:13px;
+    width:100%; placeholder-color:var(--text3);
+  }
+
+  .target-group {
+    display:flex; align-items:center; gap:8px;
+    background:var(--surface); border:1px solid var(--border);
+    border-radius:var(--radius-sm); padding:0 14px; height:38px;
+    font-size:13px; font-weight:500; color:var(--text2);
+  }
+  .target-group label { font-size:11px; font-weight:600; color:var(--text3); text-transform:uppercase; letter-spacing:.05em; white-space:nowrap; }
+  .target-group input[type="number"] {
+    border:none; outline:none; background:transparent;
+    color:var(--text); font-family:var(--font); font-size:13px; font-weight:600;
+    width:48px; text-align:center;
+  }
+
+  .filter-chip {
+    display:inline-flex; align-items:center; gap:6px;
+    height:38px; padding:0 14px; border-radius:var(--radius-sm);
+    border:1px solid var(--border); background:var(--surface);
+    font-size:12.5px; font-weight:600; color:var(--text2);
+    cursor:pointer; transition:all var(--transition);
+  }
+  .filter-chip:hover, .filter-chip.active { border-color:var(--accent); color:var(--accent); background:rgba(59,130,246,.08); }
+  .filter-chip.all     { }
+  .filter-chip.f-green.active  { border-color:#22c55e; color:#22c55e; background:rgba(34,197,94,.08); }
+  .filter-chip.f-yellow.active { border-color:#f59e0b; color:#f59e0b; background:rgba(245,158,11,.08); }
+  .filter-chip.f-red.active    { border-color:#ef4444; color:#ef4444; background:rgba(239,68,68,.08); }
+
+  /* ══════════════════════════════════════════════════════
+     KPI TABLE CARD
+  ══════════════════════════════════════════════════════ */
+  .table-card {
+    background:var(--surface);
+    border:1px solid var(--border);
+    border-radius:var(--radius-lg);
+    box-shadow:var(--card-shadow);
+    overflow:hidden;
+  }
+  .table-card-header {
+    display:flex; align-items:center; justify-content:space-between;
+    padding:16px 20px; border-bottom:1px solid var(--border); gap:12px;
+  }
+  .table-card-title {
+    font-size:14px; font-weight:700; color:var(--text);
+    display:flex; align-items:center; gap:8px;
+  }
+  .table-card-dot { width:8px; height:8px; border-radius:2px; flex-shrink:0; }
+  .table-card-sub { font-size:11.5px; color:var(--text3); margin-top:2px; }
+  .row-count-badge {
+    display:inline-flex; align-items:center;
+    height:24px; padding:0 10px; border-radius:var(--radius-sm);
+    font-size:11px; font-weight:700;
+    background:var(--surface2); color:var(--text2);
+    border:1px solid var(--border);
+  }
+
+  /* Table */
+  .kpi-table-wrap { overflow:auto; max-height:580px; }
+  .kpi-table {
+    width:100%; border-collapse:collapse; font-size:13px;
+    table-layout:fixed;
+  }
+  .kpi-table thead { background:var(--table-head); }
+  .kpi-table thead th {
+    position:sticky; top:0; z-index:2;
+    background:var(--table-head);
+    color:rgba(255,255,255,.8);
+    font-size:9.5px; font-weight:700; text-transform:uppercase; letter-spacing:.06em;
+    padding:10px 14px; white-space:nowrap;
+    border-bottom:1px solid var(--border);
+    cursor:pointer; user-select:none;
+    transition:background var(--transition);
+  }
+  .kpi-table thead th:hover { background:rgba(255,255,255,.06); }
+  .kpi-table thead th.sorted-asc::after  { content:" ↑"; opacity:.7; }
+  .kpi-table thead th.sorted-desc::after { content:" ↓"; opacity:.7; }
+  [data-theme="light"] .kpi-table thead th { color:rgba(255,255,255,.85); background:#1e293b; }
+  [data-theme="light"] .kpi-table thead th:hover { background:#263548; }
+
+  .kpi-table td {
+    padding:10px 14px; color:var(--text); font-weight:500;
+    white-space:nowrap; border-bottom:1px solid var(--border);
+    font-variant-numeric:tabular-nums;
+    transition:background var(--transition);
+  }
+  .kpi-table td.name-cell { text-align:left; }
+  .kpi-table td:not(.name-cell) { text-align:center; }
+  .kpi-table tbody tr:nth-child(even) td { background:var(--table-alt); }
+  .kpi-table tbody tr:hover td { background:var(--table-hover); }
+
+  /* Rank cell */
+  .rank-cell {
+    display:inline-flex; align-items:center; justify-content:center;
+    width:24px; height:24px; border-radius:8px;
+    font-size:11px; font-weight:700; color:var(--text3);
+    background:var(--surface2);
+  }
+  .rank-cell.rank-1 { background:linear-gradient(135deg,#fbbf24,#f59e0b); color:#fff; }
+  .rank-cell.rank-2 { background:linear-gradient(135deg,#94a3b8,#64748b); color:#fff; }
+  .rank-cell.rank-3 { background:linear-gradient(135deg,#fb923c,#ea580c); color:#fff; }
+
+  /* Name pill */
+  .emp-name { font-weight:600; font-size:13px; color:var(--text); }
+  .top-badge {
+    display:inline-flex; align-items:center; gap:3px;
+    padding:1px 6px; border-radius:99px;
+    font-size:9.5px; font-weight:700;
+    background:rgba(250,204,21,.15); color:#fbbf24;
+    margin-left:6px; vertical-align:middle;
+  }
+
+  /* Performance indicator row highlight */
+  .kpi-table tbody tr.perf-above td { background:var(--kpi-green-bg)  !important; }
+  .kpi-table tbody tr.perf-near  td { background:var(--kpi-yellow-bg) !important; }
+  .kpi-table tbody tr.perf-below td { background:var(--kpi-red-bg)    !important; }
+  .kpi-table tbody tr.perf-above:hover td { background:rgba(34,197,94,.16)  !important; }
+  .kpi-table tbody tr.perf-near:hover  td { background:rgba(245,158,11,.16) !important; }
+  .kpi-table tbody tr.perf-below:hover td { background:rgba(239,68,68,.16)  !important; }
+
+  /* Status badge chips inside table */
+  .perf-chip {
+    display:inline-flex; align-items:center; gap:5px;
+    padding:3px 9px; border-radius:99px;
+    font-size:10.5px; font-weight:700; white-space:nowrap;
+  }
+  .perf-chip.above  { background:rgba(34,197,94,.15);  color:#4ade80; }
+  .perf-chip.near   { background:rgba(245,158,11,.15); color:#fbbf24; }
+  .perf-chip.below  { background:rgba(239,68,68,.15);  color:#f87171; }
+  [data-theme="light"] .perf-chip.above { color:#16a34a; }
+  [data-theme="light"] .perf-chip.near  { color:#ca8a04; }
+  [data-theme="light"] .perf-chip.below { color:#dc2626; }
+
+  /* Mono value cells */
+  .mono { font-family:var(--font-mono); font-size:12px; }
+
+  /* Progress bar for completion rate */
+  .progress-wrap { display:flex; align-items:center; gap:8px; }
+  .progress-bar-bg {
+    flex:1; height:5px; border-radius:99px;
+    background:var(--surface3); overflow:hidden; min-width:48px;
+  }
+  .progress-bar-fill { height:100%; border-radius:99px; transition:width .5s ease; }
+
+  /* Total row */
+  .total-row td {
+    font-weight:700 !important;
+    background:rgba(59,130,246,.08) !important;
+    color:var(--accent) !important;
+    border-top:1px solid rgba(59,130,246,.15);
+  }
+
+  /* Empty / skeleton */
+  .empty-kpi { padding:48px !important; text-align:center !important; color:var(--text3) !important; font-style:italic; font-weight:400 !important; }
+  @keyframes shimmer { 0%{background-position:-600px 0} 100%{background-position:600px 0} }
+  .skeleton {
+    background:linear-gradient(90deg,var(--surface2) 25%,var(--surface3) 50%,var(--surface2) 75%);
+    background-size:600px 100%; animation:shimmer 1.4s infinite; border-radius:4px;
+  }
+
+  /* Animations */
+  @keyframes fadeUp { from{opacity:0;transform:translateY(14px)} to{opacity:1;transform:translateY(0)} }
+  @keyframes spin   { from{transform:rotate(0deg)} to{transform:rotate(360deg)} }
+  .fade-up   { animation:fadeUp .4s ease both; }
+  .fade-up-1 { animation-delay:.05s; }
+  .fade-up-2 { animation-delay:.10s; }
+  .fade-up-3 { animation-delay:.15s; }
+
+  /* ══════════════════════════════════════════════════════
+     RESPONSIVE
+  ══════════════════════════════════════════════════════ */
+  @media (max-width:1100px) { .kpi-summary-grid { grid-template-columns:repeat(2,1fr); } }
+
+  @media (max-width:960px) {
+    .sidebar { position:fixed; left:0; top:0; bottom:0; transform:translateX(-100%); z-index:200; }
+    .sidebar.open { transform:translateX(0); }
+    .sidebar-overlay { display:block; }
+    .menu-toggle { display:flex; }
+    .page-body { padding:16px; }
+    .topbar { padding:12px 16px; }
+  }
+
+  @media (max-width:640px) {
+    .kpi-summary-grid { grid-template-columns:1fr 1fr; }
+    .kpi-toolbar { flex-direction:column; align-items:stretch; }
+    .kpi-toolbar-left, .kpi-toolbar-right { flex-wrap:wrap; }
+    .search-box { min-width:0; width:100%; }
+  }
+  @media (max-width:480px) {
+    .kpi-summary-grid { grid-template-columns:1fr; }
+    .topbar-right { gap:6px; }
+    .date-group input[type="date"] { width:100px; }
+  }
+  </style>
+</head>
+<body>
+
+<div class="sidebar-overlay" id="sidebarOverlay" onclick="closeSidebar()"></div>
+
+<div class="layout">
+
+  <!-- ══════════════════════════════════════════════
+       SIDEBAR
+  ══════════════════════════════════════════════ -->
+  <aside class="sidebar" id="sidebar">
+    <div class="sidebar-logo">
+      <img src="https://d28ewddc5mocr5.cloudfront.net/images/logos-new/pp-logo-new.svg" alt="Petpooja">
+    </div>
+
+    <div class="sidebar-section">
+      <div class="sidebar-section-label">Overview</div>
+      <nav class="sidebar-nav">
+        <a class="nav-item" href="index.html">
+          <svg class="nav-icon" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/></svg>
+          Dashboard
+        </a>
+      </nav>
+    </div>
+
+    <div class="sidebar-section">
+      <div class="sidebar-section-label">Reports</div>
+      <nav class="sidebar-nav">
+        <a class="nav-item" href="category-summary.html">
+          <svg class="nav-icon" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M16 8v8m-4-5v5m-4-2v2m-2 4h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
+          Quarter Performance
+        </a>
+        <a class="nav-item active" href="kpi-report.html">
+          <svg class="nav-icon" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/></svg>
+          KPI Report
+        </a>
+      </nav>
+    </div>
+
+    <div class="sidebar-footer">
+      <div class="nav-item" style="cursor:default; gap:8px;">
+        <svg style="width:14px;height:14px;opacity:.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path stroke-linecap="round" stroke-linejoin="round" d="M12 8v4l3 3"/></svg>
+        <span style="font-size:11px;color:var(--text3)" id="sidebarTime">--:--</span>
+      </div>
+    </div>
+  </aside>
+
+  <!-- ══════════════════════════════════════════════
+       MAIN
+  ══════════════════════════════════════════════ -->
+  <div class="main">
+
+    <!-- TOPBAR -->
+    <header class="topbar">
+      <div class="topbar-left">
+        <button class="menu-toggle" onclick="toggleSidebar()" aria-label="Menu">
+          <svg width="18" height="18" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M4 6h16M4 12h16M4 18h16"/></svg>
+        </button>
+        <div>
+          <div class="page-title">KPI Report</div>
+          <div class="page-subtitle">Employee performance — task completion &amp; time metrics</div>
+        </div>
+      </div>
+      <div class="topbar-right">
+        <div class="date-group">
+          <label for="fromDate">From</label>
+          <input type="date" id="fromDate">
+        </div>
+        <div class="date-group">
+          <label for="toDate">To</label>
+          <input type="date" id="toDate">
+        </div>
+        <button class="btn btn-primary" id="refreshButton">
+          <svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>
+          Refresh
+        </button>
+        <div class="status-pill">
+          <span class="pulse-dot"></span>
+          <span id="statusText">Ready</span>
+        </div>
+        <button class="theme-toggle" onclick="toggleTheme()" title="Toggle theme">
+          <svg id="themeIcon" width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"/></svg>
+        </button>
+      </div>
+    </header>
+
+    <!-- PAGE BODY -->
+    <div class="page-body">
+
+      <!-- Error -->
+      <div class="error-banner" id="errorBanner">
+        <svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/></svg>
+        <span id="errorText"></span>
+      </div>
+
+      <!-- ── KPI Summary Cards ── -->
+      <div class="kpi-summary-grid fade-up">
+
+        <div class="kpi-sum-card fade-up fade-up-1">
+          <div class="kpi-sum-top">
+            <div>
+              <div class="kpi-sum-label">Total Employees</div>
+              <div class="kpi-sum-value" id="sumTotalEmp">—</div>
+            </div>
+            <div class="kpi-sum-icon" style="background:rgba(59,130,246,.12);">
+              <svg width="20" height="20" fill="none" viewBox="0 0 24 24" stroke="#3b82f6" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
+            </div>
+          </div>
+          <div class="kpi-sum-sub" id="sumAvailEmp">— available today</div>
+        </div>
+
+        <div class="kpi-sum-card fade-up fade-up-1">
+          <div class="kpi-sum-top">
+            <div>
+              <div class="kpi-sum-label">Total Tasks Done</div>
+              <div class="kpi-sum-value" id="sumTotalTasks">—</div>
+            </div>
+            <div class="kpi-sum-icon" style="background:rgba(34,197,94,.12);">
+              <svg width="20" height="20" fill="none" viewBox="0 0 24 24" stroke="#22c55e" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+            </div>
+          </div>
+          <div class="kpi-sum-sub" id="sumTotalTasksSub">across all employees</div>
+        </div>
+
+        <div class="kpi-sum-card fade-up fade-up-2">
+          <div class="kpi-sum-top">
+            <div>
+              <div class="kpi-sum-label">Avg Productivity</div>
+              <div class="kpi-sum-value" id="sumAvgProd">—</div>
+            </div>
+            <div class="kpi-sum-icon" style="background:rgba(245,158,11,.12);">
+              <svg width="20" height="20" fill="none" viewBox="0 0 24 24" stroke="#f59e0b" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"/></svg>
+            </div>
+          </div>
+          <div class="kpi-sum-sub" id="sumAvgProdSub">tasks per work day</div>
+        </div>
+
+        <div class="kpi-sum-card best-card fade-up fade-up-2">
+          <div class="kpi-sum-top">
+            <div>
+              <div class="kpi-sum-label">🏆 Best Performer</div>
+              <div class="kpi-sum-value" id="sumBest" style="font-size:1.25rem;">—</div>
+            </div>
+            <div class="kpi-sum-icon" style="background:rgba(250,204,21,.12);">
+              <svg width="20" height="20" fill="none" viewBox="0 0 24 24" stroke="#fbbf24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z"/></svg>
+            </div>
+          </div>
+          <div class="kpi-sum-sub" id="sumBestSub">— tasks/day</div>
+        </div>
+
+      </div>
+
+      <!-- ── Toolbar ── -->
+      <div class="kpi-toolbar fade-up fade-up-2">
+        <div class="kpi-toolbar-left">
+          <div class="search-box">
+            <svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-4.35-4.35"/></svg>
+            <input type="text" id="searchInput" placeholder="Search employee…" autocomplete="off">
+          </div>
+          <div class="target-group">
+            <label for="dailyTarget">Daily Target</label>
+            <input type="number" id="dailyTarget" value="2" min="1" max="99" step="0.5">
+            <span style="font-size:11px;color:var(--text3)">tasks/day</span>
+          </div>
+          <!-- Performance filters -->
+          <button class="filter-chip all active"   data-filter="all"   onclick="setFilter(this,'all')">
+            <svg width="12" height="12" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M4 6h16M7 12h10M10 18h4"/></svg>
+            All
+          </button>
+          <button class="filter-chip f-green"  data-filter="above"  onclick="setFilter(this,'above')">
+            <svg width="10" height="10" viewBox="0 0 10 10"><circle cx="5" cy="5" r="5" fill="#22c55e"/></svg>
+            Above Target
+          </button>
+          <button class="filter-chip f-yellow" data-filter="near"   onclick="setFilter(this,'near')">
+            <svg width="10" height="10" viewBox="0 0 10 10"><circle cx="5" cy="5" r="5" fill="#f59e0b"/></svg>
+            Near Target
+          </button>
+          <button class="filter-chip f-red"    data-filter="below"  onclick="setFilter(this,'below')">
+            <svg width="10" height="10" viewBox="0 0 10 10"><circle cx="5" cy="5" r="5" fill="#ef4444"/></svg>
+            Below Target
+          </button>
+        </div>
+        <div class="kpi-toolbar-right">
+          <button class="btn btn-success" onclick="exportCSV()">
+            <svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
+            Export CSV
+          </button>
+        </div>
+      </div>
+
+      <!-- ── KPI Table ── -->
+      <div class="table-card fade-up fade-up-3">
+        <div class="table-card-header">
+          <div>
+            <div class="table-card-title">
+              <span class="table-card-dot" style="background:#3b82f6;"></span>
+              Employee KPI Report
+            </div>
+            <div class="table-card-sub">Sortable · Click column headers to sort</div>
+          </div>
+          <span class="row-count-badge" id="rowCount">— rows</span>
+        </div>
+        <div class="kpi-table-wrap">
+          <table class="kpi-table" id="kpiTable">
+            <thead>
+              <tr>
+                <th style="width:46px;" data-col="rank">#</th>
+                <th class="name-cell" style="width:160px;text-align:left;" data-col="name">Employee</th>
+                <th style="width:90px;" data-col="workDays">Work Days</th>
+                <th style="width:90px;" data-col="totalTasks">Total Tasks</th>
+                <th style="width:110px;" data-col="perDayAvg">Per Day Avg</th>
+                <th style="width:100px;" data-col="expected">Expected</th>
+                <th style="width:100px;" data-col="actual">Actual</th>
+                <th style="width:110px;" data-col="avgTime">Avg Time</th>
+                <th style="width:140px;" data-col="completion">Completion %</th>
+                <th style="width:110px;" data-col="status">Status</th>
+              </tr>
+            </thead>
+            <tbody id="kpiTbody">
+              <tr><td colspan="10" class="empty-kpi">Loading KPI data…</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+    </div><!-- /page-body -->
+  </div><!-- /main -->
+</div><!-- /layout -->
+
+<script>
+/* ══════════════════════════════════════════════════════
+   CONFIG
+══════════════════════════════════════════════════════ */
+const SHEET_URL  = "https://docs.google.com/spreadsheets/d/1-VxbQ_IaRMKtDH--2JDeqvGFrb_Or3D0kG-mGLu7dG8/export?format=csv&gid=1747930222";
+const MASTER_URL = "https://docs.google.com/spreadsheets/d/1-VxbQ_IaRMKtDH--2JDeqvGFrb_Or3D0kG-mGLu7dG8/export?format=csv&gid=1007217209";
+const HOURS_PER_DAY = 8;
+
+/* ══════════════════════════════════════════════════════
+   STATE
+══════════════════════════════════════════════════════ */
+let kpiRows        = [];          // processed, full dataset
+let filteredRows   = [];          // after search + filter
+let lastHash       = "";
+let masterPromise  = null;
+let isLoading      = false;
+let hasInitialized = false;
+let sortCol        = "rank";
+let sortDir        = 1;           // 1=asc, -1=desc
+let activeFilter   = "all";
+let timer          = null;
+
+/* ══════════════════════════════════════════════════════
+   DOM REFS
+══════════════════════════════════════════════════════ */
+const fromInput     = document.getElementById("fromDate");
+const toInput       = document.getElementById("toDate");
+const refreshBtn    = document.getElementById("refreshButton");
+const statusText    = document.getElementById("statusText");
+const errorBanner   = document.getElementById("errorBanner");
+const searchInput   = document.getElementById("searchInput");
+const dailyTarget   = document.getElementById("dailyTarget");
+const kpiTbody      = document.getElementById("kpiTbody");
+const rowCountEl    = document.getElementById("rowCount");
+
+/* ══════════════════════════════════════════════════════
+   THEME / SIDEBAR
+══════════════════════════════════════════════════════ */
+function toggleTheme() {
+  const h = document.documentElement;
+  const d = h.getAttribute("data-theme") === "dark";
+  h.setAttribute("data-theme", d ? "light" : "dark");
+  document.getElementById("themeIcon").innerHTML = d
+    ? `<path stroke-linecap="round" stroke-linejoin="round" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z"/>`
+    : `<path stroke-linecap="round" stroke-linejoin="round" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"/>`;
+}
+function toggleSidebar()  { document.getElementById("sidebar").classList.toggle("open"); document.getElementById("sidebarOverlay").classList.toggle("open"); }
+function closeSidebar()   { document.getElementById("sidebar").classList.remove("open"); document.getElementById("sidebarOverlay").classList.remove("open"); }
+
+/* live clock */
+function tick() { document.getElementById("sidebarTime").textContent = new Date().toLocaleTimeString("en-IN",{hour:"2-digit",minute:"2-digit",second:"2-digit"}); }
+setInterval(tick, 1000); tick();
+
+/* spin keyframe */
+const _s = document.createElement("style");
+_s.textContent = "@keyframes spin{from{transform:rotate(0deg)}to{transform:rotate(360deg)}}";
+document.head.appendChild(_s);
+
+/* ══════════════════════════════════════════════════════
+   UI HELPERS
+══════════════════════════════════════════════════════ */
+function setStatus(msg)    { statusText.textContent = msg; }
+function showError(msg)    { document.getElementById("errorText").textContent = msg; errorBanner.classList.add("visible"); setStatus("Error"); }
+function clearError()      { errorBanner.classList.remove("visible"); }
+function setBtnState() {
+  refreshBtn.disabled = isLoading;
+  refreshBtn.innerHTML = isLoading
+    ? `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="animation:spin 1s linear infinite"><path stroke-linecap="round" stroke-linejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg> Loading…`
+    : `<svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg> Refresh`;
+}
+
+function formatDate(d) { return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,"0")}-${String(d.getDate()).padStart(2,"0")}`; }
+
+function showSkeletons() {
+  const sk = `<tr>${Array(10).fill(`<td><div class="skeleton" style="height:11px;margin:auto;width:80%"></div></td>`).join("")}</tr>`;
+  kpiTbody.innerHTML = Array(6).fill(sk).join("");
+  rowCountEl.textContent = "— rows";
+  ["sumTotalEmp","sumAvailEmp","sumTotalTasks","sumTotalTasksSub","sumAvgProd","sumBest","sumBestSub"].forEach(id=>{
+    const el=document.getElementById(id);
+    if(el) el.textContent="—";
+  });
+}
+
+/* ══════════════════════════════════════════════════════
+   DATA HELPERS  (identical to dashboard.html)
+══════════════════════════════════════════════════════ */
+function timeToSeconds(v) {
+  if(!v||typeof v!=="string") return 0;
+  const p=v.trim().split(":").map(Number);
+  if(p.some(isNaN)) return 0;
+  while(p.length<3) p.unshift(0);
+  return p[0]*3600+p[1]*60+p[2];
+}
+function secondsToTime(s) {
+  s=Math.max(0,Math.floor(s||0));
+  return `${Math.floor(s/3600)}:${String(Math.floor((s%3600)/60)).padStart(2,"0")}:${String(s%60).padStart(2,"0")}`;
+}
+function parseExpectedHours(v) {
+  if(v==null) return 0;
+  const n=String(v).trim();
+  if(!n) return 0;
+  if(n.includes(":")) return timeToSeconds(n);
+  const h=Number(n); return isNaN(h)?0:h*3600;
+}
+function formatExpectedHours(v) {
+  if(v==null) return "0 hrs";
+  const raw = String(v).trim();
+  if(!raw) return "0 hrs";
+  if(raw.includes(":")) return secondsToTime(timeToSeconds(raw));
+  const hours = Number(raw);
+  if(isNaN(hours)) return raw;
+  return `${hours % 1 === 0 ? hours.toFixed(0) : hours.toFixed(1)} hrs`;
+}
+function normalizeName(n)  { return (n||"").toLowerCase().trim().replace(/\s+/g," "); }
+function toDisplayName(n)  { return normalizeName(n).split(" ").filter(Boolean).map(w=>w[0].toUpperCase()+w.slice(1)).join(" "); }
+function getAvail(att)     { const a=(att||"").toUpperCase().trim(); return (a==="P"||a==="HD")?"available":"unavailable"; }
+
+function parseCSV(text) {
+  const rows=[]; let row=[],cur="",inQ=false;
+  for(let i=0;i<text.length;i++){
+    const c=text[i],nc=text[i+1];
+    if(c==='"'){ inQ&&nc==='"'?(cur+='"',i++):(inQ=!inQ); }
+    else if(c===","&&!inQ){ row.push(cur);cur=""; }
+    else if((c==="\n"||c==="\r")&&!inQ){
+      if(c==="\r"&&nc==="\n")i++;
+      row.push(cur);
+      if(row.some(x=>x.trim()!==""))rows.push(row);
+      row=[];cur="";
+    } else cur+=c;
+  }
+  if(cur!==""||row.length){ row.push(cur); if(row.some(x=>x.trim()!==""))rows.push(row); }
+  return rows;
+}
+
+/* ══════════════════════════════════════════════════════
+   MASTER DATA  (memoised Promise — never re-fetched)
+══════════════════════════════════════════════════════ */
+function loadMasterData() {
+  if(!masterPromise){
+    masterPromise=fetch(MASTER_URL,{cache:"default"})
+      .then(r=>{ if(!r.ok) throw new Error(`Master sheet error: ${r.status}`); return r.text(); })
+      .then(csv=>{
+        const rows=parseCSV(csv);
+        const hdr=(rows[0]||[]).map(h=>h.trim().toLowerCase());
+        const ni=hdr.indexOf("employee");
+        const ei=hdr.findIndex(h=>h==="working hours");
+        const ai=hdr.findIndex(h=>h==="attendance");
+        if(ni===-1||ei===-1||ai===-1) throw new Error("Master sheet missing Employee/Working Hours/Attendance columns.");
+        const map={};
+        rows.slice(1).forEach(row=>{ const k=normalizeName(row[ni]); if(k) map[k]={workingHours:row[ei]||"0",attendance:row[ai]||""}; });
+        return map;
+      })
+      .catch(e=>{ masterPromise=null; throw e; });
+  }
+  return masterPromise;
+}
+
+/* ══════════════════════════════════════════════════════
+   KPI CALCULATION
+══════════════════════════════════════════════════════ */
+function calcPerf(actual, expected) {
+  if(!expected) return "below";
+  const ratio = actual / expected;
+  if(ratio >= 1.0)  return "above";
+  if(ratio >= 0.75) return "near";
+  return "below";
+}
+
+function buildKpiRows(hoursData, doneData, masterMap) {
+  const names  = new Set([...Object.keys(hoursData), ...Object.keys(doneData)]);
+
+  return Array.from(names).map(name => {
+    const key      = normalizeName(name);
+    const expRaw   = masterMap[key]?.workingHours || "0";
+    const expSec   = parseExpectedHours(expRaw);
+    const workDays = expSec / (HOURS_PER_DAY * 3600);
+
+    const totalTasks = doneData[name] || 0;
+    const perDayAvg  = workDays > 0 ? totalTasks / workDays : 0;
+    const actualSec  = hoursData[name] || 0;
+    const avgTimeSec = workDays > 0 ? actualSec / workDays : 0;
+
+    const completionPct = expSec > 0 ? Math.min(Math.round((actualSec / expSec) * 100), 999) : 0;
+    const perf          = calcPerf(actualSec, expSec);
+    const avail         = getAvail(masterMap[key]?.attendance);
+
+    return {
+      name,
+      workDays,
+      totalTasks,
+      perDayAvg,
+      expectedRaw: expRaw,
+      expectedSec: expSec,
+      expected: expSec,
+      actualSec,
+      actual: actualSec,
+      avgTimeSec,
+      avgTime: avgTimeSec,
+      completionPct,
+      perf,
+      avail
+    };
+  });
+}
+
+/* ══════════════════════════════════════════════════════
+   SUMMARY CARDS
+══════════════════════════════════════════════════════ */
+function updateSummaryCards(rows, masterMap) {
+  const totalEmp   = rows.length;
+  const availEmp   = rows.filter(r=>r.avail==="available").length;
+  const totalDone  = rows.reduce((s,r)=>s+r.totalTasks,0);
+  const avgProd    = totalEmp>0 ? (rows.reduce((s,r)=>s+r.perDayAvg,0)/totalEmp) : 0;
+  const best       = rows.slice().sort((a,b)=>b.perDayAvg-a.perDayAvg)[0];
+
+  document.getElementById("sumTotalEmp").textContent  = totalEmp;
+  document.getElementById("sumAvailEmp").textContent  = `${availEmp} available today`;
+  document.getElementById("sumTotalTasks").textContent = totalDone.toLocaleString();
+  document.getElementById("sumTotalTasksSub").textContent = `${rows.filter(r=>r.perf==="above").length} above target`;
+  document.getElementById("sumAvgProd").textContent   = avgProd.toFixed(2);
+  document.getElementById("sumAvgProdSub").textContent = `tasks per work day`;
+  document.getElementById("sumBest").textContent      = best?.name || "—";
+  document.getElementById("sumBestSub").textContent   = best ? `${best.perDayAvg.toFixed(2)} tasks/day` : "—";
+}
+
+/* ══════════════════════════════════════════════════════
+   FILTER + SEARCH
+══════════════════════════════════════════════════════ */
+function applyFilterSearch() {
+  const q      = searchInput.value.toLowerCase().trim();
+  const filter = activeFilter;
+
+  filteredRows = kpiRows.filter(r=>{
+    const nameMatch = !q || r.name.toLowerCase().includes(q);
+    const perfMatch = filter==="all" || r.perf===filter;
+    return nameMatch && perfMatch;
+  });
+
+  renderTable();
+}
+
+function setFilter(btn, val) {
+  document.querySelectorAll(".filter-chip").forEach(b=>b.classList.remove("active"));
+  btn.classList.add("active");
+  activeFilter = val;
+  applyFilterSearch();
+}
+
+searchInput.addEventListener("input", ()=>applyFilterSearch());
+dailyTarget.addEventListener("change", ()=>{
+  if(kpiRows.length) {
+    applyFilterSearch();
+  }
+});
+
+/* ══════════════════════════════════════════════════════
+   SORTING
+══════════════════════════════════════════════════════ */
+document.querySelectorAll(".kpi-table thead th[data-col]").forEach(th=>{
+  th.addEventListener("click", ()=>{
+    const col = th.getAttribute("data-col");
+    if(sortCol===col) sortDir*=-1;
+    else { sortCol=col; sortDir=1; }
+    document.querySelectorAll(".kpi-table thead th").forEach(t=>t.classList.remove("sorted-asc","sorted-desc"));
+    th.classList.add(sortDir===1?"sorted-asc":"sorted-desc");
+    renderTable();
+  });
+});
+
+function sortedRows() {
+  return filteredRows.slice().sort((a,b)=>{
+    let va=a[sortCol], vb=b[sortCol];
+    if(sortCol==="rank") { va=b.perDayAvg; vb=a.perDayAvg; } // rank by perDayAvg desc
+    if(sortCol==="name") { return sortDir*(a.name.localeCompare(b.name)); }
+    if(typeof va==="string") return sortDir*va.localeCompare(vb);
+    return sortDir*(va-vb);
+  });
+}
+
+/* ══════════════════════════════════════════════════════
+   RENDER TABLE
+══════════════════════════════════════════════════════ */
+function perfColor(p){ return p==="above"?"#22c55e":p==="near"?"#f59e0b":"#ef4444"; }
+
+function renderTable() {
+  const rows = sortedRows();
+  rowCountEl.textContent = `${rows.length} row${rows.length!==1?"s":""}`;
+
+  if(!rows.length){
+    kpiTbody.innerHTML = `<tr><td colspan="10" class="empty-kpi">No employees match the current filter.</td></tr>`;
+    return;
+  }
+
+  // For ranking display — use global perDayAvg ranking
+  const rankMap = new Map();
+  kpiRows.slice().sort((a,b)=>b.perDayAvg-a.perDayAvg).forEach((r,i)=>rankMap.set(r.name,i+1));
+
+  // Totals
+  const totTasks       = rows.reduce((s,r)=>s+r.totalTasks,0);
+  const totExpectedSec = rows.reduce((s,r)=>s+r.expectedSec,0);
+  const totActualSec   = rows.reduce((s,r)=>s+r.actualSec,0);
+  const totAvgSec      = rows.reduce((s,r)=>s+r.avgTimeSec,0)/rows.length;
+
+  const frag = document.createDocumentFragment();
+
+  rows.forEach(r=>{
+    const rank    = rankMap.get(r.name)||"—";
+    const isTop   = rank===1;
+    const tr      = document.createElement("tr");
+    tr.className  = `perf-${r.perf}`;
+
+    const rankEl  = rank<=3
+      ? `<span class="rank-cell rank-${rank}">${rank}</span>`
+      : `<span class="rank-cell">${rank}</span>`;
+
+    const wdText  = r.workDays>0
+      ? (r.workDays%1===0?r.workDays.toFixed(0):r.workDays.toFixed(1))
+      : "—";
+
+    const pdAvg   = r.perDayAvg.toFixed(2);
+    const exp     = formatExpectedHours(r.expectedRaw);
+
+    const barPct  = Math.min(r.completionPct, 100);
+    const barClr  = perfColor(r.perf);
+    const progressHTML = `
+      <div class="progress-wrap">
+        <div class="progress-bar-bg">
+          <div class="progress-bar-fill" style="width:${barPct}%;background:${barClr};"></div>
+        </div>
+        <span style="font-size:11px;font-weight:700;color:${barClr};min-width:34px;">${r.completionPct}%</span>
+      </div>`;
+
+    const perfLbl  = r.perf==="above"?"Above target":r.perf==="near"?"Near target":"Below target";
+    const chipHTML = `<span class="perf-chip ${r.perf}">${perfLbl}</span>`;
+
+    tr.innerHTML = `
+      <td style="text-align:center;">${rankEl}</td>
+      <td class="name-cell">
+        <span class="emp-name">${r.name}</span>
+        ${isTop?`<span class="top-badge">⭐ Top</span>`:""}
+      </td>
+      <td style="text-align:center;">${wdText}</td>
+      <td style="text-align:center;font-weight:700;">${r.totalTasks}</td>
+      <td style="text-align:center;" class="mono">${pdAvg}</td>
+      <td style="text-align:center;" class="mono">${exp}</td>
+      <td style="text-align:center;font-weight:700;" class="mono">${secondsToTime(r.actualSec)}</td>
+      <td style="text-align:center;" class="mono">${r.avgTimeSec>0?secondsToTime(r.avgTimeSec):"—"}</td>
+      <td>${progressHTML}</td>
+      <td style="text-align:center;">${chipHTML}</td>`;
+
+    frag.appendChild(tr);
+  });
+
+  // Total row
+  const totalTr = document.createElement("tr");
+  totalTr.className = "total-row";
+  totalTr.innerHTML = `
+    <td style="text-align:center;">—</td>
+    <td class="name-cell">Σ Total / Avg</td>
+    <td style="text-align:center;">—</td>
+    <td style="text-align:center;">${totTasks}</td>
+    <td class="mono" style="text-align:center;">${rows.length>0?(rows.reduce((s,r)=>s+r.perDayAvg,0)/rows.length).toFixed(2):"—"}</td>
+    <td class="mono" style="text-align:center;">${secondsToTime(totExpectedSec)}</td>
+    <td class="mono" style="text-align:center;">${secondsToTime(totActualSec)}</td>
+    <td class="mono" style="text-align:center;">${totAvgSec>0?secondsToTime(totAvgSec):"—"}</td>
+    <td>—</td>
+    <td style="text-align:center;">—</td>`;
+  frag.appendChild(totalTr);
+
+  kpiTbody.innerHTML = "";
+  kpiTbody.appendChild(frag);
+}
+
+/* ══════════════════════════════════════════════════════
+   EXPORT CSV
+══════════════════════════════════════════════════════ */
+function exportCSV() {
+  if(!filteredRows.length){ alert("No data to export."); return; }
+  const esc    = v => `"${String(v).replace(/"/g,'""')}"`;
+  const headers= ["Rank","Employee","Work Days","Total Tasks","Per Day Avg","Expected","Actual","Avg Time","Completion %","Status"];
+  const rankMap= new Map();
+  kpiRows.slice().sort((a,b)=>b.perDayAvg-a.perDayAvg).forEach((r,i)=>rankMap.set(r.name,i+1));
+
+  const csvLines=[headers.map(esc).join(",")];
+  sortedRows().forEach(r=>{
+    const rank   = rankMap.get(r.name)||"";
+    const wdText = r.workDays>0?(r.workDays%1===0?r.workDays.toFixed(0):r.workDays.toFixed(1)):"0";
+    csvLines.push([
+      esc(rank),
+      esc(r.name),
+      esc(wdText),
+      esc(r.totalTasks),
+      esc(r.perDayAvg.toFixed(2)),
+      esc(formatExpectedHours(r.expectedRaw)),
+      esc(secondsToTime(r.actualSec)),
+      esc(r.avgTimeSec>0?secondsToTime(r.avgTimeSec):"—"),
+      esc(r.completionPct+"%"),
+      esc(r.perf==="above"?"Above target":r.perf==="near"?"Near target":"Below target")
+    ].join(","));
+  });
+
+  const blob = new Blob([csvLines.join("\n")],{type:"text/csv;charset=utf-8;"});
+  const url  = URL.createObjectURL(blob);
+  const a    = document.createElement("a");
+  a.href     = url;
+  a.download = `kpi-report-${fromInput.value}-to-${toInput.value}.csv`;
+  a.click();
+  URL.revokeObjectURL(url);
+}
+
+/* ══════════════════════════════════════════════════════
+   MAIN LOAD
+══════════════════════════════════════════════════════ */
+async function loadData(fromDate, toDate, opts={}) {
+  if(isLoading||!fromDate||!toDate) return;
+  isLoading=true; setBtnState(); setStatus("Loading…"); clearError();
+  showSkeletons();
+
+  try {
+    const [fy,fm,fd]=fromDate.split("-");
+    const from=new Date(fy,fm-1,fd);
+    const [ty,tm,td]=toDate.split("-");
+    const to=new Date(ty,tm-1,td); to.setHours(23,59,59,999);
+
+    // Fetch both in parallel
+    const [sheetRes, masterMap] = await Promise.all([
+      fetch(SHEET_URL,{cache:"no-cache"}),
+      loadMasterData()
+    ]);
+    if(!sheetRes.ok) throw new Error(`Sheet fetch failed: ${sheetRes.status}`);
+    const csv = await sheetRes.text();
+
+    if(!opts.force && csv===lastHash){
+      setStatus(`Up to date · ${new Date().toLocaleTimeString()}`);
+      isLoading=false; setBtnState(); return;
+    }
+    lastHash=csv;
+
+    const rows    = parseCSV(csv);
+    const headers = (rows[0]||[]).map(h=>h.trim());
+    const idx     = {
+      date:     headers.findIndex(h=>h.toLowerCase()==="assign date"),
+      assigned: headers.findIndex(h=>h.toLowerCase()==="assigned"),
+      status:   headers.findIndex(h=>h.toLowerCase()==="status"),
+      dur:      headers.findIndex(h=>h.toLowerCase().includes("duration"))
+    };
+    if([idx.date,idx.assigned,idx.status].some(i=>i===-1))
+      throw new Error("Missing required columns: Assign Date, Assigned, Status.");
+
+    // Accumulators — single pass
+    const hoursData = {};   // name -> total duration seconds in selected range
+    const totalTaskData  = {};   // name -> total task count in selected range
+
+    const len=rows.length;
+    for(let i=1;i<len;i++){
+      const row    = rows[i];
+      const rawDt  = row[idx.date]; if(!rawDt) continue;
+      const parts  = rawDt.split("/"); if(parts.length!==3) continue;
+      const fd     = new Date(parts[2],parts[1]-1,parts[0]); if(isNaN(fd.getTime())) continue;
+      if(fd<from||fd>to) continue;
+
+      const nname  = normalizeName(row[idx.assigned]); if(!nname) continue;
+      const dname  = toDisplayName(nname);
+      const status = (row[idx.status]||"").toLowerCase().trim().replace(/\s+/g," ");
+      const dur    = idx.dur>=0 ? row[idx.dur] : "0:00:00";
+      const durSec = timeToSeconds(dur||"0:00:00");
+
+      totalTaskData[dname] = (totalTaskData[dname]||0)+1;
+      hoursData[dname] = (hoursData[dname]||0)+durSec;
+    }
+
+    // Build KPI rows
+    kpiRows      = buildKpiRows(hoursData, totalTaskData, masterMap);
+    filteredRows = kpiRows.slice();
+
+    // Update summary cards
+    updateSummaryCards(kpiRows, masterMap);
+
+    // Render table
+    applyFilterSearch();
+
+    setStatus(`Updated · ${new Date().toLocaleTimeString()}`);
+
+  } catch(e) {
+    console.error(e);
+    showError(e.message||"Unable to load KPI data.");
+  } finally {
+    isLoading=false; setBtnState();
+  }
+}
+
+/* ══════════════════════════════════════════════════════
+   EVENTS & INIT
+══════════════════════════════════════════════════════ */
+refreshBtn.addEventListener("click", ()=>loadData(fromInput.value,toInput.value,{force:true}));
+
+let dateTimer=null;
+function debounceDate(){ clearTimeout(dateTimer); dateTimer=setTimeout(()=>loadData(fromInput.value,toInput.value,{force:true}),350); }
+fromInput.addEventListener("change",debounceDate);
+toInput.addEventListener("change",debounceDate);
+
+function initializePage() {
+  const today=new Date(), first=new Date(today.getFullYear(),today.getMonth(),1);
+  fromInput.value=formatDate(first);
+  toInput.value=formatDate(today);
+  document.querySelector('th[data-col="rank"]')?.classList.add("sorted-desc");
+  setBtnState();
+  loadData(fromInput.value,toInput.value,{force:true});
+}
+
+window.addEventListener("load",()=>{
+  if (hasInitialized) return;
+  hasInitialized = true;
+  initializePage();
+});
+
+window.addEventListener("pageshow",(event)=>{
+  if (!event.persisted) return;
+  isLoading = false;
+  setBtnState();
+  clearError();
+  if (!fromInput.value || !toInput.value) {
+    initializePage();
+    return;
+  }
+  loadData(fromInput.value,toInput.value,{force:false});
+});
+</script>
+</body>
+</html>
