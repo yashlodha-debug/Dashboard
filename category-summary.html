@@ -376,33 +376,26 @@
   .total-row td { font-weight:700; background:rgba(59,130,246,.08) !important; color:var(--accent) !important; border-top:1px solid rgba(59,130,246,.15); }
 
   /* ═══════════════════════════════════════════════════════
-     CHART SHELL
+     CHART SHELL — ORIGINAL (preserved exactly from source)
   ═══════════════════════════════════════════════════════ */
-  .chart-wrap { padding:16px; }
-  .col-chart-shell {
-    position:relative; border-radius:var(--radius); overflow:hidden;
-    padding:16px 16px 10px;
-    background:linear-gradient(160deg,#0d1a2e 0%,#0f1f3a 55%,#0b1525 100%);
-    border:1px solid rgba(255,255,255,.06);
-    box-shadow:inset 0 1px 0 rgba(255,255,255,.05),0 8px 32px rgba(0,0,0,.3);
+  .chart-wrap-original {
+    padding: 14px;
   }
-  [data-theme="light"] .col-chart-shell {
-    background:linear-gradient(160deg,#f8faff 0%,#eef3ff 55%,#f3f8ff 100%);
-    border-color:rgba(0,0,0,.06);
-    box-shadow:inset 0 1px 0 rgba(255,255,255,.8),0 4px 16px rgba(0,0,0,.06);
-  }
-  .col-chart-shell::before {
-    content:""; position:absolute; inset:0; pointer-events:none;
+  .chart-shell-original {
+    border-radius: 22px;
+    overflow: hidden;
+    border: 1px solid rgba(148, 163, 184, 0.18);
     background:
-      radial-gradient(ellipse at 15% 20%,rgba(59,130,246,.12),transparent 50%),
-      radial-gradient(ellipse at 85% 80%,rgba(251,146,60,.08),transparent 50%);
+      radial-gradient(circle at top right, rgba(56, 189, 248, 0.18), transparent 28%),
+      radial-gradient(circle at bottom left, rgba(217, 70, 239, 0.14), transparent 32%),
+      linear-gradient(145deg, #14213d 0%, #1d2951 58%, #2d1f4f 100%);
+    box-shadow: inset 0 1px 0 rgba(255,255,255,0.06);
   }
-  [data-theme="light"] .col-chart-shell::before {
-    background:
-      radial-gradient(ellipse at 15% 20%,rgba(59,130,246,.06),transparent 50%),
-      radial-gradient(ellipse at 85% 80%,rgba(251,146,60,.04),transparent 50%);
+  .chart-box-original {
+    position: relative;
+    min-height: 320px;
+    padding: 18px 16px 12px;
   }
-  .chart-area { position:relative; min-height:300px; }
 
   /* ═══════════════════════════════════════════════════════
      SKELETON
@@ -458,6 +451,7 @@
   <aside class="sidebar" id="sidebar">
     <div class="sidebar-logo">
       <img src="https://d28ewddc5mocr5.cloudfront.net/images/logos-new/pp-logo-new.svg" alt="Petpooja">
+      <span class="sidebar-logo-label">Analytics</span>
     </div>
 
     <div class="sidebar-section">
@@ -480,6 +474,7 @@
         <a class="nav-item" href="kpi-report.html">
           <svg class="nav-icon" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/></svg>
           KPI Report
+          <span class="nav-badge">New</span>
         </a>
       </nav>
     </div>
@@ -618,7 +613,7 @@
         </div>
       </div>
 
-      <!-- ── Month-wise Chart ── -->
+      <!-- ── Month-wise Chart — PRESERVED EXACTLY ── -->
       <div class="card section fade-up fade-up-3">
         <div class="card-header">
           <div class="card-header-left">
@@ -626,12 +621,12 @@
               <span class="card-title-dot" style="background:#fb923c;"></span>
               Month-wise Category Chart
             </div>
-            <div class="card-subtitle">Stacked volume trend for selected date range</div>
+            <div class="card-subtitle">Dynamic for the selected date range</div>
           </div>
         </div>
-        <div class="chart-wrap">
-          <div class="col-chart-shell">
-            <div class="chart-area">
+        <div class="chart-wrap-original">
+          <div class="chart-shell-original">
+            <div class="chart-box-original">
               <canvas id="monthChart"></canvas>
             </div>
           </div>
@@ -653,8 +648,7 @@ function toggleTheme() {
   document.getElementById("themeIcon").innerHTML = d
     ? `<path stroke-linecap="round" stroke-linejoin="round" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z"/>`
     : `<path stroke-linecap="round" stroke-linejoin="round" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"/>`;
-  // Rebuild chart with new theme colours
-  if (window._lastMonthData) renderMonthChart(window._lastMonthData);
+  // Note: Month chart uses a fixed dark shell — no re-render needed on theme toggle
 }
 
 function toggleSidebar()  { document.getElementById("sidebar").classList.toggle("open");  document.getElementById("sidebarOverlay").classList.toggle("open");  }
@@ -830,87 +824,163 @@ function renderTable(summary) {
 }
 
 /* ══════════════════════════════════════════════════════
-   RENDER: MONTH CHART  (modern gradient column)
+   RENDER: MONTH CHART — PRESERVED EXACTLY FROM SOURCE
+   (stacked bar + totalValuePlugin, original colours)
 ══════════════════════════════════════════════════════ */
 function renderMonthChart(monthData) {
-  window._lastMonthData = monthData;   // store for theme toggle re-render
   const ctx = document.getElementById("monthChart").getContext("2d");
-  const months = Object.keys(monthData).sort((a,b)=>{
-    const [ya,ma]=a.split("-").map(Number);
-    const [yb,mb]=b.split("-").map(Number);
-    return new Date(ya,ma-1,1)-new Date(yb,mb-1,1);
-  });
-  if (window.summaryChart) { window.summaryChart.destroy(); window.summaryChart=null; }
 
-  if(!months.length){
-    window.summaryChart = new Chart(ctx,{type:"bar",data:{labels:["No Data"],datasets:[{label:"No Data",data:[0],backgroundColor:"#334155"}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}}}});
+  const months = Object.keys(monthData).sort((a, b) => {
+    const [yearA, monthA] = a.split("-").map(Number);
+    const [yearB, monthB] = b.split("-").map(Number);
+    return new Date(yearA, monthA - 1, 1) - new Date(yearB, monthB - 1, 1);
+  });
+
+  const totalValuePlugin = {
+    id: "totalValuePlugin",
+    afterDatasetsDraw(chart) {
+      const { ctx: chartCtx, scales } = chart;
+      const xScale = scales.x;
+      const yScale = scales.y;
+      const totals = chart.data.labels.map((_, index) => {
+        return chart.data.datasets.reduce((sum, dataset) => {
+          return sum + (Number(dataset.data[index]) || 0);
+        }, 0);
+      });
+
+      chartCtx.save();
+      chartCtx.fillStyle = "#f8fafc";
+      chartCtx.font = "600 11px 'DM Sans', Poppins, sans-serif";
+      chartCtx.textAlign = "center";
+      chartCtx.textBaseline = "bottom";
+
+      totals.forEach((total, index) => {
+        if (!total) return;
+        const x = xScale.getPixelForValue(index);
+        const y = yScale.getPixelForValue(total) - 6;
+        chartCtx.fillText(String(total), x, y);
+      });
+
+      chartCtx.restore();
+    }
+  };
+
+  if (window.summaryChart) {
+    window.summaryChart.destroy();
+    window.summaryChart = null;
+  }
+
+  if (!months.length) {
+    window.summaryChart = new Chart(ctx, {
+      type: "bar",
+      data: {
+        labels: ["No Data"],
+        datasets: [{ label: "No Data", data: [0], backgroundColor: "#cbd5e1" }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: { legend: { display: false } },
+        scales: {
+          y: { beginAtZero: true, ticks: { color: "#dbeafe" }, grid: { color: "rgba(148, 163, 184, 0.14)" } },
+          x: { ticks: { color: "#f8fafc" }, grid: { display: false } }
+        }
+      }
+    });
     return;
   }
 
-  const isDark  = document.documentElement.getAttribute("data-theme")==="dark";
-  const gridC   = isDark ? "rgba(255,255,255,0.06)" : "rgba(0,0,0,0.05)";
-  const tickC   = isDark ? "rgba(200,210,230,0.8)"  : "#64748b";
-  const legendC = isDark ? "rgba(200,210,230,0.85)" : "#475569";
-  const labels  = months.map(mk=>{const[y,m]=mk.split("-");return new Date(y,m-1).toLocaleString("en-US",{month:"short"});});
+  const labels = months.map(monthKey => {
+    const [year, month] = monthKey.split("-").map(Number);
+    return new Date(year, month - 1, 1).toLocaleString("en-US", { month: "long" });
+  });
 
-  function colGrad(ctx, top, bot) {
-    const g = ctx.createLinearGradient(0,0,0,280);
-    g.addColorStop(0,top); g.addColorStop(1,bot); return g;
-  }
-
-  const cats = [
-    {key:"recipe",label:"Recipe & Material",top:"rgba(99,102,241,0.95)",  bot:"rgba(67,56,202,0.75)"},
-    {key:"raw",   label:"Raw Material",      top:"rgba(34,197,94,0.90)",   bot:"rgba(22,101,52,0.70)"},
-    {key:"rework",label:"Rework",            top:"rgba(251,146,60,0.90)",  bot:"rgba(180,65,0,0.70)"},
-    {key:"other", label:"Other",             top:"rgba(239,68,68,0.85)",   bot:"rgba(153,27,27,0.65)"},
-  ];
-
-  window.summaryChart = new Chart(ctx,{
-    type:"bar",
-    data:{
+  window.summaryChart = new Chart(ctx, {
+    type: "bar",
+    data: {
       labels,
-      datasets: cats.map(c=>({
-        label:c.label,
-        data:months.map(m=>monthData[m][c.key]||0),
-        backgroundColor:colGrad(ctx,c.top,c.bot),
-        borderColor:c.top,
-        borderWidth:0,
-        borderRadius:{topLeft:6,topRight:6},
-        borderSkipped:false,
-        hoverBackgroundColor:c.top,
-        barPercentage:0.72,
-        categoryPercentage:0.78,
-      }))
+      datasets: [
+        {
+          label: "Raw Material",
+          data: months.map(month => monthData[month].raw || 0),
+          backgroundColor: "rgba(59, 130, 246, 0.86)",
+          borderColor: "#93c5fd",
+          borderWidth: 1,
+          borderRadius: 10,
+          borderSkipped: false
+        },
+        {
+          label: "Recipe & Material",
+          data: months.map(month => monthData[month].recipe || 0),
+          backgroundColor: "rgba(251, 146, 60, 0.88)",
+          borderColor: "#fdba74",
+          borderWidth: 1,
+          borderRadius: 10,
+          borderSkipped: false
+        },
+        {
+          label: "Other",
+          data: months.map(month => monthData[month].other || 0),
+          backgroundColor: "rgba(217, 70, 239, 0.82)",
+          borderColor: "#e9a8f2",
+          borderWidth: 1,
+          borderRadius: 10,
+          borderSkipped: false
+        },
+        {
+          label: "Rework",
+          data: months.map(month => monthData[month].rework || 0),
+          backgroundColor: "rgba(45, 212, 191, 0.84)",
+          borderColor: "#99f6e4",
+          borderWidth: 1,
+          borderRadius: 10,
+          borderSkipped: false
+        }
+      ]
     },
-    options:{
-      responsive:true, maintainAspectRatio:false,
-      animation:{duration:550,easing:"easeOutQuart"},
-      interaction:{mode:"index",intersect:false},
-      layout:{padding:{top:10,right:8,left:4,bottom:0}},
-      plugins:{
-        legend:{position:"top",align:"start",labels:{color:legendC,usePointStyle:true,pointStyle:"rectRounded",boxWidth:10,padding:16,font:{weight:"600",size:11}}},
-        tooltip:{
-          backgroundColor:isDark?"rgba(6,11,20,0.97)":"rgba(255,255,255,0.97)",
-          titleColor:isDark?"#e2e8f0":"#0f172a",
-          bodyColor:isDark?"#94a3b8":"#475569",
-          borderColor:isDark?"rgba(255,255,255,0.09)":"rgba(0,0,0,0.08)",
-          borderWidth:1, padding:12, cornerRadius:10, boxPadding:5,
-          callbacks:{
-            title:items=>`📅 ${items[0].label}`,
-            label:item=>{
-              const tot=cats.reduce((s,_,i)=>s+(item.chart.data.datasets[i].data[item.dataIndex]||0),0);
-              const pct=tot>0?` (${((item.parsed.y/tot)*100).toFixed(0)}%)`:"";
-              return `  ${item.dataset.label}: ${item.parsed.y}${pct}`;
-            }
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      animation: { duration: 260 },
+      layout: {
+        padding: { top: 28, right: 14, left: 8, bottom: 0 }
+      },
+      plugins: {
+        legend: {
+          position: "top",
+          labels: {
+            color: "#f8fafc",
+            usePointStyle: true,
+            pointStyle: "rectRounded",
+            boxWidth: 10,
+            padding: 16,
+            font: { weight: "600" }
           }
         },
-        datalabels:{display:false}
+        tooltip: {
+          backgroundColor: "rgba(15, 23, 42, 0.94)",
+          titleColor: "#f8fafc",
+          bodyColor: "#dbeafe",
+          borderColor: "rgba(148, 163, 184, 0.28)",
+          borderWidth: 1,
+          padding: 12
+        }
       },
-      scales:{
-        x:{grid:{display:false,drawBorder:false},ticks:{color:tickC,font:{weight:"600",size:11}}},
-        y:{beginAtZero:true,grid:{color:gridC,drawBorder:false},ticks:{color:tickC,font:{size:11},precision:0}}
+      scales: {
+        x: {
+          stacked: true,
+          ticks: { color: "#f8fafc", font: { weight: "600" } },
+          grid: { display: false, drawBorder: false }
+        },
+        y: {
+          stacked: true,
+          beginAtZero: true,
+          ticks: { color: "rgba(226, 232, 240, 0.78)", precision: 0 },
+          grid: { color: "rgba(148, 163, 184, 0.14)", drawBorder: false }
+        }
       }
-    }
+    },
+    plugins: [totalValuePlugin]
   });
 }
 
