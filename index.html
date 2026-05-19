@@ -1,9 +1,17 @@
 <!DOCTYPE html>
-<html lang="en" data-theme="dark">
+<html lang="en">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Live Performance Dashboard — Petpooja</title>
+  <!-- ─── THEME INIT: runs before first paint — prevents flash ─── -->
+  <script>
+    (function () {
+      var saved = localStorage.getItem('pp-theme');
+      var theme = (saved === 'light' || saved === 'dark') ? saved : 'dark';
+      document.documentElement.setAttribute('data-theme', theme);
+    })();
+  </script>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;1,9..40,400&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
@@ -1009,6 +1017,7 @@
   <aside class="sidebar" id="sidebar">
     <div class="sidebar-logo">
       <img src="https://d28ewddc5mocr5.cloudfront.net/images/logos-new/pp-logo-new.svg" alt="Petpooja">
+      <span class="sidebar-logo-label">Analytics</span>
     </div>
 
     <div class="sidebar-section">
@@ -1032,6 +1041,7 @@
         <a class="nav-item" href="kpi-report.html">
           <svg class="nav-icon" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/></svg>
           KPI Report
+          <span class="nav-badge">New</span>
         </a>
       </nav>
     </div>
@@ -1343,13 +1353,24 @@
    THEME
 ═══════════════════════════════════════════════════ */
 function toggleTheme() {
-  const html = document.documentElement;
-  const isDark = html.getAttribute("data-theme") === "dark";
-  html.setAttribute("data-theme", isDark ? "light" : "dark");
-  document.getElementById("themeIcon").innerHTML = isDark
-    ? `<path stroke-linecap="round" stroke-linejoin="round" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z"/>`
-    : `<path stroke-linecap="round" stroke-linejoin="round" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"/>`;
+  var html   = document.documentElement;
+  var isDark = html.getAttribute('data-theme') === 'dark';
+  var next   = isDark ? 'light' : 'dark';
+  html.setAttribute('data-theme', next);
+  try { localStorage.setItem('pp-theme', next); } catch(e) {}
+  _syncThemeIcon(next === 'dark');
 }
+
+function _syncThemeIcon(isDark) {
+  var el = document.getElementById('themeIcon');
+  if (!el) return;
+  el.innerHTML = isDark
+    ? '<path stroke-linecap="round" stroke-linejoin="round" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"/>'
+    : '<path stroke-linecap="round" stroke-linejoin="round" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z"/>';
+}
+
+// Sync icon immediately — runs before DOMContentLoaded, no flash
+_syncThemeIcon(document.documentElement.getAttribute('data-theme') === 'dark');
 
 /* ═══════════════════════════════════════════════════
    SIDEBAR MOBILE
