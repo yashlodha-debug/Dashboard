@@ -538,6 +538,43 @@
     .topbar-right { gap:6px; }
     .date-group input[type="date"] { width:100px; }
   }
+
+  /* ══ ACHIEVEMENT % + PERFORMANCE SLAB BADGES ══ */
+  .slab-chip {
+    display:inline-flex; align-items:center; gap:5px;
+    padding:3px 10px; border-radius:99px;
+    font-size:10px; font-weight:700; white-space:nowrap; letter-spacing:.02em;
+  }
+  .slab-excellent { background:rgba(34,197,94,.16);   color:#22c55e; border:1px solid rgba(34,197,94,.3); }
+  .slab-good      { background:rgba(59,130,246,.14);  color:#60a5fa; border:1px solid rgba(59,130,246,.28); }
+  .slab-average   { background:rgba(245,158,11,.14);  color:#f59e0b; border:1px solid rgba(245,158,11,.28); }
+  .slab-poor      { background:rgba(239,68,68,.14);   color:#ef4444; border:1px solid rgba(239,68,68,.28); }
+  .slab-none      { background:rgba(148,163,184,.10); color:var(--text3); border:1px solid var(--border); }
+  [data-theme="light"] .slab-excellent { color:#15803d; }
+  [data-theme="light"] .slab-good      { color:#1d4ed8; }
+  [data-theme="light"] .slab-average   { color:#b45309; }
+  [data-theme="light"] .slab-poor      { color:#dc2626; }
+  .achieve-pct { font-family:var(--font-mono); font-size:12px; font-weight:700; }
+  .achieve-pct.a-excellent { color:#22c55e; }
+  .achieve-pct.a-good      { color:#60a5fa; }
+  .achieve-pct.a-average   { color:#f59e0b; }
+  .achieve-pct.a-poor      { color:#ef4444; }
+  [data-theme="light"] .achieve-pct.a-excellent { color:#15803d; }
+  [data-theme="light"] .achieve-pct.a-good      { color:#1d4ed8; }
+  [data-theme="light"] .achieve-pct.a-average   { color:#b45309; }
+  [data-theme="light"] .achieve-pct.a-poor      { color:#dc2626; }
+
+  /* Attendance warning banner */
+  .att-warn {
+    display:none; align-items:flex-start; gap:10px;
+    margin-bottom:14px; padding:12px 16px;
+    border-radius:var(--radius);
+    border:1px solid rgba(245,158,11,.35);
+    background:rgba(245,158,11,.08);
+    color:#fbbf24; font-size:12.5px; font-weight:500; line-height:1.6;
+  }
+  [data-theme="light"] .att-warn { color:#b45309; }
+  .att-warn strong { font-weight:700; }
   </style>
 </head>
 <body>
@@ -634,6 +671,17 @@
       <div class="error-banner" id="errorBanner">
         <svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/></svg>
         <span id="errorText"></span>
+      </div>
+
+      <!-- Attendance file warning -->
+      <div class="att-warn" id="attWarn">
+        <svg width="15" height="15" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" style="flex-shrink:0;margin-top:2px"><path stroke-linecap="round" stroke-linejoin="round" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+        <div id="attWarnMsg" style="flex:1;">
+          <strong>Attendance file not accessible</strong> — Work Days will show 0.
+          Ensure the <em>Yash Team Month Roster</em> sheet is shared as
+          <strong>"Anyone with link can view"</strong>.
+        </div>
+        <button onclick="retryAttendance()" style="margin-left:12px;padding:5px 12px;border-radius:8px;border:1px solid currentColor;background:transparent;color:inherit;font-size:11px;font-weight:700;cursor:pointer;white-space:nowrap;flex-shrink:0;">↻ Retry</button>
       </div>
 
       <!-- ── KPI Summary Cards ── -->
@@ -747,19 +795,21 @@
           <table class="kpi-table" id="kpiTable">
             <thead>
               <tr>
-                <th style="width:52px;" data-col="serial">No.</th>
-                <th class="name-cell" style="width:190px;text-align:left;" data-col="name">Employee</th>
-                <th style="width:90px;" data-col="workDays">Work Days</th>
-                <th style="width:98px;" data-col="assignTasks">Assign Tasks</th>
-                <th style="width:98px;" data-col="dailyTargetValue">Daily Target</th>
-                <th style="width:92px;" data-col="doneTasks">Done Task</th>
-                <th style="width:132px;" data-col="perDayAvg">Per Day Avg Task</th>
-                <th style="width:126px;" data-col="expectedTarget">Expected Target</th>
-                <th style="width:110px;" data-col="difference">Difference</th>
+                <th style="width:46px;" data-col="serial">No.</th>
+                <th class="name-cell" style="width:160px;text-align:left;" data-col="name">Employee</th>
+                <th style="width:80px;" data-col="workDays">Work Days</th>
+                <th style="width:88px;" data-col="assignTasks">Assign Tasks</th>
+                <th style="width:84px;" data-col="dailyTargetValue">Daily Target</th>
+                <th style="width:80px;" data-col="doneTasks">Done Task</th>
+                <th style="width:104px;" data-col="perDayAvg">Per Day Avg</th>
+                <th style="width:108px;" data-col="expectedTarget">Expected Target</th>
+                <th style="width:96px;" data-col="difference">Difference</th>
+                <th style="width:84px;" data-col="achievementPct">Achieve %</th>
+                <th style="width:130px;" data-col="slab">Performance Slab</th>
               </tr>
             </thead>
             <tbody id="kpiTbody">
-              <tr><td colspan="9" class="empty-kpi">Loading KPI data…</td></tr>
+              <tr><td colspan="11" class="empty-kpi">Loading KPI data…</td></tr>
             </tbody>
           </table>
         </div>
@@ -770,46 +820,54 @@
 </div><!-- /layout -->
 
 <script>
-/* ══════════════════════════════════════════════════════
-   CONFIG
-══════════════════════════════════════════════════════ */
-const SHEET_URL  = "https://docs.google.com/spreadsheets/d/1-VxbQ_IaRMKtDH--2JDeqvGFrb_Or3D0kG-mGLu7dG8/export?format=csv&gid=1747930222";
-const MASTER_URL = "https://docs.google.com/spreadsheets/d/1-VxbQ_IaRMKtDH--2JDeqvGFrb_Or3D0kG-mGLu7dG8/export?format=csv&gid=1007217209";
-const HOURS_PER_DAY = 8;
+/* ══════════════════════════════════════════════════════════════════════
+   PETPOOJA KPI REPORT — Clean Single-Source JS
+   Working Days source: Yash Team Month Roster (Attendance 2026 tab)
+   URL: https://docs.google.com/spreadsheets/d/
+        1b08Kfoh48N8pWIxWHp2gmjV9Wj_VNRXdlvTWlAN7wB4/
+        export?format=csv&gid=421022727
+   Structure:
+     Row 1 : header — col A="Date", col B="Name" (pipe-separated names)
+     Row 2+: data   — "DD/MM/YYYY" | "Name1 | Name2 | Name3 …"
+   Working Day rule:
+     If employee name appears in the pipe-list for a date → +1 working day
+     Matching: case-insensitive, trimmed, exact token match (not partial)
+══════════════════════════════════════════════════════════════════════ */
 
-/* ══════════════════════════════════════════════════════
-   STATE
-══════════════════════════════════════════════════════ */
-let kpiRows        = [];          // processed, full dataset
-let filteredRows   = [];          // after search + filter
-let lastHash       = "";
-let masterPromise  = null;
-let isLoading      = false;
-let hasInitialized = false;
-let sortCol        = "serial";
-let sortDir        = 1;           // 1=asc, -1=desc
-let activeFilter   = "all";
-let timer          = null;
+/* ── CONFIG ──────────────────────────────────────────────────────── */
+const SHEET_URL      = "https://docs.google.com/spreadsheets/d/1-VxbQ_IaRMKtDH--2JDeqvGFrb_Or3D0kG-mGLu7dG8/export?format=csv&gid=1747930222";
+const MASTER_URL     = "https://docs.google.com/spreadsheets/d/1-VxbQ_IaRMKtDH--2JDeqvGFrb_Or3D0kG-mGLu7dG8/export?format=csv&gid=1007217209";
+const ATTENDANCE_URL = "https://docs.google.com/spreadsheets/d/1b08Kfoh48N8pWIxWHp2gmjV9Wj_VNRXdlvTWlAN7wB4/export?format=csv&gid=421022727";
+
+/* ── STATE ───────────────────────────────────────────────────────── */
+let kpiRows          = [];
+let filteredRows     = [];
+let lastHash         = "";
+let masterPromise    = null;
+let attendanceCache  = null;   // { dateStr("YYYY-MM-DD"): Set<normName> }
+let isLoading        = false;
+let hasInitialized   = false;
+let sortCol          = "serial";
+let sortDir          = 1;
+let activeFilter     = "all";
+let dateTimer        = null;
+// Cached for dailyTarget re-calc (no re-fetch needed)
 let latestAssignData = {};
-let latestDoneData = {};
-let latestMasterMap = null;
+let latestDoneData   = {};
+let latestWorkDays   = {};   // normName -> workDays (number)
 
-/* ══════════════════════════════════════════════════════
-   DOM REFS
-══════════════════════════════════════════════════════ */
-const fromInput     = document.getElementById("fromDate");
-const toInput       = document.getElementById("toDate");
-const refreshBtn    = document.getElementById("refreshButton");
-const statusText    = document.getElementById("statusText");
-const errorBanner   = document.getElementById("errorBanner");
-const searchInput   = document.getElementById("searchInput");
-const dailyTarget   = document.getElementById("dailyTarget");
-const kpiTbody      = document.getElementById("kpiTbody");
-const rowCountEl    = document.getElementById("rowCount");
+/* ── DOM REFS ────────────────────────────────────────────────────── */
+const fromInput   = document.getElementById("fromDate");
+const toInput     = document.getElementById("toDate");
+const refreshBtn  = document.getElementById("refreshButton");
+const statusText  = document.getElementById("statusText");
+const errorBanner = document.getElementById("errorBanner");
+const searchInput = document.getElementById("searchInput");
+const dailyTarget = document.getElementById("dailyTarget");
+const kpiTbody    = document.getElementById("kpiTbody");
+const rowCountEl  = document.getElementById("rowCount");
 
-/* ══════════════════════════════════════════════════════
-   THEME / SIDEBAR
-══════════════════════════════════════════════════════ */
+/* ── THEME / SIDEBAR ─────────────────────────────────────────────── */
 function toggleTheme() {
   var html   = document.documentElement;
   var isDark = html.getAttribute('data-theme') === 'dark';
@@ -818,7 +876,6 @@ function toggleTheme() {
   try { localStorage.setItem('pp-theme', next); } catch(e) {}
   _syncThemeIcon(next === 'dark');
 }
-
 function _syncThemeIcon(isDark) {
   var el = document.getElementById('themeIcon');
   if (!el) return;
@@ -826,1123 +883,568 @@ function _syncThemeIcon(isDark) {
     ? '<path stroke-linecap="round" stroke-linejoin="round" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"/>'
     : '<path stroke-linecap="round" stroke-linejoin="round" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z"/>';
 }
-
-// Sync icon immediately — runs before DOMContentLoaded, no flash
 _syncThemeIcon(document.documentElement.getAttribute('data-theme') === 'dark');
-function toggleSidebar()  { document.getElementById("sidebar").classList.toggle("open"); document.getElementById("sidebarOverlay").classList.toggle("open"); }
-function closeSidebar()   { document.getElementById("sidebar").classList.remove("open"); document.getElementById("sidebarOverlay").classList.remove("open"); }
+
+function toggleSidebar() { document.getElementById("sidebar").classList.toggle("open"); document.getElementById("sidebarOverlay").classList.toggle("open"); }
+function closeSidebar()  { document.getElementById("sidebar").classList.remove("open");  document.getElementById("sidebarOverlay").classList.remove("open"); }
 
 /* live clock */
-function tick() { document.getElementById("sidebarTime").textContent = new Date().toLocaleTimeString("en-IN",{hour:"2-digit",minute:"2-digit",second:"2-digit"}); }
-setInterval(tick, 1000); tick();
+(function tickClock() {
+  var el = document.getElementById("sidebarTime");
+  if (el) el.textContent = new Date().toLocaleTimeString("en-IN",{hour:"2-digit",minute:"2-digit",second:"2-digit"});
+  setTimeout(tickClock, 1000);
+})();
 
 /* spin keyframe */
-const _s = document.createElement("style");
-_s.textContent = "@keyframes spin{from{transform:rotate(0deg)}to{transform:rotate(360deg)}}";
-document.head.appendChild(_s);
+var _ks = document.createElement("style");
+_ks.textContent = "@keyframes spin{from{transform:rotate(0deg)}to{transform:rotate(360deg)}}";
+document.head.appendChild(_ks);
 
-/* ══════════════════════════════════════════════════════
-   UI HELPERS
-══════════════════════════════════════════════════════ */
-function setStatus(msg)    { statusText.textContent = msg; }
-function showError(msg)    { document.getElementById("errorText").textContent = msg; errorBanner.classList.add("visible"); setStatus("Error"); }
-function clearError()      { errorBanner.classList.remove("visible"); }
+/* ── UI HELPERS ──────────────────────────────────────────────────── */
+function setStatus(msg)  { statusText.textContent = msg; }
+function showError(msg)  { document.getElementById("errorText").textContent = msg; errorBanner.classList.add("visible"); setStatus("Error"); }
+function clearError()    { errorBanner.classList.remove("visible"); }
+
+function showAttWarn(show, msg) {
+  var el = document.getElementById("attWarn");
+  if (!el) return;
+  if (!show) { el.style.display = "none"; return; }
+  if (msg) { var m = document.getElementById("attWarnMsg"); if (m) m.innerHTML = msg; }
+  el.style.display = "flex";
+}
+function retryAttendance() {
+  attendanceCache = null;
+  showAttWarn(false);
+  loadData(fromInput.value, toInput.value, { force: true });
+}
+
 function setBtnState() {
   refreshBtn.disabled = isLoading;
   refreshBtn.innerHTML = isLoading
-    ? `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="animation:spin 1s linear infinite"><path stroke-linecap="round" stroke-linejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg> Loading…`
-    : `<svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg> Refresh`;
+    ? '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="animation:spin 1s linear infinite"><path stroke-linecap="round" stroke-linejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg> Loading\u2026'
+    : '<svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg> Refresh';
 }
 
-function formatDate(d) { return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,"0")}-${String(d.getDate()).padStart(2,"0")}`; }
+function formatDate(d) {
+  return d.getFullYear() + "-" +
+    String(d.getMonth()+1).padStart(2,"0") + "-" +
+    String(d.getDate()).padStart(2,"0");
+}
 
 function showSkeletons() {
-  const sk = `<tr>${Array(9).fill(`<td><div class="skeleton" style="height:11px;margin:auto;width:80%"></div></td>`).join("")}</tr>`;
-  kpiTbody.innerHTML = Array(6).fill(sk).join("");
+  var sk = "<tr>" + Array(11).fill('<td><div class="skeleton" style="height:11px;margin:auto;width:80%"></div></td>').join("") + "</tr>";
+  kpiTbody.innerHTML = Array(8).fill(sk).join("");
   rowCountEl.textContent = "— rows";
-  ["sumTotalEmp","sumAvailEmp","sumTotalTasks","sumTotalTasksSub","sumAvgProd","sumBest","sumBestSub"].forEach(id=>{
-    const el=document.getElementById(id);
-    if(el) el.textContent="—";
+  ["sumTotalEmp","sumAvailEmp","sumTotalTasks","sumTotalTasksSub","sumAvgProd","sumBest","sumBestSub"].forEach(function(id){
+    var el = document.getElementById(id); if (el) el.textContent = "—";
   });
 }
 
-/* ══════════════════════════════════════════════════════
-   DATA HELPERS  (identical to dashboard.html)
-══════════════════════════════════════════════════════ */
-function timeToSeconds(v) {
-  if(!v||typeof v!=="string") return 0;
-  const p=v.trim().split(":").map(Number);
-  if(p.some(isNaN)) return 0;
-  while(p.length<3) p.unshift(0);
-  return p[0]*3600+p[1]*60+p[2];
+function showWaitingState() {
+  kpiTbody.innerHTML = '<tr><td colspan="11" class="empty-kpi" style="padding:32px;">Select a date range and click Refresh to load KPI data.</td></tr>';
+  rowCountEl.textContent = "— rows";
 }
-function secondsToTime(s) {
-  s=Math.max(0,Math.floor(s||0));
-  return `${Math.floor(s/3600)}:${String(Math.floor((s%3600)/60)).padStart(2,"0")}:${String(s%60).padStart(2,"0")}`;
-}
-function parseExpectedHours(v) {
-  if(v==null) return 0;
-  const n=String(v).trim();
-  if(!n) return 0;
-  if(n.includes(":")) return timeToSeconds(n);
-  const h=Number(n); return isNaN(h)?0:h*3600;
-}
-function formatExpectedHours(v) {
-  if(v==null) return "0 hrs";
-  const raw = String(v).trim();
-  if(!raw) return "0 hrs";
-  if(raw.includes(":")) return secondsToTime(timeToSeconds(raw));
-  const hours = Number(raw);
-  if(isNaN(hours)) return raw;
-  return `${hours % 1 === 0 ? hours.toFixed(0) : hours.toFixed(1)} hrs`;
-}
+
+/* ── DATA HELPERS ────────────────────────────────────────────────── */
 function normalizeName(n)  { return (n||"").toLowerCase().trim().replace(/\s+/g," "); }
-function toDisplayName(n)  { return normalizeName(n).split(" ").filter(Boolean).map(w=>w[0].toUpperCase()+w.slice(1)).join(" "); }
-function getAvail(att)     { const a=(att||"").toUpperCase().trim(); return (a==="P"||a==="HD")?"available":"unavailable"; }
+function toDisplayName(n)  {
+  return normalizeName(n).split(" ").filter(Boolean)
+    .map(function(w){ return w[0].toUpperCase()+w.slice(1); }).join(" ");
+}
 
 function parseCSV(text) {
-  const rows=[]; let row=[],cur="",inQ=false;
-  for(let i=0;i<text.length;i++){
-    const c=text[i],nc=text[i+1];
-    if(c==='"'){ inQ&&nc==='"'?(cur+='"',i++):(inQ=!inQ); }
+  var rows=[]; var row=[]; var cur=""; var inQ=false;
+  for(var i=0;i<text.length;i++){
+    var c=text[i]; var nc=text[i+1];
+    if(c==='"'){ if(inQ&&nc==='"'){cur+='"';i++;}else{inQ=!inQ;} }
     else if(c===","&&!inQ){ row.push(cur);cur=""; }
     else if((c==="\n"||c==="\r")&&!inQ){
       if(c==="\r"&&nc==="\n")i++;
       row.push(cur);
-      if(row.some(x=>x.trim()!==""))rows.push(row);
+      if(row.some(function(x){return x.trim()!==""})) rows.push(row);
       row=[];cur="";
     } else cur+=c;
   }
-  if(cur!==""||row.length){ row.push(cur); if(row.some(x=>x.trim()!==""))rows.push(row); }
+  if(cur!==""||row.length){ row.push(cur); if(row.some(function(x){return x.trim()!==""}))rows.push(row); }
   return rows;
 }
 
-/* ══════════════════════════════════════════════════════
-   MASTER DATA  (memoised Promise — never re-fetched)
-══════════════════════════════════════════════════════ */
+/* ── ATTENDANCE DATA ─────────────────────────────────────────────────
+   Sheet: "Attendance 2026" (gid=421022727)
+   Row 1: headers — col A = "Date", col B = "Name"
+   Row 2+: DD/MM/YYYY  |  "Ankit | Priyanka | Nikita | …"
+   Returns: Map  dateStr("YYYY-MM-DD") → Set<normName>
+────────────────────────────────────────────────────────────────────── */
+async function loadAttendanceData() {
+  if (attendanceCache) return { map: attendanceCache, ok: true };
+  try {
+    var res = await fetch(ATTENDANCE_URL, { cache: "default" });
+    if (!res.ok) throw new Error("HTTP " + res.status);
+    var csv  = await res.text();
+    var rows = parseCSV(csv);
+
+    /* Row 0 = header (Date | Name), skip.
+       Row 1+ = data rows. */
+    var map = {};
+
+    for (var i = 1; i < rows.length; i++) {
+      var row  = rows[i];
+      var dateCell = (row[0] || "").trim();
+      var nameCell = (row[1] || "").trim();
+
+      if (!dateCell || !nameCell) continue;
+
+      /* Parse date: MM/DD/YYYY */
+      var parts = dateCell.split("/");
+      if (parts.length !== 3) continue;
+      var mm = parts[0].trim(), dd = parts[1].trim(), yyyy = parts[2].trim();
+      if (!dd || !mm || !yyyy) continue;
+      var dateStr = yyyy + "-" + mm.padStart(2,"0") + "-" + dd.padStart(2,"0");
+
+      /* Validate date */
+      var d = new Date(parseInt(yyyy), parseInt(mm)-1, parseInt(dd));
+      if (isNaN(d.getTime())) continue;
+
+      /* Parse pipe-separated names — exact token matching */
+      var namesSet = new Set();
+      nameCell.split("|").forEach(function(raw) {
+        var n = normalizeName(raw);
+        if (n) namesSet.add(n);
+      });
+
+      map[dateStr] = namesSet;
+    }
+
+    attendanceCache = map;
+    return { map: map, ok: true };
+  } catch(e) {
+    console.warn("Attendance fetch failed:", e.message);
+    return { map: {}, ok: false, error: e.message };
+  }
+}
+
+/*
+  Count working days for one employee within exact [from, to] range.
+  Iterates day by day → checks if normName is in the Set for that date.
+  Exact match: "ankit" will NOT match "ankita" because Sets use === equality.
+*/
+function countWorkingDays(attMap, normName, from, to) {
+  var count = 0;
+  var cur   = new Date(from.getFullYear(), from.getMonth(), from.getDate());
+  var end   = new Date(to.getFullYear(),   to.getMonth(),   to.getDate());
+
+  while (cur <= end) {
+    var ds = cur.getFullYear() + "-" +
+             String(cur.getMonth()+1).padStart(2,"0") + "-" +
+             String(cur.getDate()).padStart(2,"0");
+    if (attMap[ds] && attMap[ds].has(normName)) count++;
+    cur.setDate(cur.getDate() + 1);
+  }
+  return count;
+}
+
+/* ── MASTER DATA (optional — for attendance fallback only) ────────── */
 function loadMasterData() {
-  if(!masterPromise){
-    masterPromise=fetch(MASTER_URL,{cache:"default"})
-      .then(r=>{ if(!r.ok) throw new Error(`Master sheet error: ${r.status}`); return r.text(); })
-      .then(csv=>{
-        const rows=parseCSV(csv);
-        const hdr=(rows[0]||[]).map(h=>h.trim().toLowerCase());
-        const ni=hdr.indexOf("employee");
-        const ei=hdr.findIndex(h=>h==="working hours");
-        const ai=hdr.findIndex(h=>h==="attendance");
-        if(ni===-1||ei===-1||ai===-1) throw new Error("Master sheet missing Employee/Working Hours/Attendance columns.");
-        const map={};
-        rows.slice(1).forEach(row=>{ const k=normalizeName(row[ni]); if(k) map[k]={workingHours:row[ei]||"0",attendance:row[ai]||""}; });
+  if (!masterPromise) {
+    masterPromise = fetch(MASTER_URL, { cache: "default" })
+      .then(function(r){ if(!r.ok) throw new Error("Master "+r.status); return r.text(); })
+      .then(function(csv){
+        var rows = parseCSV(csv);
+        var hdr  = (rows[0]||[]).map(function(h){ return h.trim().toLowerCase(); });
+        var ni   = hdr.indexOf("employee");
+        var ai   = hdr.findIndex(function(h){ return h==="attendance"; });
+        var map  = {};
+        rows.slice(1).forEach(function(row){
+          var k = normalizeName(row[ni]);
+          if(k) map[k] = { attendance: ai>=0?(row[ai]||""):"" };
+        });
         return map;
       })
-      .catch(e=>{ masterPromise=null; throw e; });
+      .catch(function(e){ masterPromise=null; return {}; });  // graceful
   }
   return masterPromise;
 }
 
-/* ══════════════════════════════════════════════════════
-   KPI CALCULATION
-══════════════════════════════════════════════════════ */
+/* ── SLAB LOGIC ──────────────────────────────────────────────────── */
+function getSlabInfo(pct) {
+  if (pct === null) return { cls:"slab-none",      label:"No Data",        achCls:"" };
+  if (pct >= 100)   return { cls:"slab-excellent", label:"100%+ Achieved", achCls:"a-excellent" };
+  if (pct >= 90)    return { cls:"slab-good",      label:"90% \u2013 99%", achCls:"a-good" };
+  if (pct >= 80)    return { cls:"slab-average",   label:"80% \u2013 89%", achCls:"a-average" };
+  return                   { cls:"slab-poor",      label:"Below 80%",      achCls:"a-poor" };
+}
+
 function calcPerf(diff) {
-  if(diff > 0) return "above";
-  if(diff === 0) return "near";
+  if (diff > 0)   return "above";
+  if (diff === 0) return "near";
   return "below";
 }
 
-function buildKpiRows(assignData, doneData, masterMap) {
-  const targetValue = Math.max(0, parseFloat(dailyTarget.value) || 0);
-  const names  = new Set([...Object.keys(assignData), ...Object.keys(doneData)]);
+/* ── KPI CALCULATION ─────────────────────────────────────────────── */
+function buildKpiRows(assignData, doneData, workDaysMap) {
+  var target = Math.max(0, parseFloat(dailyTarget.value) || 0);
+  var names  = new Set(Object.keys(assignData).concat(Object.keys(doneData)));
 
-  return Array.from(names).map(name => {
-    const key      = normalizeName(name);
-    const expRaw   = masterMap[key]?.workingHours || "0";
-    const expSec   = parseExpectedHours(expRaw);
-    const workDays = expSec / (HOURS_PER_DAY * 3600);
+  return Array.from(names).map(function(name) {
+    var key         = normalizeName(name);
+    var workDays    = workDaysMap[name] || 0;
 
-    const assignTasks = assignData[name] || 0;
-    const doneTasks   = doneData[name] || 0;
-    const perDayAvg   = workDays > 0 ? doneTasks / workDays : 0;
-    const expectedTarget = workDays * targetValue;
-    const difference     = doneTasks - expectedTarget;
-    const perf           = calcPerf(difference);
-    const avail         = getAvail(masterMap[key]?.attendance);
+    var assignTasks    = assignData[name]  || 0;
+    var doneTasks      = doneData[name]    || 0;
+    var perDayAvg      = workDays > 0 ? doneTasks / workDays : 0;
+    var expectedTarget = workDays * target;
+    var difference     = doneTasks - expectedTarget;
+    var achievePct     = expectedTarget > 0
+                         ? Math.round((doneTasks / expectedTarget) * 100)
+                         : null;
 
     return {
-      name,
-      workDays,
-      assignTasks,
-      doneTasks,
-      dailyTargetValue: targetValue,
-      perDayAvg,
-      expectedTarget,
-      difference,
-      perf,
-      avail
+      name, workDays, assignTasks, doneTasks,
+      dailyTargetValue: target,
+      perDayAvg, expectedTarget, difference,
+      achievePct,
+      perf: calcPerf(difference)
     };
   });
 }
 
-/* ══════════════════════════════════════════════════════
-   SUMMARY CARDS
-══════════════════════════════════════════════════════ */
-function updateSummaryCards(rows, masterMap) {
-  const totalEmp   = rows.length;
-  const availEmp   = rows.filter(r=>r.avail==="available").length;
-  const totalDone  = rows.reduce((s,r)=>s+r.doneTasks,0);
-  const avgProd    = totalEmp>0 ? (rows.reduce((s,r)=>s+r.perDayAvg,0)/totalEmp) : 0;
-  const best       = rows.slice().sort((a,b)=>b.perDayAvg-a.perDayAvg)[0];
+/* ── SUMMARY CARDS ───────────────────────────────────────────────── */
+function updateSummaryCards(rows) {
+  var totalEmp  = rows.length;
+  var totalDone = rows.reduce(function(s,r){ return s+r.doneTasks; }, 0);
+  var productive= rows.filter(function(r){ return r.workDays>0; });
+  var avgProd   = productive.length
+    ? productive.reduce(function(s,r){ return s+r.perDayAvg; },0) / productive.length
+    : 0;
+  var best = rows.slice().sort(function(a,b){ return b.perDayAvg-a.perDayAvg; })[0];
+  var aboveCnt  = rows.filter(function(r){ return r.perf==="above"; }).length;
 
-  document.getElementById("sumTotalEmp").textContent  = totalEmp;
-  document.getElementById("sumAvailEmp").textContent  = `${availEmp} available today`;
-  document.getElementById("sumTotalTasks").textContent = totalDone.toLocaleString();
-  document.getElementById("sumTotalTasksSub").textContent = `${rows.filter(r=>r.perf==="above").length} above target`;
-  document.getElementById("sumAvgProd").textContent   = avgProd.toFixed(2);
-  document.getElementById("sumAvgProdSub").textContent = `tasks per work day`;
-  document.getElementById("sumBest").textContent      = best?.name || "—";
-  document.getElementById("sumBestSub").textContent   = best ? `${best.perDayAvg.toFixed(2)} tasks/day` : "—";
+  document.getElementById("sumTotalEmp").textContent      = totalEmp;
+  document.getElementById("sumAvailEmp").textContent      = "\u2014";
+  document.getElementById("sumTotalTasks").textContent    = totalDone.toLocaleString();
+  document.getElementById("sumTotalTasksSub").textContent = aboveCnt + " above target";
+  document.getElementById("sumAvgProd").textContent       = avgProd.toFixed(2);
+  document.getElementById("sumAvgProdSub").textContent    = "tasks per work day";
+  document.getElementById("sumBest").textContent          = best ? best.name : "\u2014";
+  document.getElementById("sumBestSub").textContent       = best ? best.perDayAvg.toFixed(2)+" tasks/day" : "\u2014";
 }
 
-/* ══════════════════════════════════════════════════════
-   FILTER + SEARCH
-══════════════════════════════════════════════════════ */
+/* ── FILTER + SEARCH ─────────────────────────────────────────────── */
 function applyFilterSearch() {
-  const q      = searchInput.value.toLowerCase().trim();
-  const filter = activeFilter;
-
-  filteredRows = kpiRows.filter(r=>{
-    const nameMatch = !q || r.name.toLowerCase().includes(q);
-    const perfMatch = filter==="all" || r.perf===filter;
-    return nameMatch && perfMatch;
+  var q = searchInput.value.toLowerCase().trim();
+  filteredRows = kpiRows.filter(function(r) {
+    var nm = !q || r.name.toLowerCase().includes(q);
+    var pm = activeFilter==="all" || r.perf===activeFilter;
+    return nm && pm;
   });
-
   renderTable();
 }
 
 function setFilter(btn, val) {
-  document.querySelectorAll(".filter-chip").forEach(b=>b.classList.remove("active"));
+  document.querySelectorAll(".filter-chip").forEach(function(b){ b.classList.remove("active"); });
   btn.classList.add("active");
   activeFilter = val;
   applyFilterSearch();
 }
 
-searchInput.addEventListener("input", ()=>applyFilterSearch());
-dailyTarget.addEventListener("change", ()=>{
-  if(kpiRows.length && latestMasterMap) {
-    kpiRows = buildKpiRows(latestAssignData, latestDoneData, latestMasterMap);
-    filteredRows = kpiRows.slice();
-    updateSummaryCards(kpiRows, latestMasterMap);
-    applyFilterSearch();
-  }
+searchInput.addEventListener("input", function(){ applyFilterSearch(); });
+
+/* Re-calc on dailyTarget change — no re-fetch */
+dailyTarget.addEventListener("change", function() {
+  if (!kpiRows.length) return;
+  kpiRows      = buildKpiRows(latestAssignData, latestDoneData, latestWorkDays);
+  filteredRows = kpiRows.slice();
+  updateSummaryCards(kpiRows);
+  applyFilterSearch();
 });
 
-/* ══════════════════════════════════════════════════════
-   SORTING
-══════════════════════════════════════════════════════ */
-document.querySelectorAll(".kpi-table thead th[data-col]").forEach(th=>{
-  th.addEventListener("click", ()=>{
-    const col = th.getAttribute("data-col");
-    if(sortCol===col) sortDir*=-1;
-    else { sortCol=col; sortDir=1; }
-    document.querySelectorAll(".kpi-table thead th").forEach(t=>t.classList.remove("sorted-asc","sorted-desc"));
+/* ── SORTING ─────────────────────────────────────────────────────── */
+document.querySelectorAll(".kpi-table thead th[data-col]").forEach(function(th) {
+  th.addEventListener("click", function() {
+    var col = th.getAttribute("data-col");
+    if (sortCol===col) sortDir*=-1; else { sortCol=col; sortDir=1; }
+    document.querySelectorAll(".kpi-table thead th").forEach(function(t){
+      t.classList.remove("sorted-asc","sorted-desc");
+    });
     th.classList.add(sortDir===1?"sorted-asc":"sorted-desc");
     renderTable();
   });
 });
 
 function sortedRows() {
-  return filteredRows.slice().sort((a,b)=>{
-    let va=a[sortCol], vb=b[sortCol];
-    if(sortCol==="serial") { va=b.perDayAvg; vb=a.perDayAvg; } // default ranking by productivity
-    if(sortCol==="name") { return sortDir*(a.name.localeCompare(b.name)); }
-    if(typeof va==="string") return sortDir*va.localeCompare(vb);
+  return filteredRows.slice().sort(function(a,b) {
+    if (sortCol==="serial")  return b.doneTasks - a.doneTasks; // default: done desc
+    if (sortCol==="name")    return sortDir*(a.name.localeCompare(b.name));
+    var va=a[sortCol], vb=b[sortCol];
+    if (va==null&&vb==null) return 0;
+    if (va==null) return sortDir;
+    if (vb==null) return -sortDir;
+    if (typeof va==="string") return sortDir*va.localeCompare(vb);
     return sortDir*(va-vb);
   });
 }
 
-/* ══════════════════════════════════════════════════════
-   RENDER TABLE
-══════════════════════════════════════════════════════ */
-function perfColor(p){ return p==="above"?"#22c55e":p==="near"?"#f59e0b":"#ef4444"; }
+/* ── FORMAT HELPERS ──────────────────────────────────────────────── */
+var fmtDay  = function(v){ if(v==null||isNaN(v))return"—"; return v%1===0?v.toFixed(0):v.toFixed(1); };
+var fmtNum  = function(v){ if(v==null||isNaN(v))return"—"; return v%1===0?v.toFixed(0):v.toFixed(2); };
+var fmtDiff = function(v){
+  if(v==null||isNaN(v))return"—";
+  var s=v%1===0?v.toFixed(0):v.toFixed(2);
+  return v>0?"+"+s:s;
+};
+var diffCls = function(v){ return v>0?"diff-positive":v<0?"diff-negative":"diff-neutral"; };
 
+/* ── RENDER TABLE ────────────────────────────────────────────────── */
 function renderTable() {
-  const rows = sortedRows();
-  rowCountEl.textContent = `${rows.length} row${rows.length!==1?"s":""}`;
+  var rows = sortedRows();
+  rowCountEl.textContent = rows.length + " row" + (rows.length!==1?"s":"");
 
-  if(!rows.length){
-    kpiTbody.innerHTML = `<tr><td colspan="9" class="empty-kpi">No employees match the current filter.</td></tr>`;
+  if (!rows.length) {
+    kpiTbody.innerHTML = '<tr><td colspan="11" class="empty-kpi">No employees match the current filter.</td></tr>';
     return;
   }
 
-  // For ranking display — use global perDayAvg ranking
-  const totalAssign = rows.reduce((s,r)=>s+r.assignTasks,0);
-  const totalDone = rows.reduce((s,r)=>s+r.doneTasks,0);
-  const totalWorkDays = rows.reduce((s,r)=>s+r.workDays,0);
-  const totalExpected = rows.reduce((s,r)=>s+r.expectedTarget,0);
-  const totalDiff = rows.reduce((s,r)=>s+r.difference,0);
-  const targetValue = Math.max(0, parseFloat(dailyTarget.value) || 0);
-  const avgPerDay = rows.length ? (rows.reduce((s,r)=>s+r.perDayAvg,0) / rows.length) : 0;
+  var tAssign   = rows.reduce(function(s,r){ return s+r.assignTasks;    },0);
+  var tDone     = rows.reduce(function(s,r){ return s+r.doneTasks;      },0);
+  var tWorkDays = rows.reduce(function(s,r){ return s+r.workDays;       },0);
+  var tExpected = rows.reduce(function(s,r){ return s+r.expectedTarget; },0);
+  var tDiff     = tDone - tExpected;
+  var avgPD     = rows.length ? rows.reduce(function(s,r){ return s+r.perDayAvg; },0)/rows.length : 0;
+  var tAchieve  = tExpected>0 ? Math.round((tDone/tExpected)*100) : null;
+  var tSlab     = getSlabInfo(tAchieve);
+  var tgt       = Math.max(0, parseFloat(dailyTarget.value)||0);
 
-  const frag = document.createDocumentFragment();
+  var frag = document.createDocumentFragment();
 
-  rows.forEach((r, index)=>{
-    const rank    = rankMap.get(r.name)||"—";
-    const isTop   = rank===1;
-    const tr      = document.createElement("tr");
-    tr.className  = `perf-${r.perf}`;
+  rows.forEach(function(row, index) {
+    var tr   = document.createElement("tr");
+    tr.className = "perf-" + row.perf;
+    var slab = getSlabInfo(row.achievePct);
+    var achTxt = row.achievePct!==null ? row.achievePct+"%" : "\u2014";
 
-    const rankEl  = rank<=3
-      ? `<span class="rank-cell rank-${rank}">${rank}</span>`
-      : `<span class="rank-cell">${rank}</span>`;
-
-    const wdText  = r.workDays>0
-      ? (r.workDays%1===0?r.workDays.toFixed(0):r.workDays.toFixed(1))
-      : "—";
-
-    const pdAvg   = r.perDayAvg.toFixed(2);
-    const exp     = formatExpectedHours(r.expectedRaw);
-
-    const barPct  = Math.min(r.completionPct, 100);
-    const barClr  = perfColor(r.perf);
-    const progressHTML = `
-      <div class="progress-wrap">
-        <div class="progress-bar-bg">
-          <div class="progress-bar-fill" style="width:${barPct}%;background:${barClr};"></div>
-        </div>
-        <span style="font-size:11px;font-weight:700;color:${barClr};min-width:34px;">${r.completionPct}%</span>
-      </div>`;
-
-    const perfLbl  = r.perf==="above"?"Above target":r.perf==="near"?"Near target":"Below target";
-    const chipHTML = `<span class="perf-chip ${r.perf}">${perfLbl}</span>`;
-
-    tr.innerHTML = `
-      <td style="text-align:center;">${rankEl}</td>
-      <td class="name-cell">
-        <span class="emp-name">${r.name}</span>
-        ${isTop?`<span class="top-badge">⭐ Top</span>`:""}
-      </td>
-      <td style="text-align:center;">${wdText}</td>
-      <td style="text-align:center;font-weight:700;">${r.totalTasks}</td>
-      <td style="text-align:center;" class="mono">${pdAvg}</td>
-      <td style="text-align:center;" class="mono">${exp}</td>
-      <td style="text-align:center;font-weight:700;" class="mono">${secondsToTime(r.actualSec)}</td>
-      <td style="text-align:center;" class="mono">${r.avgTimeSec>0?secondsToTime(r.avgTimeSec):"—"}</td>
-      <td>${progressHTML}</td>
-      <td style="text-align:center;">${chipHTML}</td>`;
-
+    tr.innerHTML =
+      '<td style="text-align:center;color:var(--text3);font-size:12px;">'+(index+1)+'</td>'+
+      '<td class="name-cell"><span class="emp-name">'+row.name+'</span></td>'+
+      '<td style="text-align:center;">'+fmtDay(row.workDays)+'</td>'+
+      '<td style="text-align:center;font-weight:700;">'+row.assignTasks+'</td>'+
+      '<td style="text-align:center;" class="mono">'+fmtNum(row.dailyTargetValue)+'</td>'+
+      '<td style="text-align:center;font-weight:700;">'+row.doneTasks+'</td>'+
+      '<td style="text-align:center;" class="mono">'+row.perDayAvg.toFixed(2)+'</td>'+
+      '<td style="text-align:center;" class="mono">'+fmtNum(row.expectedTarget)+'</td>'+
+      '<td style="text-align:center;"><span class="diff-chip '+diffCls(row.difference)+'">'+fmtDiff(row.difference)+'</span></td>'+
+      '<td style="text-align:center;"><span class="achieve-pct '+slab.achCls+'">'+achTxt+'</span></td>'+
+      '<td style="text-align:center;"><span class="slab-chip '+slab.cls+'">'+slab.label+'</span></td>';
     frag.appendChild(tr);
   });
 
-  // Total row
-  const totalTr = document.createElement("tr");
+  /* Total / summary row */
+  var totalTr = document.createElement("tr");
   totalTr.className = "total-row";
-  totalTr.innerHTML = `
-    <td style="text-align:center;">—</td>
-    <td class="name-cell">Σ Total / Avg</td>
-    <td style="text-align:center;">—</td>
-    <td style="text-align:center;">${totTasks}</td>
-    <td class="mono" style="text-align:center;">${rows.length>0?(rows.reduce((s,r)=>s+r.perDayAvg,0)/rows.length).toFixed(2):"—"}</td>
-    <td class="mono" style="text-align:center;">${secondsToTime(totExpectedSec)}</td>
-    <td class="mono" style="text-align:center;">${secondsToTime(totActualSec)}</td>
-    <td class="mono" style="text-align:center;">${totAvgSec>0?secondsToTime(totAvgSec):"—"}</td>
-    <td>—</td>
-    <td style="text-align:center;">—</td>`;
+  totalTr.innerHTML =
+    '<td style="text-align:center;">\u2014</td>'+
+    '<td class="name-cell">\u03a3 Total / Avg</td>'+
+    '<td style="text-align:center;">'+fmtDay(tWorkDays)+'</td>'+
+    '<td style="text-align:center;">'+tAssign+'</td>'+
+    '<td class="mono" style="text-align:center;">'+fmtNum(tgt)+'</td>'+
+    '<td style="text-align:center;">'+tDone+'</td>'+
+    '<td class="mono" style="text-align:center;">'+avgPD.toFixed(2)+'</td>'+
+    '<td class="mono" style="text-align:center;">'+fmtNum(tExpected)+'</td>'+
+    '<td style="text-align:center;"><span class="diff-chip '+diffCls(tDiff)+'">'+fmtDiff(tDiff)+'</span></td>'+
+    '<td style="text-align:center;">'+(tAchieve!==null?tAchieve+"%":"\u2014")+'</td>'+
+    '<td style="text-align:center;"><span class="slab-chip '+tSlab.cls+'">'+tSlab.label+'</span></td>';
   frag.appendChild(totalTr);
 
   kpiTbody.innerHTML = "";
   kpiTbody.appendChild(frag);
 }
 
-/* ══════════════════════════════════════════════════════
-   EXPORT CSV
-══════════════════════════════════════════════════════ */
+/* ── EXPORT CSV ──────────────────────────────────────────────────── */
 function exportCSV() {
-  if(!filteredRows.length){ alert("No data to export."); return; }
-  const esc    = v => `"${String(v).replace(/"/g,'""')}"`;
-  const headers= ["Rank","Employee","Work Days","Total Tasks","Per Day Avg","Expected","Actual","Avg Time","Completion %","Status"];
-  const rankMap= new Map();
-  kpiRows.slice().sort((a,b)=>b.perDayAvg-a.perDayAvg).forEach((r,i)=>rankMap.set(r.name,i+1));
+  if (!filteredRows.length) { alert("No data to export."); return; }
+  var esc  = function(v){ return '"'+String(v).replace(/"/g,'""')+'"'; };
+  var hdrs = ["No.","Employee","Work Days","Assign Tasks","Daily Target",
+              "Done Task","Per Day Avg Task","Expected Target","Difference",
+              "Achievement %","Performance Slab"];
+  var rows = sortedRows();
+  var lines = [hdrs.map(esc).join(",")];
 
-  const csvLines=[headers.map(esc).join(",")];
-  sortedRows().forEach(r=>{
-    const rank   = rankMap.get(r.name)||"";
-    const wdText = r.workDays>0?(r.workDays%1===0?r.workDays.toFixed(0):r.workDays.toFixed(1)):"0";
-    csvLines.push([
-      esc(rank),
-      esc(r.name),
-      esc(wdText),
-      esc(r.totalTasks),
-      esc(r.perDayAvg.toFixed(2)),
-      esc(formatExpectedHours(r.expectedRaw)),
-      esc(secondsToTime(r.actualSec)),
-      esc(r.avgTimeSec>0?secondsToTime(r.avgTimeSec):"—"),
-      esc(r.completionPct+"%"),
-      esc(r.perf==="above"?"Above target":r.perf==="near"?"Near target":"Below target")
+  rows.forEach(function(row, i) {
+    var slab   = getSlabInfo(row.achievePct);
+    var achTxt = row.achievePct!==null ? row.achievePct+"%" : "\u2014";
+    lines.push([
+      esc(i+1), esc(row.name), esc(fmtDay(row.workDays)),
+      esc(row.assignTasks), esc(fmtNum(row.dailyTargetValue)),
+      esc(row.doneTasks), esc(row.perDayAvg.toFixed(2)),
+      esc(fmtNum(row.expectedTarget)), esc(fmtDiff(row.difference)),
+      esc(achTxt), esc(slab.label)
     ].join(","));
   });
 
-  const blob = new Blob([csvLines.join("\n")],{type:"text/csv;charset=utf-8;"});
-  const url  = URL.createObjectURL(blob);
-  const a    = document.createElement("a");
-  a.href     = url;
-  a.download = `kpi-report-${fromInput.value}-to-${toInput.value}.csv`;
+  var blob = new Blob([lines.join("\n")],{type:"text/csv;charset=utf-8;"});
+  var url  = URL.createObjectURL(blob);
+  var a    = document.createElement("a");
+  a.href   = url;
+  a.download = "kpi-report-"+fromInput.value+"-to-"+toInput.value+".csv";
   a.click();
   URL.revokeObjectURL(url);
 }
 
-function isDoneStatus(status) {
-  const normalized = (status || "").toLowerCase().trim().replace(/\s+/g," ");
-  return normalized.includes("done");
-}
+/* ── MAIN LOAD ───────────────────────────────────────────────────── */
+async function loadData(fromDate, toDate, opts) {
+  opts = opts || {};
+  if (isLoading) return;
+  if (!fromDate || !toDate) { showWaitingState(); setStatus("Select date range"); return; }
 
-function renderTable() {
-  const rows = sortedRows();
-  rowCountEl.textContent = `${rows.length} row${rows.length!==1?"s":""}`;
-
-  if(!rows.length){
-    kpiTbody.innerHTML = `<tr><td colspan="9" class="empty-kpi">No employees match the current filter.</td></tr>`;
-    return;
-  }
-
-  const totalAssign = rows.reduce((sum, row) => sum + row.assignTasks, 0);
-  const totalDone = rows.reduce((sum, row) => sum + row.doneTasks, 0);
-  const totalWorkDays = rows.reduce((sum, row) => sum + row.workDays, 0);
-  const totalExpected = rows.reduce((sum, row) => sum + row.expectedTarget, 0);
-  const totalDifference = rows.reduce((sum, row) => sum + row.difference, 0);
-  const avgPerDay = rows.length ? rows.reduce((sum, row) => sum + row.perDayAvg, 0) / rows.length : 0;
-
-  const formatDayValue = value => value % 1 === 0 ? value.toFixed(0) : value.toFixed(1);
-  const formatMetricValue = value => value % 1 === 0 ? value.toFixed(0) : value.toFixed(2);
-  const formatDiffValue = value => `${value > 0 ? "+" : ""}${value % 1 === 0 ? value.toFixed(0) : value.toFixed(2)}`;
-  const getDiffClass = value => value > 0 ? "diff-positive" : value < 0 ? "diff-negative" : "diff-neutral";
-
-  const frag = document.createDocumentFragment();
-
-  rows.forEach((row, index) => {
-    const tr = document.createElement("tr");
-    tr.className = `perf-${row.perf}`;
-    tr.innerHTML = `
-      <td style="text-align:center;">${index + 1}</td>
-      <td class="name-cell"><span class="emp-name">${row.name}</span></td>
-      <td style="text-align:center;">${formatDayValue(row.workDays)}</td>
-      <td style="text-align:center;font-weight:700;">${row.assignTasks}</td>
-      <td style="text-align:center;" class="mono">${formatMetricValue(row.dailyTargetValue)}</td>
-      <td style="text-align:center;font-weight:700;">${row.doneTasks}</td>
-      <td style="text-align:center;" class="mono">${row.perDayAvg.toFixed(2)}</td>
-      <td style="text-align:center;" class="mono">${formatMetricValue(row.expectedTarget)}</td>
-      <td style="text-align:center;"><span class="diff-chip ${getDiffClass(row.difference)}">${formatDiffValue(row.difference)}</span></td>`;
-    frag.appendChild(tr);
-  });
-
-  const totalTr = document.createElement("tr");
-  totalTr.className = "total-row";
-  totalTr.innerHTML = `
-    <td style="text-align:center;">â€”</td>
-    <td class="name-cell">Î£ Total / Avg</td>
-    <td style="text-align:center;">${formatDayValue(totalWorkDays)}</td>
-    <td style="text-align:center;">${totalAssign}</td>
-    <td class="mono" style="text-align:center;">${formatMetricValue(Math.max(0, parseFloat(dailyTarget.value) || 0))}</td>
-    <td style="text-align:center;">${totalDone}</td>
-    <td class="mono" style="text-align:center;">${avgPerDay.toFixed(2)}</td>
-    <td class="mono" style="text-align:center;">${formatMetricValue(totalExpected)}</td>
-    <td style="text-align:center;"><span class="diff-chip ${getDiffClass(totalDifference)}">${formatDiffValue(totalDifference)}</span></td>`;
-  frag.appendChild(totalTr);
-
-  kpiTbody.innerHTML = "";
-  kpiTbody.appendChild(frag);
-}
-
-function exportCSV() {
-  if(!filteredRows.length){ alert("No data to export."); return; }
-
-  const esc = v => `"${String(v).replace(/"/g,'""')}"`;
-  const headers = ["No.","Employee","Work Days","Assign Tasks","Daily Target","Done Task","Per Day Avg Task","Expected Target","Difference"];
-  const rows = sortedRows();
-  const formatDayValue = value => value % 1 === 0 ? value.toFixed(0) : value.toFixed(1);
-  const formatMetricValue = value => value % 1 === 0 ? value.toFixed(0) : value.toFixed(2);
-  const formatDiffValue = value => `${value > 0 ? "+" : ""}${value % 1 === 0 ? value.toFixed(0) : value.toFixed(2)}`;
-
-  const csvLines = [headers.map(esc).join(",")];
-  rows.forEach((row, index) => {
-    csvLines.push([
-      esc(index + 1),
-      esc(row.name),
-      esc(formatDayValue(row.workDays)),
-      esc(row.assignTasks),
-      esc(formatMetricValue(row.dailyTargetValue)),
-      esc(row.doneTasks),
-      esc(row.perDayAvg.toFixed(2)),
-      esc(formatMetricValue(row.expectedTarget)),
-      esc(formatDiffValue(row.difference))
-    ].join(","));
-  });
-
-  const blob = new Blob([csvLines.join("\n")],{type:"text/csv;charset=utf-8;"});
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement("a");
-  a.href = url;
-  a.download = `kpi-report-${fromInput.value}-to-${toInput.value}.csv`;
-  a.click();
-  URL.revokeObjectURL(url);
-}
-
-async function loadData(fromDate, toDate, opts={}) {
-  if(isLoading||!fromDate||!toDate) return;
-  isLoading=true; setBtnState(); setStatus("Loadingâ€¦"); clearError();
+  isLoading = true; setBtnState(); setStatus("Loading\u2026"); clearError();
   showSkeletons();
 
   try {
-    const [fy,fm,fd]=fromDate.split("-");
-    const from=new Date(fy,fm-1,fd);
-    const [ty,tm,td]=toDate.split("-");
-    const to=new Date(ty,tm-1,td); to.setHours(23,59,59,999);
+    /* Parse date range */
+    var fp = fromDate.split("-"); var from = new Date(fp[0],fp[1]-1,fp[2]);
+    var tp = toDate.split("-");   var to   = new Date(tp[0],tp[1]-1,tp[2]); to.setHours(23,59,59,999);
 
-    const [sheetRes, masterMap] = await Promise.all([
-      fetch(SHEET_URL,{cache:"no-cache"}),
-      loadMasterData()
-    ]);
-    if(!sheetRes.ok) throw new Error(`Sheet fetch failed: ${sheetRes.status}`);
-    const csv = await sheetRes.text();
+    /* Fetch task sheet + attendance in parallel; master is optional */
+    var attFetchP    = loadAttendanceData();
+    var sheetFetchP  = fetch(SHEET_URL, { cache: "no-cache" });
+    var masterFetchP = loadMasterData();
 
-    if(!opts.force && csv===lastHash){
-      setStatus(`Up to date Â· ${new Date().toLocaleTimeString()}`);
-      isLoading=false; setBtnState(); return;
+    var results    = await Promise.all([sheetFetchP, attFetchP, masterFetchP]);
+    var sheetRes   = results[0];
+    var attResult  = results[1];
+    /* masterMap result[2] no longer needed for workDays */
+
+    if (!sheetRes.ok) throw new Error("Sheet fetch failed: " + sheetRes.status);
+    var csv = await sheetRes.text();
+
+    /* Show attendance warning if needed */
+    if (!attResult.ok) {
+      showAttWarn(true,
+        '<strong>Attendance file not accessible</strong> \u2014 Work Days will show 0.<br>' +
+        'Error: ' + (attResult.error||"unknown") + '<br>' +
+        'Ensure the <em>Yash Team Month Roster</em> sheet is shared as <strong>\u201cAnyone with link can view\u201d</strong>.'
+      );
+    } else {
+      showAttWarn(false);
     }
-    lastHash=csv;
 
-    const rows = parseCSV(csv);
-    const headers = (rows[0]||[]).map(h=>h.trim());
-    const idx = {
-      date: headers.findIndex(h=>h.toLowerCase()==="assign date"),
-      assigned: headers.findIndex(h=>h.toLowerCase()==="assigned"),
-      status: headers.findIndex(h=>h.toLowerCase()==="status")
+    /* De-duplicate check — include date range in hash so changing
+       From/To always triggers a full re-compute of work days */
+    var rangeKey = fromDate + "|" + toDate;
+    var fullHash = rangeKey + "||" + csv;
+    if (!opts.force && fullHash === lastHash) {
+      setStatus("Up to date \u00b7 " + new Date().toLocaleTimeString());
+      isLoading = false; setBtnState(); return;
+    }
+    lastHash = fullHash;
+
+    /* ── Parse task sheet (single pass) ── */
+    var rows    = parseCSV(csv);
+    var headers = (rows[0]||[]).map(function(h){ return h.trim(); });
+    var idx = {
+      date:     headers.findIndex(function(h){ return h.toLowerCase()==="assign date"; }),
+      assigned: headers.findIndex(function(h){ return h.toLowerCase()==="assigned"; }),
+      status:   headers.findIndex(function(h){ return h.toLowerCase()==="status"; })
     };
-    if([idx.date,idx.assigned,idx.status].some(i=>i===-1))
-      throw new Error("Missing required columns: Assign Date, Assigned, Status.");
+    if ([idx.date,idx.assigned,idx.status].some(function(i){ return i===-1; }))
+      throw new Error("Missing required columns: Assign Date / Assigned / Status.");
 
-    const assignData = {};
-    const doneData = {};
+    var assignData = {};
+    var doneData   = {};
 
-    for(let i=1;i<rows.length;i++){
-      const row = rows[i];
-      const rawDt = row[idx.date];
-      if(!rawDt) continue;
-      const parts = rawDt.split("/");
-      if(parts.length!==3) continue;
-      const rowDate = new Date(parts[2],parts[1]-1,parts[0]);
-      if(isNaN(rowDate.getTime()) || rowDate < from || rowDate > to) continue;
+    for (var i = 1; i < rows.length; i++) {
+      var row    = rows[i];
+      var rawDt  = row[idx.date]; if (!rawDt) continue;
+      var parts  = rawDt.split("/"); if (parts.length!==3) continue;
+      var rowDate = new Date(parseInt(parts[2]),parseInt(parts[1])-1,parseInt(parts[0]));
+      if (isNaN(rowDate.getTime()) || rowDate<from || rowDate>to) continue;
 
-      const normalizedName = normalizeName(row[idx.assigned]);
-      if(!normalizedName) continue;
-      const displayName = toDisplayName(normalizedName);
-      const status = row[idx.status] || "";
+      var nn    = normalizeName(row[idx.assigned]); if (!nn) continue;
+      var dname = toDisplayName(nn);
+      var st    = (row[idx.status]||"").toLowerCase().trim().replace(/\s+/g," ");
 
-      assignData[displayName] = (assignData[displayName] || 0) + 1;
-      if(isDoneStatus(status)) {
-        doneData[displayName] = (doneData[displayName] || 0) + 1;
-      }
+      assignData[dname] = (assignData[dname]||0) + 1;
+      if (st.includes("done")) doneData[dname] = (doneData[dname]||0) + 1;
     }
 
-    kpiRows = buildKpiRows(assignData, doneData, masterMap);
-    filteredRows = kpiRows.slice();
+    /* ── Compute working days from attendance map for every employee ── */
+    var attMap   = attResult.map;
+    var workDays = {};
+    var allNames = new Set(Object.keys(assignData).concat(Object.keys(doneData)));
 
-    updateSummaryCards(kpiRows, masterMap);
-    applyFilterSearch();
-    setStatus(`Updated Â· ${new Date().toLocaleTimeString()}`);
-  } catch(e) {
-    console.error(e);
-    showError(e.message||"Unable to load KPI data.");
-  } finally {
-    isLoading=false; setBtnState();
-  }
-}
+    allNames.forEach(function(name) {
+      var nn  = normalizeName(name);
+      var cnt = countWorkingDays(attMap, nn, from, to);
+      workDays[name] = cnt;
+    });
 
-function renderTable() {
-  const rows = sortedRows();
-  rowCountEl.textContent = `${rows.length} row${rows.length!==1?"s":""}`;
-  if(!rows.length){
-    kpiTbody.innerHTML = `<tr><td colspan="9" class="empty-kpi">No employees match the current filter.</td></tr>`;
-    return;
-  }
-
-  const totalAssign = rows.reduce((sum, row) => sum + row.assignTasks, 0);
-  const totalDone = rows.reduce((sum, row) => sum + row.doneTasks, 0);
-  const totalWorkDays = rows.reduce((sum, row) => sum + row.workDays, 0);
-  const totalExpected = rows.reduce((sum, row) => sum + row.expectedTarget, 0);
-  const totalDifference = rows.reduce((sum, row) => sum + row.difference, 0);
-  const avgPerDay = rows.length ? rows.reduce((sum, row) => sum + row.perDayAvg, 0) / rows.length : 0;
-  const formatDayValue = value => value % 1 === 0 ? value.toFixed(0) : value.toFixed(1);
-  const formatMetricValue = value => value % 1 === 0 ? value.toFixed(0) : value.toFixed(2);
-  const formatDiffValue = value => `${value > 0 ? "+" : ""}${value % 1 === 0 ? value.toFixed(0) : value.toFixed(2)}`;
-  const getDiffClass = value => value > 0 ? "diff-positive" : value < 0 ? "diff-negative" : "diff-neutral";
-
-  const frag = document.createDocumentFragment();
-  rows.forEach((row, index) => {
-    const tr = document.createElement("tr");
-    tr.className = `perf-${row.perf}`;
-    tr.innerHTML = `
-      <td style="text-align:center;">${index + 1}</td>
-      <td class="name-cell"><span class="emp-name">${row.name}</span></td>
-      <td style="text-align:center;">${formatDayValue(row.workDays)}</td>
-      <td style="text-align:center;font-weight:700;">${row.assignTasks}</td>
-      <td style="text-align:center;" class="mono">${formatMetricValue(row.dailyTargetValue)}</td>
-      <td style="text-align:center;font-weight:700;">${row.doneTasks}</td>
-      <td style="text-align:center;" class="mono">${row.perDayAvg.toFixed(2)}</td>
-      <td style="text-align:center;" class="mono">${formatMetricValue(row.expectedTarget)}</td>
-      <td style="text-align:center;"><span class="diff-chip ${getDiffClass(row.difference)}">${formatDiffValue(row.difference)}</span></td>`;
-    frag.appendChild(tr);
-  });
-
-  const totalTr = document.createElement("tr");
-  totalTr.className = "total-row";
-  totalTr.innerHTML = `
-    <td style="text-align:center;">-</td>
-    <td class="name-cell">Total / Avg</td>
-    <td style="text-align:center;">${formatDayValue(totalWorkDays)}</td>
-    <td style="text-align:center;">${totalAssign}</td>
-    <td class="mono" style="text-align:center;">${formatMetricValue(Math.max(0, parseFloat(dailyTarget.value) || 0))}</td>
-    <td style="text-align:center;">${totalDone}</td>
-    <td class="mono" style="text-align:center;">${avgPerDay.toFixed(2)}</td>
-    <td class="mono" style="text-align:center;">${formatMetricValue(totalExpected)}</td>
-    <td style="text-align:center;"><span class="diff-chip ${getDiffClass(totalDifference)}">${formatDiffValue(totalDifference)}</span></td>`;
-  frag.appendChild(totalTr);
-
-  kpiTbody.innerHTML = "";
-  kpiTbody.appendChild(frag);
-}
-
-function exportCSV() {
-  if(!filteredRows.length){ alert("No data to export."); return; }
-  const esc = v => `"${String(v).replace(/"/g,'""')}"`;
-  const headers = ["No.","Employee","Work Days","Assign Tasks","Daily Target","Done Task","Per Day Avg Task","Expected Target","Difference"];
-  const rows = sortedRows();
-  const formatDayValue = value => value % 1 === 0 ? value.toFixed(0) : value.toFixed(1);
-  const formatMetricValue = value => value % 1 === 0 ? value.toFixed(0) : value.toFixed(2);
-  const formatDiffValue = value => `${value > 0 ? "+" : ""}${value % 1 === 0 ? value.toFixed(0) : value.toFixed(2)}`;
-  const csvLines = [headers.map(esc).join(",")];
-
-  rows.forEach((row, index) => {
-    csvLines.push([
-      esc(index + 1),
-      esc(row.name),
-      esc(formatDayValue(row.workDays)),
-      esc(row.assignTasks),
-      esc(formatMetricValue(row.dailyTargetValue)),
-      esc(row.doneTasks),
-      esc(row.perDayAvg.toFixed(2)),
-      esc(formatMetricValue(row.expectedTarget)),
-      esc(formatDiffValue(row.difference))
-    ].join(","));
-  });
-
-  const blob = new Blob([csvLines.join("\n")],{type:"text/csv;charset=utf-8;"});
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement("a");
-  a.href = url;
-  a.download = `kpi-report-${fromInput.value}-to-${toInput.value}.csv`;
-  a.click();
-  URL.revokeObjectURL(url);
-}
-
-async function loadData(fromDate, toDate, opts={}) {
-  if(isLoading||!fromDate||!toDate) return;
-  isLoading=true; setBtnState(); setStatus("Loading..."); clearError();
-  showSkeletons();
-
-  try {
-    const [fy,fm,fd]=fromDate.split("-");
-    const from=new Date(fy,fm-1,fd);
-    const [ty,tm,td]=toDate.split("-");
-    const to=new Date(ty,tm-1,td); to.setHours(23,59,59,999);
-
-    const [sheetRes, masterMap] = await Promise.all([
-      fetch(SHEET_URL,{cache:"no-cache"}),
-      loadMasterData()
-    ]);
-    if(!sheetRes.ok) throw new Error(`Sheet fetch failed: ${sheetRes.status}`);
-    const csv = await sheetRes.text();
-
-    if(!opts.force && csv===lastHash){
-      setStatus(`Up to date · ${new Date().toLocaleTimeString()}`);
-      isLoading=false; setBtnState(); return;
-    }
-    lastHash=csv;
-
-    const rows = parseCSV(csv);
-    const headers = (rows[0]||[]).map(h=>h.trim());
-    const idx = {
-      date: headers.findIndex(h=>h.toLowerCase()==="assign date"),
-      assigned: headers.findIndex(h=>h.toLowerCase()==="assigned"),
-      status: headers.findIndex(h=>h.toLowerCase()==="status")
-    };
-    if([idx.date,idx.assigned,idx.status].some(i=>i===-1))
-      throw new Error("Missing required columns: Assign Date, Assigned, Status.");
-
-    const assignData = {};
-    const doneData = {};
-
-    for(let i=1;i<rows.length;i++){
-      const row = rows[i];
-      const rawDt = row[idx.date];
-      if(!rawDt) continue;
-      const parts = rawDt.split("/");
-      if(parts.length!==3) continue;
-      const rowDate = new Date(parts[2],parts[1]-1,parts[0]);
-      if(isNaN(rowDate.getTime()) || rowDate < from || rowDate > to) continue;
-
-      const normalizedName = normalizeName(row[idx.assigned]);
-      if(!normalizedName) continue;
-      const displayName = toDisplayName(normalizedName);
-      const status = row[idx.status] || "";
-
-      assignData[displayName] = (assignData[displayName] || 0) + 1;
-      if(isDoneStatus(status)) doneData[displayName] = (doneData[displayName] || 0) + 1;
-    }
-
+    /* ── Cache for dailyTarget re-calc ── */
     latestAssignData = assignData;
-    latestDoneData = doneData;
-    latestMasterMap = masterMap;
-    kpiRows = buildKpiRows(assignData, doneData, masterMap);
+    latestDoneData   = doneData;
+    latestWorkDays   = workDays;
+
+    /* ── Build + render ── */
+    kpiRows      = buildKpiRows(assignData, doneData, workDays);
     filteredRows = kpiRows.slice();
-    updateSummaryCards(kpiRows, masterMap);
+    updateSummaryCards(kpiRows);
     applyFilterSearch();
-    setStatus(`Updated · ${new Date().toLocaleTimeString()}`);
-  } catch(e) {
-    console.error(e);
-    showError(e.message||"Unable to load KPI data.");
-  } finally {
-    isLoading=false; setBtnState();
-  }
-}
-
-function renderTable() {
-  const rows = sortedRows();
-  rowCountEl.textContent = `${rows.length} row${rows.length!==1?"s":""}`;
-
-  if(!rows.length){
-    kpiTbody.innerHTML = `<tr><td colspan="9" class="empty-kpi">No employees match the current filter.</td></tr>`;
-    return;
-  }
-
-  const totalAssign = rows.reduce((sum, row) => sum + row.assignTasks, 0);
-  const totalDone = rows.reduce((sum, row) => sum + row.doneTasks, 0);
-  const totalWorkDays = rows.reduce((sum, row) => sum + row.workDays, 0);
-  const totalExpected = rows.reduce((sum, row) => sum + row.expectedTarget, 0);
-  const totalDifference = rows.reduce((sum, row) => sum + row.difference, 0);
-  const avgPerDay = rows.length ? rows.reduce((sum, row) => sum + row.perDayAvg, 0) / rows.length : 0;
-
-  const formatDayValue = value => value % 1 === 0 ? value.toFixed(0) : value.toFixed(1);
-  const formatMetricValue = value => value % 1 === 0 ? value.toFixed(0) : value.toFixed(2);
-  const formatDiffValue = value => `${value > 0 ? "+" : ""}${value % 1 === 0 ? value.toFixed(0) : value.toFixed(2)}`;
-  const getDiffClass = value => value > 0 ? "diff-positive" : value < 0 ? "diff-negative" : "diff-neutral";
-
-  const frag = document.createDocumentFragment();
-
-  rows.forEach((row, index) => {
-    const tr = document.createElement("tr");
-    tr.className = `perf-${row.perf}`;
-    tr.innerHTML = `
-      <td style="text-align:center;">${index + 1}</td>
-      <td class="name-cell"><span class="emp-name">${row.name}</span></td>
-      <td style="text-align:center;">${formatDayValue(row.workDays)}</td>
-      <td style="text-align:center;font-weight:700;">${row.assignTasks}</td>
-      <td style="text-align:center;" class="mono">${formatMetricValue(row.dailyTargetValue)}</td>
-      <td style="text-align:center;font-weight:700;">${row.doneTasks}</td>
-      <td style="text-align:center;" class="mono">${row.perDayAvg.toFixed(2)}</td>
-      <td style="text-align:center;" class="mono">${formatMetricValue(row.expectedTarget)}</td>
-      <td style="text-align:center;"><span class="diff-chip ${getDiffClass(row.difference)}">${formatDiffValue(row.difference)}</span></td>`;
-    frag.appendChild(tr);
-  });
-
-  const totalTr = document.createElement("tr");
-  totalTr.className = "total-row";
-  totalTr.innerHTML = `
-    <td style="text-align:center;">-</td>
-    <td class="name-cell">Total / Avg</td>
-    <td style="text-align:center;">${formatDayValue(totalWorkDays)}</td>
-    <td style="text-align:center;">${totalAssign}</td>
-    <td class="mono" style="text-align:center;">${formatMetricValue(Math.max(0, parseFloat(dailyTarget.value) || 0))}</td>
-    <td style="text-align:center;">${totalDone}</td>
-    <td class="mono" style="text-align:center;">${avgPerDay.toFixed(2)}</td>
-    <td class="mono" style="text-align:center;">${formatMetricValue(totalExpected)}</td>
-    <td style="text-align:center;"><span class="diff-chip ${getDiffClass(totalDifference)}">${formatDiffValue(totalDifference)}</span></td>`;
-  frag.appendChild(totalTr);
-
-  kpiTbody.innerHTML = "";
-  kpiTbody.appendChild(frag);
-}
-
-function exportCSV() {
-  if(!filteredRows.length){ alert("No data to export."); return; }
-
-  const esc = v => `"${String(v).replace(/"/g,'""')}"`;
-  const headers = ["No.","Employee","Work Days","Assign Tasks","Daily Target","Done Task","Per Day Avg Task","Expected Target","Difference"];
-  const rows = sortedRows();
-  const formatDayValue = value => value % 1 === 0 ? value.toFixed(0) : value.toFixed(1);
-  const formatMetricValue = value => value % 1 === 0 ? value.toFixed(0) : value.toFixed(2);
-  const formatDiffValue = value => `${value > 0 ? "+" : ""}${value % 1 === 0 ? value.toFixed(0) : value.toFixed(2)}`;
-
-  const csvLines = [headers.map(esc).join(",")];
-  rows.forEach((row, index) => {
-    csvLines.push([
-      esc(index + 1),
-      esc(row.name),
-      esc(formatDayValue(row.workDays)),
-      esc(row.assignTasks),
-      esc(formatMetricValue(row.dailyTargetValue)),
-      esc(row.doneTasks),
-      esc(row.perDayAvg.toFixed(2)),
-      esc(formatMetricValue(row.expectedTarget)),
-      esc(formatDiffValue(row.difference))
-    ].join(","));
-  });
-
-  const blob = new Blob([csvLines.join("\n")],{type:"text/csv;charset=utf-8;"});
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement("a");
-  a.href = url;
-  a.download = `kpi-report-${fromInput.value}-to-${toInput.value}.csv`;
-  a.click();
-  URL.revokeObjectURL(url);
-}
-
-async function loadData(fromDate, toDate, opts={}) {
-  if(isLoading||!fromDate||!toDate) return;
-  isLoading=true; setBtnState(); setStatus("Loading..."); clearError();
-  showSkeletons();
-
-  try {
-    const [fy,fm,fd]=fromDate.split("-");
-    const from=new Date(fy,fm-1,fd);
-    const [ty,tm,td]=toDate.split("-");
-    const to=new Date(ty,tm-1,td); to.setHours(23,59,59,999);
-
-    const [sheetRes, masterMap] = await Promise.all([
-      fetch(SHEET_URL,{cache:"no-cache"}),
-      loadMasterData()
-    ]);
-    if(!sheetRes.ok) throw new Error(`Sheet fetch failed: ${sheetRes.status}`);
-    const csv = await sheetRes.text();
-
-    if(!opts.force && csv===lastHash){
-      setStatus(`Up to date · ${new Date().toLocaleTimeString()}`);
-      isLoading=false; setBtnState(); return;
-    }
-    lastHash=csv;
-
-    const rows = parseCSV(csv);
-    const headers = (rows[0]||[]).map(h=>h.trim());
-    const idx = {
-      date: headers.findIndex(h=>h.toLowerCase()==="assign date"),
-      assigned: headers.findIndex(h=>h.toLowerCase()==="assigned"),
-      status: headers.findIndex(h=>h.toLowerCase()==="status")
-    };
-    if([idx.date,idx.assigned,idx.status].some(i=>i===-1))
-      throw new Error("Missing required columns: Assign Date, Assigned, Status.");
-
-    const assignData = {};
-    const doneData = {};
-
-    for(let i=1;i<rows.length;i++){
-      const row = rows[i];
-      const rawDt = row[idx.date];
-      if(!rawDt) continue;
-      const parts = rawDt.split("/");
-      if(parts.length!==3) continue;
-      const rowDate = new Date(parts[2],parts[1]-1,parts[0]);
-      if(isNaN(rowDate.getTime()) || rowDate < from || rowDate > to) continue;
-
-      const normalizedName = normalizeName(row[idx.assigned]);
-      if(!normalizedName) continue;
-      const displayName = toDisplayName(normalizedName);
-      const status = row[idx.status] || "";
-
-      assignData[displayName] = (assignData[displayName] || 0) + 1;
-      if(isDoneStatus(status)) {
-        doneData[displayName] = (doneData[displayName] || 0) + 1;
-      }
-    }
-
-    latestAssignData = assignData;
-    latestDoneData = doneData;
-    latestMasterMap = masterMap;
-    kpiRows = buildKpiRows(assignData, doneData, masterMap);
-    filteredRows = kpiRows.slice();
-
-    updateSummaryCards(kpiRows, masterMap);
-    applyFilterSearch();
-    setStatus(`Updated · ${new Date().toLocaleTimeString()}`);
-  } catch(e) {
-    console.error(e);
-    showError(e.message||"Unable to load KPI data.");
-  } finally {
-    isLoading=false; setBtnState();
-  }
-}
-
-async function loadData(fromDate, toDate, opts={}) {
-  if(isLoading||!fromDate||!toDate) return;
-  isLoading=true; setBtnState(); setStatus("Loading..."); clearError();
-  showSkeletons();
-
-  try {
-    const [fy,fm,fd]=fromDate.split("-");
-    const from=new Date(fy,fm-1,fd);
-    const [ty,tm,td]=toDate.split("-");
-    const to=new Date(ty,tm-1,td); to.setHours(23,59,59,999);
-
-    const [sheetRes, masterMap] = await Promise.all([
-      fetch(SHEET_URL,{cache:"no-cache"}),
-      loadMasterData()
-    ]);
-    if(!sheetRes.ok) throw new Error(`Sheet fetch failed: ${sheetRes.status}`);
-    const csv = await sheetRes.text();
-
-    if(!opts.force && csv===lastHash){
-      setStatus(`Up to date · ${new Date().toLocaleTimeString()}`);
-      isLoading=false; setBtnState(); return;
-    }
-    lastHash=csv;
-
-    const rows = parseCSV(csv);
-    const headers = (rows[0]||[]).map(h=>h.trim());
-    const idx = {
-      date: headers.findIndex(h=>h.toLowerCase()==="assign date"),
-      assigned: headers.findIndex(h=>h.toLowerCase()==="assigned"),
-      status: headers.findIndex(h=>h.toLowerCase()==="status")
-    };
-    if([idx.date,idx.assigned,idx.status].some(i=>i===-1))
-      throw new Error("Missing required columns: Assign Date, Assigned, Status.");
-
-    const assignData = {};
-    const doneData = {};
-
-    for(let i=1;i<rows.length;i++){
-      const row = rows[i];
-      const rawDt = row[idx.date];
-      if(!rawDt) continue;
-      const parts = rawDt.split("/");
-      if(parts.length!==3) continue;
-      const rowDate = new Date(parts[2],parts[1]-1,parts[0]);
-      if(isNaN(rowDate.getTime()) || rowDate < from || rowDate > to) continue;
-
-      const normalizedName = normalizeName(row[idx.assigned]);
-      if(!normalizedName) continue;
-      const displayName = toDisplayName(normalizedName);
-      const status = row[idx.status] || "";
-
-      assignData[displayName] = (assignData[displayName] || 0) + 1;
-      if(isDoneStatus(status)) {
-        doneData[displayName] = (doneData[displayName] || 0) + 1;
-      }
-    }
-
-    latestAssignData = assignData;
-    latestDoneData = doneData;
-    latestMasterMap = masterMap;
-    kpiRows = buildKpiRows(assignData, doneData, masterMap);
-    filteredRows = kpiRows.slice();
-
-    updateSummaryCards(kpiRows, masterMap);
-    applyFilterSearch();
-    setStatus(`Updated · ${new Date().toLocaleTimeString()}`);
-  } catch(e) {
-    console.error(e);
-    showError(e.message||"Unable to load KPI data.");
-  } finally {
-    isLoading=false; setBtnState();
-  }
-}
-
-/* ══════════════════════════════════════════════════════
-   MAIN LOAD
-══════════════════════════════════════════════════════ */
-async function loadData(fromDate, toDate, opts={}) {
-  if(isLoading||!fromDate||!toDate) return;
-  isLoading=true; setBtnState(); setStatus("Loading…"); clearError();
-  showSkeletons();
-
-  try {
-    const [fy,fm,fd]=fromDate.split("-");
-    const from=new Date(fy,fm-1,fd);
-    const [ty,tm,td]=toDate.split("-");
-    const to=new Date(ty,tm-1,td); to.setHours(23,59,59,999);
-
-    // Fetch both in parallel
-    const [sheetRes, masterMap] = await Promise.all([
-      fetch(SHEET_URL,{cache:"no-cache"}),
-      loadMasterData()
-    ]);
-    if(!sheetRes.ok) throw new Error(`Sheet fetch failed: ${sheetRes.status}`);
-    const csv = await sheetRes.text();
-
-    if(!opts.force && csv===lastHash){
-      setStatus(`Up to date · ${new Date().toLocaleTimeString()}`);
-      isLoading=false; setBtnState(); return;
-    }
-    lastHash=csv;
-
-    const rows    = parseCSV(csv);
-    const headers = (rows[0]||[]).map(h=>h.trim());
-    const idx     = {
-      date:     headers.findIndex(h=>h.toLowerCase()==="assign date"),
-      assigned: headers.findIndex(h=>h.toLowerCase()==="assigned"),
-      status:   headers.findIndex(h=>h.toLowerCase()==="status"),
-      dur:      headers.findIndex(h=>h.toLowerCase().includes("duration"))
-    };
-    if([idx.date,idx.assigned,idx.status].some(i=>i===-1))
-      throw new Error("Missing required columns: Assign Date, Assigned, Status.");
-
-    // Accumulators — single pass
-    const hoursData = {};   // name -> total duration seconds in selected range
-    const totalTaskData  = {};   // name -> total task count in selected range
-
-    const len=rows.length;
-    for(let i=1;i<len;i++){
-      const row    = rows[i];
-      const rawDt  = row[idx.date]; if(!rawDt) continue;
-      const parts  = rawDt.split("/"); if(parts.length!==3) continue;
-      const fd     = new Date(parts[2],parts[1]-1,parts[0]); if(isNaN(fd.getTime())) continue;
-      if(fd<from||fd>to) continue;
-
-      const nname  = normalizeName(row[idx.assigned]); if(!nname) continue;
-      const dname  = toDisplayName(nname);
-      const status = (row[idx.status]||"").toLowerCase().trim().replace(/\s+/g," ");
-      const dur    = idx.dur>=0 ? row[idx.dur] : "0:00:00";
-      const durSec = timeToSeconds(dur||"0:00:00");
-
-      totalTaskData[dname] = (totalTaskData[dname]||0)+1;
-      hoursData[dname] = (hoursData[dname]||0)+durSec;
-    }
-
-    // Build KPI rows
-    kpiRows      = buildKpiRows(hoursData, totalTaskData, masterMap);
-    filteredRows = kpiRows.slice();
-
-    // Update summary cards
-    updateSummaryCards(kpiRows, masterMap);
-
-    // Render table
-    applyFilterSearch();
-
-    setStatus(`Updated · ${new Date().toLocaleTimeString()}`);
+    setStatus("Updated \u00b7 " + new Date().toLocaleTimeString());
 
   } catch(e) {
     console.error(e);
-    showError(e.message||"Unable to load KPI data.");
+    showError(e.message || "Unable to load KPI data.");
   } finally {
-    isLoading=false; setBtnState();
+    isLoading = false; setBtnState();
   }
 }
 
-/* ══════════════════════════════════════════════════════
-   EVENTS & INIT
-══════════════════════════════════════════════════════ */
-refreshBtn.addEventListener("click", ()=>loadData(fromInput.value,toInput.value,{force:true}));
+/* ── INIT — bulletproof 4-strategy ──────────────────────────────── */
+refreshBtn.addEventListener("click", function() {
+  if (!fromInput.value || !toInput.value) { alert("Please select From and To dates first."); return; }
+  loadData(fromInput.value, toInput.value, { force: true });
+});
 
-let dateTimer=null;
-function debounceDate(){ clearTimeout(dateTimer); dateTimer=setTimeout(()=>loadData(fromInput.value,toInput.value,{force:true}),350); }
-fromInput.addEventListener("change",debounceDate);
-toInput.addEventListener("change",debounceDate);
+function debounceDate() {
+  clearTimeout(dateTimer);
+  dateTimer = setTimeout(function() {
+    if (fromInput.value && toInput.value) loadData(fromInput.value, toInput.value, { force: true });
+  }, 350);
+}
+fromInput.addEventListener("change", debounceDate);
+toInput.addEventListener("change",   debounceDate);
+
+function setDefaultDates() {
+  var today = new Date();
+  var first = new Date(today.getFullYear(), today.getMonth(), 1);
+  fromInput.value = formatDate(first);
+  toInput.value   = formatDate(today);
+}
 
 function initializePage() {
-  const today=new Date(), first=new Date(today.getFullYear(),today.getMonth(),1);
-  fromInput.value=formatDate(first);
-  toInput.value=formatDate(today);
-  document.querySelector('th[data-col="serial"]')?.classList.add("sorted-desc");
-  setBtnState();
-  loadData(fromInput.value,toInput.value,{force:true});
-}
-
-window.addEventListener("load",()=>{
   if (hasInitialized) return;
   hasInitialized = true;
-  initializePage();
-});
-
-window.addEventListener("pageshow",(event)=>{
-  if (!event.persisted) return;
-  isLoading = false;
+  setDefaultDates();
+  var th = document.querySelector('th[data-col="serial"]');
+  if (th) th.classList.add("sorted-desc");
   setBtnState();
-  clearError();
-  if (!fromInput.value || !toInput.value) {
-    initializePage();
-    return;
-  }
-  loadData(fromInput.value,toInput.value,{force:false});
-});
-async function loadData(fromDate, toDate, opts={}) {
-  if(isLoading||!fromDate||!toDate) return;
-  isLoading=true; setBtnState(); setStatus("Loading..."); clearError();
-  showSkeletons();
-
-  try {
-    const [fy,fm,fd]=fromDate.split("-");
-    const from=new Date(fy,fm-1,fd);
-    const [ty,tm,td]=toDate.split("-");
-    const to=new Date(ty,tm-1,td); to.setHours(23,59,59,999);
-
-    const [sheetRes, masterMap] = await Promise.all([
-      fetch(SHEET_URL,{cache:"no-cache"}),
-      loadMasterData()
-    ]);
-    if(!sheetRes.ok) throw new Error(`Sheet fetch failed: ${sheetRes.status}`);
-    const csv = await sheetRes.text();
-
-    if(!opts.force && csv===lastHash){
-      setStatus(`Up to date · ${new Date().toLocaleTimeString()}`);
-      isLoading=false; setBtnState(); return;
-    }
-    lastHash=csv;
-
-    const rows = parseCSV(csv);
-    const headers = (rows[0]||[]).map(h=>h.trim());
-    const idx = {
-      date: headers.findIndex(h=>h.toLowerCase()==="assign date"),
-      assigned: headers.findIndex(h=>h.toLowerCase()==="assigned"),
-      status: headers.findIndex(h=>h.toLowerCase()==="status")
-    };
-    if([idx.date,idx.assigned,idx.status].some(i=>i===-1)) {
-      throw new Error("Missing required columns: Assign Date, Assigned, Status.");
-    }
-
-    const assignData = {};
-    const doneData = {};
-
-    for(let i=1;i<rows.length;i++){
-      const row = rows[i];
-      const rawDt = row[idx.date];
-      if(!rawDt) continue;
-      const parts = rawDt.split("/");
-      if(parts.length!==3) continue;
-      const rowDate = new Date(parts[2],parts[1]-1,parts[0]);
-      if(isNaN(rowDate.getTime()) || rowDate < from || rowDate > to) continue;
-
-      const normalizedName = normalizeName(row[idx.assigned]);
-      if(!normalizedName) continue;
-      const displayName = toDisplayName(normalizedName);
-      const status = (row[idx.status] || "").toLowerCase().trim().replace(/\s+/g," ");
-
-      assignData[displayName] = (assignData[displayName] || 0) + 1;
-      if(status.includes("done")) {
-        doneData[displayName] = (doneData[displayName] || 0) + 1;
-      }
-    }
-
-    latestAssignData = assignData;
-    latestDoneData = doneData;
-    latestMasterMap = masterMap;
-    kpiRows = buildKpiRows(assignData, doneData, masterMap);
-    filteredRows = kpiRows.slice();
-    updateSummaryCards(kpiRows, masterMap);
-    applyFilterSearch();
-    setStatus(`Updated · ${new Date().toLocaleTimeString()}`);
-  } catch(e) {
-    console.error(e);
-    showError(e.message||"Unable to load KPI data.");
-  } finally {
-    isLoading=false; setBtnState();
-  }
+  if (!fromInput.value || !toInput.value) { showWaitingState(); return; }
+  loadData(fromInput.value, toInput.value, { force: true });
 }
+
+/* Strategy 1: DOMContentLoaded */
+document.addEventListener("DOMContentLoaded", initializePage);
+/* Strategy 2: window load fallback */
+window.addEventListener("load", initializePage);
+/* Strategy 3: immediate (script already below DOM) */
+if (document.readyState==="complete" || document.readyState==="interactive") {
+  setTimeout(initializePage, 0);
+}
+/* Strategy 4: bfcache restore */
+window.addEventListener("pageshow", function(ev) {
+  if (ev.persisted) {
+    isLoading = false; setBtnState(); clearError();
+    if (!fromInput.value || !toInput.value) { hasInitialized=false; initializePage(); }
+  }
+});
 </script>
 </body>
 </html>
