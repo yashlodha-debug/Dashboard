@@ -470,6 +470,17 @@
   /* Mono value cells */
   .mono { font-family:var(--font-mono); font-size:12px; }
 
+  .diff-chip {
+    display:inline-flex; align-items:center; justify-content:center;
+    min-width:64px; padding:4px 10px; border-radius:999px;
+    font-size:11px; font-weight:700; letter-spacing:.01em;
+  }
+  .diff-positive { background:rgba(34,197,94,.14); color:#22c55e; }
+  .diff-neutral  { background:rgba(148,163,184,.14); color:var(--text2); }
+  .diff-negative { background:rgba(239,68,68,.14); color:#ef4444; }
+  [data-theme="light"] .diff-positive { color:#15803d; }
+  [data-theme="light"] .diff-negative { color:#dc2626; }
+
   /* Progress bar for completion rate */
   .progress-wrap { display:flex; align-items:center; gap:8px; }
   .progress-bar-bg {
@@ -541,6 +552,7 @@
   <aside class="sidebar" id="sidebar">
     <div class="sidebar-logo">
       <img src="https://d28ewddc5mocr5.cloudfront.net/images/logos-new/pp-logo-new.svg" alt="Petpooja">
+      <span class="sidebar-logo-label">Analytics</span>
     </div>
 
     <div class="sidebar-section">
@@ -563,6 +575,7 @@
         <a class="nav-item active" href="kpi-report.html">
           <svg class="nav-icon" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/></svg>
           KPI Report
+          <span class="nav-badge">New</span>
         </a>
       </nav>
     </div>
@@ -734,20 +747,19 @@
           <table class="kpi-table" id="kpiTable">
             <thead>
               <tr>
-                <th style="width:46px;" data-col="rank">#</th>
-                <th class="name-cell" style="width:160px;text-align:left;" data-col="name">Employee</th>
+                <th style="width:52px;" data-col="serial">No.</th>
+                <th class="name-cell" style="width:190px;text-align:left;" data-col="name">Employee</th>
                 <th style="width:90px;" data-col="workDays">Work Days</th>
-                <th style="width:90px;" data-col="totalTasks">Total Tasks</th>
-                <th style="width:110px;" data-col="perDayAvg">Per Day Avg</th>
-                <th style="width:100px;" data-col="expected">Expected</th>
-                <th style="width:100px;" data-col="actual">Actual</th>
-                <th style="width:110px;" data-col="avgTime">Avg Time</th>
-                <th style="width:140px;" data-col="completion">Completion %</th>
-                <th style="width:110px;" data-col="status">Status</th>
+                <th style="width:98px;" data-col="assignTasks">Assign Tasks</th>
+                <th style="width:98px;" data-col="dailyTargetValue">Daily Target</th>
+                <th style="width:92px;" data-col="doneTasks">Done Task</th>
+                <th style="width:132px;" data-col="perDayAvg">Per Day Avg Task</th>
+                <th style="width:126px;" data-col="expectedTarget">Expected Target</th>
+                <th style="width:110px;" data-col="difference">Difference</th>
               </tr>
             </thead>
             <tbody id="kpiTbody">
-              <tr><td colspan="10" class="empty-kpi">Loading KPI data…</td></tr>
+              <tr><td colspan="9" class="empty-kpi">Loading KPI data…</td></tr>
             </tbody>
           </table>
         </div>
@@ -774,10 +786,13 @@ let lastHash       = "";
 let masterPromise  = null;
 let isLoading      = false;
 let hasInitialized = false;
-let sortCol        = "rank";
+let sortCol        = "serial";
 let sortDir        = 1;           // 1=asc, -1=desc
 let activeFilter   = "all";
 let timer          = null;
+let latestAssignData = {};
+let latestDoneData = {};
+let latestMasterMap = null;
 
 /* ══════════════════════════════════════════════════════
    DOM REFS
@@ -842,7 +857,7 @@ function setBtnState() {
 function formatDate(d) { return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,"0")}-${String(d.getDate()).padStart(2,"0")}`; }
 
 function showSkeletons() {
-  const sk = `<tr>${Array(10).fill(`<td><div class="skeleton" style="height:11px;margin:auto;width:80%"></div></td>`).join("")}</tr>`;
+  const sk = `<tr>${Array(9).fill(`<td><div class="skeleton" style="height:11px;margin:auto;width:80%"></div></td>`).join("")}</tr>`;
   kpiTbody.innerHTML = Array(6).fill(sk).join("");
   rowCountEl.textContent = "— rows";
   ["sumTotalEmp","sumAvailEmp","sumTotalTasks","sumTotalTasksSub","sumAvgProd","sumBest","sumBestSub"].forEach(id=>{
@@ -928,16 +943,15 @@ function loadMasterData() {
 /* ══════════════════════════════════════════════════════
    KPI CALCULATION
 ══════════════════════════════════════════════════════ */
-function calcPerf(actual, expected) {
-  if(!expected) return "below";
-  const ratio = actual / expected;
-  if(ratio >= 1.0)  return "above";
-  if(ratio >= 0.75) return "near";
+function calcPerf(diff) {
+  if(diff > 0) return "above";
+  if(diff === 0) return "near";
   return "below";
 }
 
-function buildKpiRows(hoursData, doneData, masterMap) {
-  const names  = new Set([...Object.keys(hoursData), ...Object.keys(doneData)]);
+function buildKpiRows(assignData, doneData, masterMap) {
+  const targetValue = Math.max(0, parseFloat(dailyTarget.value) || 0);
+  const names  = new Set([...Object.keys(assignData), ...Object.keys(doneData)]);
 
   return Array.from(names).map(name => {
     const key      = normalizeName(name);
@@ -945,28 +959,23 @@ function buildKpiRows(hoursData, doneData, masterMap) {
     const expSec   = parseExpectedHours(expRaw);
     const workDays = expSec / (HOURS_PER_DAY * 3600);
 
-    const totalTasks = doneData[name] || 0;
-    const perDayAvg  = workDays > 0 ? totalTasks / workDays : 0;
-    const actualSec  = hoursData[name] || 0;
-    const avgTimeSec = workDays > 0 ? actualSec / workDays : 0;
-
-    const completionPct = expSec > 0 ? Math.min(Math.round((actualSec / expSec) * 100), 999) : 0;
-    const perf          = calcPerf(actualSec, expSec);
+    const assignTasks = assignData[name] || 0;
+    const doneTasks   = doneData[name] || 0;
+    const perDayAvg   = workDays > 0 ? doneTasks / workDays : 0;
+    const expectedTarget = workDays * targetValue;
+    const difference     = doneTasks - expectedTarget;
+    const perf           = calcPerf(difference);
     const avail         = getAvail(masterMap[key]?.attendance);
 
     return {
       name,
       workDays,
-      totalTasks,
+      assignTasks,
+      doneTasks,
+      dailyTargetValue: targetValue,
       perDayAvg,
-      expectedRaw: expRaw,
-      expectedSec: expSec,
-      expected: expSec,
-      actualSec,
-      actual: actualSec,
-      avgTimeSec,
-      avgTime: avgTimeSec,
-      completionPct,
+      expectedTarget,
+      difference,
       perf,
       avail
     };
@@ -979,7 +988,7 @@ function buildKpiRows(hoursData, doneData, masterMap) {
 function updateSummaryCards(rows, masterMap) {
   const totalEmp   = rows.length;
   const availEmp   = rows.filter(r=>r.avail==="available").length;
-  const totalDone  = rows.reduce((s,r)=>s+r.totalTasks,0);
+  const totalDone  = rows.reduce((s,r)=>s+r.doneTasks,0);
   const avgProd    = totalEmp>0 ? (rows.reduce((s,r)=>s+r.perDayAvg,0)/totalEmp) : 0;
   const best       = rows.slice().sort((a,b)=>b.perDayAvg-a.perDayAvg)[0];
 
@@ -1018,7 +1027,10 @@ function setFilter(btn, val) {
 
 searchInput.addEventListener("input", ()=>applyFilterSearch());
 dailyTarget.addEventListener("change", ()=>{
-  if(kpiRows.length) {
+  if(kpiRows.length && latestMasterMap) {
+    kpiRows = buildKpiRows(latestAssignData, latestDoneData, latestMasterMap);
+    filteredRows = kpiRows.slice();
+    updateSummaryCards(kpiRows, latestMasterMap);
     applyFilterSearch();
   }
 });
@@ -1040,7 +1052,7 @@ document.querySelectorAll(".kpi-table thead th[data-col]").forEach(th=>{
 function sortedRows() {
   return filteredRows.slice().sort((a,b)=>{
     let va=a[sortCol], vb=b[sortCol];
-    if(sortCol==="rank") { va=b.perDayAvg; vb=a.perDayAvg; } // rank by perDayAvg desc
+    if(sortCol==="serial") { va=b.perDayAvg; vb=a.perDayAvg; } // default ranking by productivity
     if(sortCol==="name") { return sortDir*(a.name.localeCompare(b.name)); }
     if(typeof va==="string") return sortDir*va.localeCompare(vb);
     return sortDir*(va-vb);
@@ -1057,23 +1069,22 @@ function renderTable() {
   rowCountEl.textContent = `${rows.length} row${rows.length!==1?"s":""}`;
 
   if(!rows.length){
-    kpiTbody.innerHTML = `<tr><td colspan="10" class="empty-kpi">No employees match the current filter.</td></tr>`;
+    kpiTbody.innerHTML = `<tr><td colspan="9" class="empty-kpi">No employees match the current filter.</td></tr>`;
     return;
   }
 
   // For ranking display — use global perDayAvg ranking
-  const rankMap = new Map();
-  kpiRows.slice().sort((a,b)=>b.perDayAvg-a.perDayAvg).forEach((r,i)=>rankMap.set(r.name,i+1));
-
-  // Totals
-  const totTasks       = rows.reduce((s,r)=>s+r.totalTasks,0);
-  const totExpectedSec = rows.reduce((s,r)=>s+r.expectedSec,0);
-  const totActualSec   = rows.reduce((s,r)=>s+r.actualSec,0);
-  const totAvgSec      = rows.reduce((s,r)=>s+r.avgTimeSec,0)/rows.length;
+  const totalAssign = rows.reduce((s,r)=>s+r.assignTasks,0);
+  const totalDone = rows.reduce((s,r)=>s+r.doneTasks,0);
+  const totalWorkDays = rows.reduce((s,r)=>s+r.workDays,0);
+  const totalExpected = rows.reduce((s,r)=>s+r.expectedTarget,0);
+  const totalDiff = rows.reduce((s,r)=>s+r.difference,0);
+  const targetValue = Math.max(0, parseFloat(dailyTarget.value) || 0);
+  const avgPerDay = rows.length ? (rows.reduce((s,r)=>s+r.perDayAvg,0) / rows.length) : 0;
 
   const frag = document.createDocumentFragment();
 
-  rows.forEach(r=>{
+  rows.forEach((r, index)=>{
     const rank    = rankMap.get(r.name)||"—";
     const isTop   = rank===1;
     const tr      = document.createElement("tr");
@@ -1178,6 +1189,570 @@ function exportCSV() {
   URL.revokeObjectURL(url);
 }
 
+function isDoneStatus(status) {
+  const normalized = (status || "").toLowerCase().trim().replace(/\s+/g," ");
+  return normalized.includes("done");
+}
+
+function renderTable() {
+  const rows = sortedRows();
+  rowCountEl.textContent = `${rows.length} row${rows.length!==1?"s":""}`;
+
+  if(!rows.length){
+    kpiTbody.innerHTML = `<tr><td colspan="9" class="empty-kpi">No employees match the current filter.</td></tr>`;
+    return;
+  }
+
+  const totalAssign = rows.reduce((sum, row) => sum + row.assignTasks, 0);
+  const totalDone = rows.reduce((sum, row) => sum + row.doneTasks, 0);
+  const totalWorkDays = rows.reduce((sum, row) => sum + row.workDays, 0);
+  const totalExpected = rows.reduce((sum, row) => sum + row.expectedTarget, 0);
+  const totalDifference = rows.reduce((sum, row) => sum + row.difference, 0);
+  const avgPerDay = rows.length ? rows.reduce((sum, row) => sum + row.perDayAvg, 0) / rows.length : 0;
+
+  const formatDayValue = value => value % 1 === 0 ? value.toFixed(0) : value.toFixed(1);
+  const formatMetricValue = value => value % 1 === 0 ? value.toFixed(0) : value.toFixed(2);
+  const formatDiffValue = value => `${value > 0 ? "+" : ""}${value % 1 === 0 ? value.toFixed(0) : value.toFixed(2)}`;
+  const getDiffClass = value => value > 0 ? "diff-positive" : value < 0 ? "diff-negative" : "diff-neutral";
+
+  const frag = document.createDocumentFragment();
+
+  rows.forEach((row, index) => {
+    const tr = document.createElement("tr");
+    tr.className = `perf-${row.perf}`;
+    tr.innerHTML = `
+      <td style="text-align:center;">${index + 1}</td>
+      <td class="name-cell"><span class="emp-name">${row.name}</span></td>
+      <td style="text-align:center;">${formatDayValue(row.workDays)}</td>
+      <td style="text-align:center;font-weight:700;">${row.assignTasks}</td>
+      <td style="text-align:center;" class="mono">${formatMetricValue(row.dailyTargetValue)}</td>
+      <td style="text-align:center;font-weight:700;">${row.doneTasks}</td>
+      <td style="text-align:center;" class="mono">${row.perDayAvg.toFixed(2)}</td>
+      <td style="text-align:center;" class="mono">${formatMetricValue(row.expectedTarget)}</td>
+      <td style="text-align:center;"><span class="diff-chip ${getDiffClass(row.difference)}">${formatDiffValue(row.difference)}</span></td>`;
+    frag.appendChild(tr);
+  });
+
+  const totalTr = document.createElement("tr");
+  totalTr.className = "total-row";
+  totalTr.innerHTML = `
+    <td style="text-align:center;">â€”</td>
+    <td class="name-cell">Î£ Total / Avg</td>
+    <td style="text-align:center;">${formatDayValue(totalWorkDays)}</td>
+    <td style="text-align:center;">${totalAssign}</td>
+    <td class="mono" style="text-align:center;">${formatMetricValue(Math.max(0, parseFloat(dailyTarget.value) || 0))}</td>
+    <td style="text-align:center;">${totalDone}</td>
+    <td class="mono" style="text-align:center;">${avgPerDay.toFixed(2)}</td>
+    <td class="mono" style="text-align:center;">${formatMetricValue(totalExpected)}</td>
+    <td style="text-align:center;"><span class="diff-chip ${getDiffClass(totalDifference)}">${formatDiffValue(totalDifference)}</span></td>`;
+  frag.appendChild(totalTr);
+
+  kpiTbody.innerHTML = "";
+  kpiTbody.appendChild(frag);
+}
+
+function exportCSV() {
+  if(!filteredRows.length){ alert("No data to export."); return; }
+
+  const esc = v => `"${String(v).replace(/"/g,'""')}"`;
+  const headers = ["No.","Employee","Work Days","Assign Tasks","Daily Target","Done Task","Per Day Avg Task","Expected Target","Difference"];
+  const rows = sortedRows();
+  const formatDayValue = value => value % 1 === 0 ? value.toFixed(0) : value.toFixed(1);
+  const formatMetricValue = value => value % 1 === 0 ? value.toFixed(0) : value.toFixed(2);
+  const formatDiffValue = value => `${value > 0 ? "+" : ""}${value % 1 === 0 ? value.toFixed(0) : value.toFixed(2)}`;
+
+  const csvLines = [headers.map(esc).join(",")];
+  rows.forEach((row, index) => {
+    csvLines.push([
+      esc(index + 1),
+      esc(row.name),
+      esc(formatDayValue(row.workDays)),
+      esc(row.assignTasks),
+      esc(formatMetricValue(row.dailyTargetValue)),
+      esc(row.doneTasks),
+      esc(row.perDayAvg.toFixed(2)),
+      esc(formatMetricValue(row.expectedTarget)),
+      esc(formatDiffValue(row.difference))
+    ].join(","));
+  });
+
+  const blob = new Blob([csvLines.join("\n")],{type:"text/csv;charset=utf-8;"});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = `kpi-report-${fromInput.value}-to-${toInput.value}.csv`;
+  a.click();
+  URL.revokeObjectURL(url);
+}
+
+async function loadData(fromDate, toDate, opts={}) {
+  if(isLoading||!fromDate||!toDate) return;
+  isLoading=true; setBtnState(); setStatus("Loadingâ€¦"); clearError();
+  showSkeletons();
+
+  try {
+    const [fy,fm,fd]=fromDate.split("-");
+    const from=new Date(fy,fm-1,fd);
+    const [ty,tm,td]=toDate.split("-");
+    const to=new Date(ty,tm-1,td); to.setHours(23,59,59,999);
+
+    const [sheetRes, masterMap] = await Promise.all([
+      fetch(SHEET_URL,{cache:"no-cache"}),
+      loadMasterData()
+    ]);
+    if(!sheetRes.ok) throw new Error(`Sheet fetch failed: ${sheetRes.status}`);
+    const csv = await sheetRes.text();
+
+    if(!opts.force && csv===lastHash){
+      setStatus(`Up to date Â· ${new Date().toLocaleTimeString()}`);
+      isLoading=false; setBtnState(); return;
+    }
+    lastHash=csv;
+
+    const rows = parseCSV(csv);
+    const headers = (rows[0]||[]).map(h=>h.trim());
+    const idx = {
+      date: headers.findIndex(h=>h.toLowerCase()==="assign date"),
+      assigned: headers.findIndex(h=>h.toLowerCase()==="assigned"),
+      status: headers.findIndex(h=>h.toLowerCase()==="status")
+    };
+    if([idx.date,idx.assigned,idx.status].some(i=>i===-1))
+      throw new Error("Missing required columns: Assign Date, Assigned, Status.");
+
+    const assignData = {};
+    const doneData = {};
+
+    for(let i=1;i<rows.length;i++){
+      const row = rows[i];
+      const rawDt = row[idx.date];
+      if(!rawDt) continue;
+      const parts = rawDt.split("/");
+      if(parts.length!==3) continue;
+      const rowDate = new Date(parts[2],parts[1]-1,parts[0]);
+      if(isNaN(rowDate.getTime()) || rowDate < from || rowDate > to) continue;
+
+      const normalizedName = normalizeName(row[idx.assigned]);
+      if(!normalizedName) continue;
+      const displayName = toDisplayName(normalizedName);
+      const status = row[idx.status] || "";
+
+      assignData[displayName] = (assignData[displayName] || 0) + 1;
+      if(isDoneStatus(status)) {
+        doneData[displayName] = (doneData[displayName] || 0) + 1;
+      }
+    }
+
+    kpiRows = buildKpiRows(assignData, doneData, masterMap);
+    filteredRows = kpiRows.slice();
+
+    updateSummaryCards(kpiRows, masterMap);
+    applyFilterSearch();
+    setStatus(`Updated Â· ${new Date().toLocaleTimeString()}`);
+  } catch(e) {
+    console.error(e);
+    showError(e.message||"Unable to load KPI data.");
+  } finally {
+    isLoading=false; setBtnState();
+  }
+}
+
+function renderTable() {
+  const rows = sortedRows();
+  rowCountEl.textContent = `${rows.length} row${rows.length!==1?"s":""}`;
+  if(!rows.length){
+    kpiTbody.innerHTML = `<tr><td colspan="9" class="empty-kpi">No employees match the current filter.</td></tr>`;
+    return;
+  }
+
+  const totalAssign = rows.reduce((sum, row) => sum + row.assignTasks, 0);
+  const totalDone = rows.reduce((sum, row) => sum + row.doneTasks, 0);
+  const totalWorkDays = rows.reduce((sum, row) => sum + row.workDays, 0);
+  const totalExpected = rows.reduce((sum, row) => sum + row.expectedTarget, 0);
+  const totalDifference = rows.reduce((sum, row) => sum + row.difference, 0);
+  const avgPerDay = rows.length ? rows.reduce((sum, row) => sum + row.perDayAvg, 0) / rows.length : 0;
+  const formatDayValue = value => value % 1 === 0 ? value.toFixed(0) : value.toFixed(1);
+  const formatMetricValue = value => value % 1 === 0 ? value.toFixed(0) : value.toFixed(2);
+  const formatDiffValue = value => `${value > 0 ? "+" : ""}${value % 1 === 0 ? value.toFixed(0) : value.toFixed(2)}`;
+  const getDiffClass = value => value > 0 ? "diff-positive" : value < 0 ? "diff-negative" : "diff-neutral";
+
+  const frag = document.createDocumentFragment();
+  rows.forEach((row, index) => {
+    const tr = document.createElement("tr");
+    tr.className = `perf-${row.perf}`;
+    tr.innerHTML = `
+      <td style="text-align:center;">${index + 1}</td>
+      <td class="name-cell"><span class="emp-name">${row.name}</span></td>
+      <td style="text-align:center;">${formatDayValue(row.workDays)}</td>
+      <td style="text-align:center;font-weight:700;">${row.assignTasks}</td>
+      <td style="text-align:center;" class="mono">${formatMetricValue(row.dailyTargetValue)}</td>
+      <td style="text-align:center;font-weight:700;">${row.doneTasks}</td>
+      <td style="text-align:center;" class="mono">${row.perDayAvg.toFixed(2)}</td>
+      <td style="text-align:center;" class="mono">${formatMetricValue(row.expectedTarget)}</td>
+      <td style="text-align:center;"><span class="diff-chip ${getDiffClass(row.difference)}">${formatDiffValue(row.difference)}</span></td>`;
+    frag.appendChild(tr);
+  });
+
+  const totalTr = document.createElement("tr");
+  totalTr.className = "total-row";
+  totalTr.innerHTML = `
+    <td style="text-align:center;">-</td>
+    <td class="name-cell">Total / Avg</td>
+    <td style="text-align:center;">${formatDayValue(totalWorkDays)}</td>
+    <td style="text-align:center;">${totalAssign}</td>
+    <td class="mono" style="text-align:center;">${formatMetricValue(Math.max(0, parseFloat(dailyTarget.value) || 0))}</td>
+    <td style="text-align:center;">${totalDone}</td>
+    <td class="mono" style="text-align:center;">${avgPerDay.toFixed(2)}</td>
+    <td class="mono" style="text-align:center;">${formatMetricValue(totalExpected)}</td>
+    <td style="text-align:center;"><span class="diff-chip ${getDiffClass(totalDifference)}">${formatDiffValue(totalDifference)}</span></td>`;
+  frag.appendChild(totalTr);
+
+  kpiTbody.innerHTML = "";
+  kpiTbody.appendChild(frag);
+}
+
+function exportCSV() {
+  if(!filteredRows.length){ alert("No data to export."); return; }
+  const esc = v => `"${String(v).replace(/"/g,'""')}"`;
+  const headers = ["No.","Employee","Work Days","Assign Tasks","Daily Target","Done Task","Per Day Avg Task","Expected Target","Difference"];
+  const rows = sortedRows();
+  const formatDayValue = value => value % 1 === 0 ? value.toFixed(0) : value.toFixed(1);
+  const formatMetricValue = value => value % 1 === 0 ? value.toFixed(0) : value.toFixed(2);
+  const formatDiffValue = value => `${value > 0 ? "+" : ""}${value % 1 === 0 ? value.toFixed(0) : value.toFixed(2)}`;
+  const csvLines = [headers.map(esc).join(",")];
+
+  rows.forEach((row, index) => {
+    csvLines.push([
+      esc(index + 1),
+      esc(row.name),
+      esc(formatDayValue(row.workDays)),
+      esc(row.assignTasks),
+      esc(formatMetricValue(row.dailyTargetValue)),
+      esc(row.doneTasks),
+      esc(row.perDayAvg.toFixed(2)),
+      esc(formatMetricValue(row.expectedTarget)),
+      esc(formatDiffValue(row.difference))
+    ].join(","));
+  });
+
+  const blob = new Blob([csvLines.join("\n")],{type:"text/csv;charset=utf-8;"});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = `kpi-report-${fromInput.value}-to-${toInput.value}.csv`;
+  a.click();
+  URL.revokeObjectURL(url);
+}
+
+async function loadData(fromDate, toDate, opts={}) {
+  if(isLoading||!fromDate||!toDate) return;
+  isLoading=true; setBtnState(); setStatus("Loading..."); clearError();
+  showSkeletons();
+
+  try {
+    const [fy,fm,fd]=fromDate.split("-");
+    const from=new Date(fy,fm-1,fd);
+    const [ty,tm,td]=toDate.split("-");
+    const to=new Date(ty,tm-1,td); to.setHours(23,59,59,999);
+
+    const [sheetRes, masterMap] = await Promise.all([
+      fetch(SHEET_URL,{cache:"no-cache"}),
+      loadMasterData()
+    ]);
+    if(!sheetRes.ok) throw new Error(`Sheet fetch failed: ${sheetRes.status}`);
+    const csv = await sheetRes.text();
+
+    if(!opts.force && csv===lastHash){
+      setStatus(`Up to date · ${new Date().toLocaleTimeString()}`);
+      isLoading=false; setBtnState(); return;
+    }
+    lastHash=csv;
+
+    const rows = parseCSV(csv);
+    const headers = (rows[0]||[]).map(h=>h.trim());
+    const idx = {
+      date: headers.findIndex(h=>h.toLowerCase()==="assign date"),
+      assigned: headers.findIndex(h=>h.toLowerCase()==="assigned"),
+      status: headers.findIndex(h=>h.toLowerCase()==="status")
+    };
+    if([idx.date,idx.assigned,idx.status].some(i=>i===-1))
+      throw new Error("Missing required columns: Assign Date, Assigned, Status.");
+
+    const assignData = {};
+    const doneData = {};
+
+    for(let i=1;i<rows.length;i++){
+      const row = rows[i];
+      const rawDt = row[idx.date];
+      if(!rawDt) continue;
+      const parts = rawDt.split("/");
+      if(parts.length!==3) continue;
+      const rowDate = new Date(parts[2],parts[1]-1,parts[0]);
+      if(isNaN(rowDate.getTime()) || rowDate < from || rowDate > to) continue;
+
+      const normalizedName = normalizeName(row[idx.assigned]);
+      if(!normalizedName) continue;
+      const displayName = toDisplayName(normalizedName);
+      const status = row[idx.status] || "";
+
+      assignData[displayName] = (assignData[displayName] || 0) + 1;
+      if(isDoneStatus(status)) doneData[displayName] = (doneData[displayName] || 0) + 1;
+    }
+
+    latestAssignData = assignData;
+    latestDoneData = doneData;
+    latestMasterMap = masterMap;
+    kpiRows = buildKpiRows(assignData, doneData, masterMap);
+    filteredRows = kpiRows.slice();
+    updateSummaryCards(kpiRows, masterMap);
+    applyFilterSearch();
+    setStatus(`Updated · ${new Date().toLocaleTimeString()}`);
+  } catch(e) {
+    console.error(e);
+    showError(e.message||"Unable to load KPI data.");
+  } finally {
+    isLoading=false; setBtnState();
+  }
+}
+
+function renderTable() {
+  const rows = sortedRows();
+  rowCountEl.textContent = `${rows.length} row${rows.length!==1?"s":""}`;
+
+  if(!rows.length){
+    kpiTbody.innerHTML = `<tr><td colspan="9" class="empty-kpi">No employees match the current filter.</td></tr>`;
+    return;
+  }
+
+  const totalAssign = rows.reduce((sum, row) => sum + row.assignTasks, 0);
+  const totalDone = rows.reduce((sum, row) => sum + row.doneTasks, 0);
+  const totalWorkDays = rows.reduce((sum, row) => sum + row.workDays, 0);
+  const totalExpected = rows.reduce((sum, row) => sum + row.expectedTarget, 0);
+  const totalDifference = rows.reduce((sum, row) => sum + row.difference, 0);
+  const avgPerDay = rows.length ? rows.reduce((sum, row) => sum + row.perDayAvg, 0) / rows.length : 0;
+
+  const formatDayValue = value => value % 1 === 0 ? value.toFixed(0) : value.toFixed(1);
+  const formatMetricValue = value => value % 1 === 0 ? value.toFixed(0) : value.toFixed(2);
+  const formatDiffValue = value => `${value > 0 ? "+" : ""}${value % 1 === 0 ? value.toFixed(0) : value.toFixed(2)}`;
+  const getDiffClass = value => value > 0 ? "diff-positive" : value < 0 ? "diff-negative" : "diff-neutral";
+
+  const frag = document.createDocumentFragment();
+
+  rows.forEach((row, index) => {
+    const tr = document.createElement("tr");
+    tr.className = `perf-${row.perf}`;
+    tr.innerHTML = `
+      <td style="text-align:center;">${index + 1}</td>
+      <td class="name-cell"><span class="emp-name">${row.name}</span></td>
+      <td style="text-align:center;">${formatDayValue(row.workDays)}</td>
+      <td style="text-align:center;font-weight:700;">${row.assignTasks}</td>
+      <td style="text-align:center;" class="mono">${formatMetricValue(row.dailyTargetValue)}</td>
+      <td style="text-align:center;font-weight:700;">${row.doneTasks}</td>
+      <td style="text-align:center;" class="mono">${row.perDayAvg.toFixed(2)}</td>
+      <td style="text-align:center;" class="mono">${formatMetricValue(row.expectedTarget)}</td>
+      <td style="text-align:center;"><span class="diff-chip ${getDiffClass(row.difference)}">${formatDiffValue(row.difference)}</span></td>`;
+    frag.appendChild(tr);
+  });
+
+  const totalTr = document.createElement("tr");
+  totalTr.className = "total-row";
+  totalTr.innerHTML = `
+    <td style="text-align:center;">-</td>
+    <td class="name-cell">Total / Avg</td>
+    <td style="text-align:center;">${formatDayValue(totalWorkDays)}</td>
+    <td style="text-align:center;">${totalAssign}</td>
+    <td class="mono" style="text-align:center;">${formatMetricValue(Math.max(0, parseFloat(dailyTarget.value) || 0))}</td>
+    <td style="text-align:center;">${totalDone}</td>
+    <td class="mono" style="text-align:center;">${avgPerDay.toFixed(2)}</td>
+    <td class="mono" style="text-align:center;">${formatMetricValue(totalExpected)}</td>
+    <td style="text-align:center;"><span class="diff-chip ${getDiffClass(totalDifference)}">${formatDiffValue(totalDifference)}</span></td>`;
+  frag.appendChild(totalTr);
+
+  kpiTbody.innerHTML = "";
+  kpiTbody.appendChild(frag);
+}
+
+function exportCSV() {
+  if(!filteredRows.length){ alert("No data to export."); return; }
+
+  const esc = v => `"${String(v).replace(/"/g,'""')}"`;
+  const headers = ["No.","Employee","Work Days","Assign Tasks","Daily Target","Done Task","Per Day Avg Task","Expected Target","Difference"];
+  const rows = sortedRows();
+  const formatDayValue = value => value % 1 === 0 ? value.toFixed(0) : value.toFixed(1);
+  const formatMetricValue = value => value % 1 === 0 ? value.toFixed(0) : value.toFixed(2);
+  const formatDiffValue = value => `${value > 0 ? "+" : ""}${value % 1 === 0 ? value.toFixed(0) : value.toFixed(2)}`;
+
+  const csvLines = [headers.map(esc).join(",")];
+  rows.forEach((row, index) => {
+    csvLines.push([
+      esc(index + 1),
+      esc(row.name),
+      esc(formatDayValue(row.workDays)),
+      esc(row.assignTasks),
+      esc(formatMetricValue(row.dailyTargetValue)),
+      esc(row.doneTasks),
+      esc(row.perDayAvg.toFixed(2)),
+      esc(formatMetricValue(row.expectedTarget)),
+      esc(formatDiffValue(row.difference))
+    ].join(","));
+  });
+
+  const blob = new Blob([csvLines.join("\n")],{type:"text/csv;charset=utf-8;"});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = `kpi-report-${fromInput.value}-to-${toInput.value}.csv`;
+  a.click();
+  URL.revokeObjectURL(url);
+}
+
+async function loadData(fromDate, toDate, opts={}) {
+  if(isLoading||!fromDate||!toDate) return;
+  isLoading=true; setBtnState(); setStatus("Loading..."); clearError();
+  showSkeletons();
+
+  try {
+    const [fy,fm,fd]=fromDate.split("-");
+    const from=new Date(fy,fm-1,fd);
+    const [ty,tm,td]=toDate.split("-");
+    const to=new Date(ty,tm-1,td); to.setHours(23,59,59,999);
+
+    const [sheetRes, masterMap] = await Promise.all([
+      fetch(SHEET_URL,{cache:"no-cache"}),
+      loadMasterData()
+    ]);
+    if(!sheetRes.ok) throw new Error(`Sheet fetch failed: ${sheetRes.status}`);
+    const csv = await sheetRes.text();
+
+    if(!opts.force && csv===lastHash){
+      setStatus(`Up to date · ${new Date().toLocaleTimeString()}`);
+      isLoading=false; setBtnState(); return;
+    }
+    lastHash=csv;
+
+    const rows = parseCSV(csv);
+    const headers = (rows[0]||[]).map(h=>h.trim());
+    const idx = {
+      date: headers.findIndex(h=>h.toLowerCase()==="assign date"),
+      assigned: headers.findIndex(h=>h.toLowerCase()==="assigned"),
+      status: headers.findIndex(h=>h.toLowerCase()==="status")
+    };
+    if([idx.date,idx.assigned,idx.status].some(i=>i===-1))
+      throw new Error("Missing required columns: Assign Date, Assigned, Status.");
+
+    const assignData = {};
+    const doneData = {};
+
+    for(let i=1;i<rows.length;i++){
+      const row = rows[i];
+      const rawDt = row[idx.date];
+      if(!rawDt) continue;
+      const parts = rawDt.split("/");
+      if(parts.length!==3) continue;
+      const rowDate = new Date(parts[2],parts[1]-1,parts[0]);
+      if(isNaN(rowDate.getTime()) || rowDate < from || rowDate > to) continue;
+
+      const normalizedName = normalizeName(row[idx.assigned]);
+      if(!normalizedName) continue;
+      const displayName = toDisplayName(normalizedName);
+      const status = row[idx.status] || "";
+
+      assignData[displayName] = (assignData[displayName] || 0) + 1;
+      if(isDoneStatus(status)) {
+        doneData[displayName] = (doneData[displayName] || 0) + 1;
+      }
+    }
+
+    latestAssignData = assignData;
+    latestDoneData = doneData;
+    latestMasterMap = masterMap;
+    kpiRows = buildKpiRows(assignData, doneData, masterMap);
+    filteredRows = kpiRows.slice();
+
+    updateSummaryCards(kpiRows, masterMap);
+    applyFilterSearch();
+    setStatus(`Updated · ${new Date().toLocaleTimeString()}`);
+  } catch(e) {
+    console.error(e);
+    showError(e.message||"Unable to load KPI data.");
+  } finally {
+    isLoading=false; setBtnState();
+  }
+}
+
+async function loadData(fromDate, toDate, opts={}) {
+  if(isLoading||!fromDate||!toDate) return;
+  isLoading=true; setBtnState(); setStatus("Loading..."); clearError();
+  showSkeletons();
+
+  try {
+    const [fy,fm,fd]=fromDate.split("-");
+    const from=new Date(fy,fm-1,fd);
+    const [ty,tm,td]=toDate.split("-");
+    const to=new Date(ty,tm-1,td); to.setHours(23,59,59,999);
+
+    const [sheetRes, masterMap] = await Promise.all([
+      fetch(SHEET_URL,{cache:"no-cache"}),
+      loadMasterData()
+    ]);
+    if(!sheetRes.ok) throw new Error(`Sheet fetch failed: ${sheetRes.status}`);
+    const csv = await sheetRes.text();
+
+    if(!opts.force && csv===lastHash){
+      setStatus(`Up to date · ${new Date().toLocaleTimeString()}`);
+      isLoading=false; setBtnState(); return;
+    }
+    lastHash=csv;
+
+    const rows = parseCSV(csv);
+    const headers = (rows[0]||[]).map(h=>h.trim());
+    const idx = {
+      date: headers.findIndex(h=>h.toLowerCase()==="assign date"),
+      assigned: headers.findIndex(h=>h.toLowerCase()==="assigned"),
+      status: headers.findIndex(h=>h.toLowerCase()==="status")
+    };
+    if([idx.date,idx.assigned,idx.status].some(i=>i===-1))
+      throw new Error("Missing required columns: Assign Date, Assigned, Status.");
+
+    const assignData = {};
+    const doneData = {};
+
+    for(let i=1;i<rows.length;i++){
+      const row = rows[i];
+      const rawDt = row[idx.date];
+      if(!rawDt) continue;
+      const parts = rawDt.split("/");
+      if(parts.length!==3) continue;
+      const rowDate = new Date(parts[2],parts[1]-1,parts[0]);
+      if(isNaN(rowDate.getTime()) || rowDate < from || rowDate > to) continue;
+
+      const normalizedName = normalizeName(row[idx.assigned]);
+      if(!normalizedName) continue;
+      const displayName = toDisplayName(normalizedName);
+      const status = row[idx.status] || "";
+
+      assignData[displayName] = (assignData[displayName] || 0) + 1;
+      if(isDoneStatus(status)) {
+        doneData[displayName] = (doneData[displayName] || 0) + 1;
+      }
+    }
+
+    latestAssignData = assignData;
+    latestDoneData = doneData;
+    latestMasterMap = masterMap;
+    kpiRows = buildKpiRows(assignData, doneData, masterMap);
+    filteredRows = kpiRows.slice();
+
+    updateSummaryCards(kpiRows, masterMap);
+    applyFilterSearch();
+    setStatus(`Updated · ${new Date().toLocaleTimeString()}`);
+  } catch(e) {
+    console.error(e);
+    showError(e.message||"Unable to load KPI data.");
+  } finally {
+    isLoading=false; setBtnState();
+  }
+}
+
 /* ══════════════════════════════════════════════════════
    MAIN LOAD
 ══════════════════════════════════════════════════════ */
@@ -1273,7 +1848,7 @@ function initializePage() {
   const today=new Date(), first=new Date(today.getFullYear(),today.getMonth(),1);
   fromInput.value=formatDate(first);
   toInput.value=formatDate(today);
-  document.querySelector('th[data-col="rank"]')?.classList.add("sorted-desc");
+  document.querySelector('th[data-col="serial"]')?.classList.add("sorted-desc");
   setBtnState();
   loadData(fromInput.value,toInput.value,{force:true});
 }
@@ -1295,6 +1870,79 @@ window.addEventListener("pageshow",(event)=>{
   }
   loadData(fromInput.value,toInput.value,{force:false});
 });
+async function loadData(fromDate, toDate, opts={}) {
+  if(isLoading||!fromDate||!toDate) return;
+  isLoading=true; setBtnState(); setStatus("Loading..."); clearError();
+  showSkeletons();
+
+  try {
+    const [fy,fm,fd]=fromDate.split("-");
+    const from=new Date(fy,fm-1,fd);
+    const [ty,tm,td]=toDate.split("-");
+    const to=new Date(ty,tm-1,td); to.setHours(23,59,59,999);
+
+    const [sheetRes, masterMap] = await Promise.all([
+      fetch(SHEET_URL,{cache:"no-cache"}),
+      loadMasterData()
+    ]);
+    if(!sheetRes.ok) throw new Error(`Sheet fetch failed: ${sheetRes.status}`);
+    const csv = await sheetRes.text();
+
+    if(!opts.force && csv===lastHash){
+      setStatus(`Up to date · ${new Date().toLocaleTimeString()}`);
+      isLoading=false; setBtnState(); return;
+    }
+    lastHash=csv;
+
+    const rows = parseCSV(csv);
+    const headers = (rows[0]||[]).map(h=>h.trim());
+    const idx = {
+      date: headers.findIndex(h=>h.toLowerCase()==="assign date"),
+      assigned: headers.findIndex(h=>h.toLowerCase()==="assigned"),
+      status: headers.findIndex(h=>h.toLowerCase()==="status")
+    };
+    if([idx.date,idx.assigned,idx.status].some(i=>i===-1)) {
+      throw new Error("Missing required columns: Assign Date, Assigned, Status.");
+    }
+
+    const assignData = {};
+    const doneData = {};
+
+    for(let i=1;i<rows.length;i++){
+      const row = rows[i];
+      const rawDt = row[idx.date];
+      if(!rawDt) continue;
+      const parts = rawDt.split("/");
+      if(parts.length!==3) continue;
+      const rowDate = new Date(parts[2],parts[1]-1,parts[0]);
+      if(isNaN(rowDate.getTime()) || rowDate < from || rowDate > to) continue;
+
+      const normalizedName = normalizeName(row[idx.assigned]);
+      if(!normalizedName) continue;
+      const displayName = toDisplayName(normalizedName);
+      const status = (row[idx.status] || "").toLowerCase().trim().replace(/\s+/g," ");
+
+      assignData[displayName] = (assignData[displayName] || 0) + 1;
+      if(status.includes("done")) {
+        doneData[displayName] = (doneData[displayName] || 0) + 1;
+      }
+    }
+
+    latestAssignData = assignData;
+    latestDoneData = doneData;
+    latestMasterMap = masterMap;
+    kpiRows = buildKpiRows(assignData, doneData, masterMap);
+    filteredRows = kpiRows.slice();
+    updateSummaryCards(kpiRows, masterMap);
+    applyFilterSearch();
+    setStatus(`Updated · ${new Date().toLocaleTimeString()}`);
+  } catch(e) {
+    console.error(e);
+    showError(e.message||"Unable to load KPI data.");
+  } finally {
+    isLoading=false; setBtnState();
+  }
+}
 </script>
 </body>
 </html>
