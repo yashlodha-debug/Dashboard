@@ -576,164 +576,190 @@
   [data-theme="light"] .att-warn { color:#b45309; }
   .att-warn strong { font-weight:700; }
 
-  /* ═══════════════════════════════════════════════════════
-     PERFORMANCE SLAB GROUPS SECTION
-  ═══════════════════════════════════════════════════════ */
-  .slab-groups-header {
-    margin-bottom: 14px;
-  }
-  .slab-groups-title {
+
+  /* ═══ PERFORMANCE SLAB SUMMARY TABLE ═══ */
+  .slab-summary-table td { vertical-align: top; padding: 14px 16px; }
+  .slab-summary-table td.name-cell { text-align: left; }
+
+  /* Slab label cell — left column */
+  .slab-label-cell {
     display: flex;
     align-items: center;
-    gap: 8px;
-    font-size: 14px;
-    font-weight: 700;
-    color: var(--text);
+    gap: 10px;
   }
-  .slab-groups-sub {
-    font-size: 11.5px;
-    color: var(--text3);
-    margin-top: 3px;
-    padding-left: 24px;
-  }
-
-  /* Grid: 4 columns on desktop, collapses on smaller screens */
-  .slab-groups-grid {
-    display: grid;
-    grid-template-columns: repeat(4, 1fr);
-    gap: 14px;
-  }
-  @media (max-width: 1100px) { .slab-groups-grid { grid-template-columns: repeat(2, 1fr); } }
-  @media (max-width: 600px)  { .slab-groups-grid { grid-template-columns: 1fr; } }
-
-  /* Each slab card */
-  .slab-group-card {
-    background: var(--surface);
-    border: 1px solid var(--border);
-    border-radius: var(--radius-lg);
-    box-shadow: var(--card-shadow);
-    overflow: hidden;
-    transition: transform var(--transition), box-shadow var(--transition);
-  }
-  .slab-group-card:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 2px 8px rgba(0,0,0,.4), 0 12px 32px rgba(0,0,0,.3);
-  }
-
-  /* Coloured top bar per slab */
-  .slab-group-top {
-    padding: 14px 16px 12px;
-    border-bottom: 1px solid var(--border);
-    position: relative;
-  }
-  .slab-group-top::before {
-    content: "";
-    position: absolute;
-    left: 0; top: 0; bottom: 0;
+  .slab-label-bar {
     width: 4px;
-    border-radius: 0 0 0 0;
-  }
-  .sg-excellent .slab-group-top::before { background: #22c55e; }
-  .sg-good      .slab-group-top::before { background: #3b82f6; }
-  .sg-average   .slab-group-top::before { background: #f59e0b; }
-  .sg-poor      .slab-group-top::before { background: #ef4444; }
-
-  .slab-group-label {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    font-size: 12.5px;
-    font-weight: 700;
-    color: var(--text);
-    padding-left: 8px;
-  }
-  .slab-group-label-dot {
-    width: 9px; height: 9px;
-    border-radius: 50%;
+    border-radius: 99px;
+    align-self: stretch;
+    min-height: 24px;
     flex-shrink: 0;
   }
-  .sg-excellent .slab-group-label-dot { background: #22c55e; box-shadow: 0 0 0 3px rgba(34,197,94,.2); }
-  .sg-good      .slab-group-label-dot { background: #3b82f6; box-shadow: 0 0 0 3px rgba(59,130,246,.2); }
-  .sg-average   .slab-group-label-dot { background: #f59e0b; box-shadow: 0 0 0 3px rgba(245,158,11,.2); }
-  .sg-poor      .slab-group-label-dot { background: #ef4444; box-shadow: 0 0 0 3px rgba(239,68,68,.2); }
-
-  .slab-group-count {
-    margin-left: auto;
-    font-size: 10px;
+  .slab-label-text {
+    font-size: 13px;
     font-weight: 700;
-    padding: 2px 8px;
-    border-radius: 99px;
-    background: var(--surface2);
-    color: var(--text3);
-    border: 1px solid var(--border);
-  }
-
-  /* Employee list inside card */
-  .slab-group-body {
-    padding: 10px 12px 12px;
-    min-height: 52px;
-    max-height: 240px;
-    overflow-y: auto;
-    display: flex;
-    flex-direction: column;
-    gap: 5px;
-  }
-
-  .slab-emp-row {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: 8px;
-    padding: 6px 10px;
-    border-radius: var(--radius-sm);
-    background: var(--surface2);
-    border: 1px solid var(--border);
-    transition: background var(--transition);
-  }
-  .slab-emp-row:hover { background: var(--surface3); }
-
-  .slab-emp-name {
-    font-size: 12.5px;
-    font-weight: 600;
     color: var(--text);
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    flex: 1;
+  }
+  .slab-range-text {
+    font-size: 10.5px;
+    color: var(--text3);
+    margin-top: 3px;
+    font-weight: 500;
   }
 
-  .slab-emp-pct {
+  /* Achievement badge */
+  .slab-ach-badge {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 4px 10px;
+    border-radius: 8px;
     font-size: 11px;
     font-weight: 700;
     font-family: var(--font-mono);
-    white-space: nowrap;
-    flex-shrink: 0;
   }
-  .sg-excellent .slab-emp-pct { color: #22c55e; }
-  .sg-good      .slab-emp-pct { color: #60a5fa; }
-  .sg-average   .slab-emp-pct { color: #f59e0b; }
-  .sg-poor      .slab-emp-pct { color: #ef4444; }
 
-  [data-theme="light"] .sg-excellent .slab-emp-pct { color: #15803d; }
-  [data-theme="light"] .sg-good      .slab-emp-pct { color: #1d4ed8; }
-  [data-theme="light"] .sg-average   .slab-emp-pct { color: #b45309; }
-  [data-theme="light"] .sg-poor      .slab-emp-pct { color: #dc2626; }
+  /* Count badge */
+  .slab-count-badge {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 28px;
+    height: 28px;
+    border-radius: 8px;
+    font-size: 12px;
+    font-weight: 700;
+  }
 
-  .slab-empty-msg {
+  /* Employee names list in last column */
+  .slab-names-wrap {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    align-items: flex-start;
+    min-height: 32px;
+  }
+  .slab-name-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    padding: 4px 10px;
+    border-radius: 99px;
+    font-size: 12px;
+    font-weight: 600;
+    border: 1px solid;
+    white-space: nowrap;
+  }
+  .slab-name-pill-pct {
+    font-family: var(--font-mono);
+    font-size: 10px;
+    font-weight: 700;
+    opacity: 0.85;
+  }
+  .slab-none-msg {
     font-size: 12px;
     color: var(--text3);
     font-style: italic;
-    padding: 8px 2px;
-    text-align: center;
+    padding: 4px 0;
   }
 
-  /* Achievement % range badge in card header */
-  .slab-range-badge {
-    font-size: 10px;
-    font-weight: 500;
-    color: var(--text3);
-    margin-top: 3px;
-    padding-left: 8px;
+  /* Colour themes per slab */
+  /* Excellent — green */
+  .slab-row-excellent { background: rgba(34,197,94,0.04) !important; }
+  .slab-row-excellent:hover td { background: rgba(34,197,94,0.08) !important; }
+  .slab-bar-excellent  { background: #22c55e; }
+  .slab-ach-excellent  { background: rgba(34,197,94,0.14); color: #22c55e; }
+  .slab-cnt-excellent  { background: rgba(34,197,94,0.14); color: #22c55e; }
+  .slab-pill-excellent { background: rgba(34,197,94,0.10); color: #22c55e; border-color: rgba(34,197,94,0.25); }
+  [data-theme="light"] .slab-row-excellent { background: rgba(22,163,74,0.04) !important; }
+  [data-theme="light"] .slab-ach-excellent,
+  [data-theme="light"] .slab-cnt-excellent  { color: #15803d; }
+  [data-theme="light"] .slab-pill-excellent { color: #15803d; border-color: rgba(22,163,74,0.3); }
+
+  /* Good — blue */
+  .slab-row-good { background: rgba(59,130,246,0.04) !important; }
+  .slab-row-good:hover td { background: rgba(59,130,246,0.08) !important; }
+  .slab-bar-good  { background: #3b82f6; }
+  .slab-ach-good  { background: rgba(59,130,246,0.14); color: #60a5fa; }
+  .slab-cnt-good  { background: rgba(59,130,246,0.14); color: #60a5fa; }
+  .slab-pill-good { background: rgba(59,130,246,0.10); color: #60a5fa; border-color: rgba(59,130,246,0.25); }
+  [data-theme="light"] .slab-ach-good,
+  [data-theme="light"] .slab-cnt-good  { color: #1d4ed8; }
+  [data-theme="light"] .slab-pill-good { color: #1d4ed8; border-color: rgba(37,99,235,0.3); }
+
+  /* Average — amber */
+  .slab-row-average { background: rgba(245,158,11,0.04) !important; }
+  .slab-row-average:hover td { background: rgba(245,158,11,0.08) !important; }
+  .slab-bar-average  { background: #f59e0b; }
+  .slab-ach-average  { background: rgba(245,158,11,0.14); color: #f59e0b; }
+  .slab-cnt-average  { background: rgba(245,158,11,0.14); color: #f59e0b; }
+  .slab-pill-average { background: rgba(245,158,11,0.10); color: #f59e0b; border-color: rgba(245,158,11,0.25); }
+  [data-theme="light"] .slab-ach-average,
+  [data-theme="light"] .slab-cnt-average  { color: #b45309; }
+  [data-theme="light"] .slab-pill-average { color: #b45309; border-color: rgba(180,83,9,0.3); }
+
+  /* Poor — red */
+  .slab-row-poor { background: rgba(239,68,68,0.04) !important; }
+  .slab-row-poor:hover td { background: rgba(239,68,68,0.08) !important; }
+  .slab-bar-poor  { background: #ef4444; }
+  .slab-ach-poor  { background: rgba(239,68,68,0.14); color: #ef4444; }
+  .slab-cnt-poor  { background: rgba(239,68,68,0.14); color: #ef4444; }
+  .slab-pill-poor { background: rgba(239,68,68,0.10); color: #ef4444; border-color: rgba(239,68,68,0.25); }
+  [data-theme="light"] .slab-ach-poor,
+  [data-theme="light"] .slab-cnt-poor  { color: #dc2626; }
+  [data-theme="light"] .slab-pill-poor { color: #dc2626; border-color: rgba(220,38,38,0.3); }
+
+  /* ═══ KPI TABLE — SLAB GROUP HEADER ROWS ═══ */
+  tr.kpi-group-header td {
+    padding: 9px 16px 9px 14px;
+    font-size: 12px;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+    border-bottom: none;
+    border-top: none;
+    color: #fff !important;
+    background: inherit !important;
+  }
+  /* Prevent hover override on group headers */
+  tbody tr.kpi-group-header:hover td { background: inherit !important; }
+
+  /* Four slab colours */
+  tr.kpi-gh-excellent { background: linear-gradient(90deg,#15803d,#16a34a) !important; }
+  tr.kpi-gh-good      { background: linear-gradient(90deg,#1d4ed8,#2563eb) !important; }
+  tr.kpi-gh-average   { background: linear-gradient(90deg,#b45309,#d97706) !important; }
+  tr.kpi-gh-poor      { background: linear-gradient(90deg,#b91c1c,#dc2626) !important; }
+
+  /* Group header dot + text alignment */
+  .kpi-gh-inner {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .kpi-gh-dot {
+    width: 8px; height: 8px;
+    border-radius: 50%;
+    background: rgba(255,255,255,0.7);
+    flex-shrink: 0;
+  }
+  .kpi-gh-count {
+    margin-left: 8px;
+    padding: 1px 8px;
+    border-radius: 99px;
+    background: rgba(255,255,255,0.2);
+    font-size: 10.5px;
+    font-weight: 700;
+    color: #fff;
+  }
+
+  /* Employee rows inside a group — subtle left indent */
+  tr.kpi-group-row td:first-child { padding-left: 18px; }
+
+  /* Empty group message */
+  tr.kpi-group-empty td {
+    font-size: 11.5px;
+    color: var(--text3) !important;
+    font-style: italic;
+    padding: 8px 24px !important;
+    background: transparent !important;
   }
   </style>
 </head>
@@ -945,7 +971,7 @@
               <span class="table-card-dot" style="background:#3b82f6;"></span>
               Employee KPI Report
             </div>
-            <div class="table-card-sub">Sortable · Click column headers to sort</div>
+            <div class="table-card-sub">Grouped by performance slab · Sortable within each group</div>
           </div>
           <span class="row-count-badge" id="rowCount">— rows</span>
         </div>
@@ -955,40 +981,49 @@
               <tr>
                 <th style="width:46px;" data-col="serial">No.</th>
                 <th class="name-cell" style="width:160px;text-align:left;" data-col="name">Employee</th>
-                <th style="width:80px;" data-col="workDays">Work Days</th>
-                <th style="width:88px;" data-col="assignTasks">Assign Tasks</th>
-                <th style="width:84px;" data-col="dailyTargetValue">Daily Target</th>
-                <th style="width:80px;" data-col="doneTasks">Done Task</th>
-                <th style="width:104px;" data-col="perDayAvg">Per Day Avg</th>
-                <th style="width:108px;" data-col="expectedTarget">Expected Target</th>
-                <th style="width:96px;" data-col="difference">Difference</th>
-                <th style="width:84px;" data-col="achievementPct">Achieve %</th>
-                <th style="width:130px;" data-col="slab">Performance Slab</th>
+                <th style="width:86px;" data-col="workDays">Work Days</th>
+                <th style="width:94px;" data-col="assignTasks">Assign Tasks</th>
+                <th style="width:88px;" data-col="dailyTargetValue">Daily Target</th>
+                <th style="width:86px;" data-col="doneTasks">Done Task</th>
+                <th style="width:116px;" data-col="perDayAvg">Per Day Avg Task</th>
+                <th style="width:118px;" data-col="expectedTarget">Expected Target</th>
+                <th style="width:100px;" data-col="difference">Difference</th>
+                <th style="width:100px;" data-col="achievementPct">Achievement %</th>
               </tr>
             </thead>
             <tbody id="kpiTbody">
-              <tr><td colspan="11" class="empty-kpi">Loading KPI data…</td></tr>
+              <tr><td colspan="10" class="empty-kpi">Loading KPI data…</td></tr>
             </tbody>
           </table>
         </div>
       </div>
 
 
-      <!-- ── Performance Slab Groups ── -->
-      <div id="slabGroupsSection" class="fade-up fade-up-3" style="display:none;">
-
-        <div class="slab-groups-header">
-          <div class="slab-groups-title">
-            <svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/></svg>
-            Performance Achievement Groups
+      <!-- ── Performance Slab Grouped Table ── -->
+      <div class="table-card fade-up fade-up-3" id="slabTableCard" style="display:none; margin-top:18px;">
+        <div class="table-card-header">
+          <div>
+            <div class="table-card-title">
+              <span class="table-card-dot" style="background:#a855f7;"></span>
+              Performance Slab Summary
+            </div>
+            <div class="table-card-sub">Employees grouped by achievement percentage</div>
           </div>
-          <div class="slab-groups-sub">Employees categorised by achievement percentage</div>
         </div>
-
-        <div class="slab-groups-grid" id="slabGroupsGrid">
-          <!-- Rendered by renderSlabGroups() -->
+        <div class="kpi-table-wrap">
+          <table class="kpi-table slab-summary-table">
+            <thead>
+              <tr>
+                <th style="width:200px; text-align:left;">Performance Slab</th>
+                <th style="width:90px;">Achievement</th>
+                <th style="width:60px;">Count</th>
+                <th style="text-align:left;">Employees</th>
+              </tr>
+            </thead>
+            <tbody id="slabSummaryTbody">
+            </tbody>
+          </table>
         </div>
-
       </div>
 
     </div><!-- /page-body -->
@@ -1108,7 +1143,7 @@ function formatDate(d) {
 }
 
 function showSkeletons() {
-  var sk = "<tr>" + Array(11).fill('<td><div class="skeleton" style="height:11px;margin:auto;width:80%"></div></td>').join("") + "</tr>";
+  var sk = "<tr>" + Array(10).fill('<td><div class="skeleton" style="height:11px;margin:auto;width:80%"></div></td>').join("") + "</tr>";
   kpiTbody.innerHTML = Array(8).fill(sk).join("");
   rowCountEl.textContent = "— rows";
   ["sumTotalEmp","sumAvailEmp","sumTotalTasks","sumTotalTasksSub","sumAvgProd","sumBest","sumBestSub"].forEach(function(id){
@@ -1117,7 +1152,7 @@ function showSkeletons() {
 }
 
 function showWaitingState() {
-  kpiTbody.innerHTML = '<tr><td colspan="11" class="empty-kpi" style="padding:32px;">Select a date range and click Refresh to load KPI data.</td></tr>';
+  kpiTbody.innerHTML = '<tr><td colspan="10" class="empty-kpi" style="padding:32px;">Select a date range and click Refresh to load KPI data.</td></tr>';
   rowCountEl.textContent = "— rows";
 }
 
@@ -1314,7 +1349,7 @@ function applyFilterSearch() {
     return nm && pm;
   });
   renderTable();
-  renderSlabGroups();   // always uses full kpiRows — independent of filter
+  renderSlabTable();   // always uses full kpiRows — unaffected by search/filter
 }
 
 function setFilter(btn, val) {
@@ -1332,7 +1367,7 @@ dailyTarget.addEventListener("change", function() {
   kpiRows      = buildKpiRows(latestAssignData, latestDoneData, latestWorkDays);
   filteredRows = kpiRows.slice();
   updateSummaryCards(kpiRows);
-  applyFilterSearch();  // calls renderTable + renderSlabGroups internally
+  applyFilterSearch();  // calls renderTable + renderSlabTable internally
 });
 
 /* ── SORTING ─────────────────────────────────────────────────────── */
@@ -1371,165 +1406,246 @@ var fmtDiff = function(v){
 };
 var diffCls = function(v){ return v>0?"diff-positive":v<0?"diff-negative":"diff-neutral"; };
 
-/* ── RENDER SLAB GROUPS ─────────────────────────────────────────────
-   Groups ALL kpiRows (not filteredRows) by achievement slab.
-   Uses kpiRows so the grouping is always complete regardless of
-   search/filter applied to the main table.
-────────────────────────────────────────────────────────────────── */
-function renderSlabGroups() {
-  var section = document.getElementById("slabGroupsSection");
-  var grid    = document.getElementById("slabGroupsGrid");
-  if (!section || !grid) return;
+/* ── RENDER SLAB SUMMARY TABLE ──────────────────────────────────────
+   Builds 4 fixed rows (one per slab) in the slab summary table.
+   Each row shows: Slab label | Achievement range | Count | Employee pills
+   Uses kpiRows (full dataset, not filtered) so summary is always complete.
+─────────────────────────────────────────────────────────────────── */
+function renderSlabTable() {
+  var card  = document.getElementById("slabTableCard");
+  var tbody = document.getElementById("slabSummaryTbody");
+  if (!card || !tbody) return;
 
-  // Use ALL kpiRows — slab summary is global, not filtered
-  if (!kpiRows.length) { section.style.display = "none"; return; }
-  section.style.display = "";
+  if (!kpiRows.length) { card.style.display = "none"; return; }
+  card.style.display = "";
 
-  // Define slab buckets (order matters — rendered left to right)
-  var slabs = [
+  var SLABS = [
     {
-      key: "excellent",
-      label: "100%+ Achieved",
-      range: "Achievement ≥ 100%",
-      cssClass: "sg-excellent",
-      filter: function(r) { return r.achievePct !== null && r.achievePct >= 100; }
+      key:     "excellent",
+      label:   "100%+ Achieved",
+      range:   "≥ 100%",
+      filter:  function(r) { return r.achievePct !== null && r.achievePct >= 100; }
     },
     {
-      key: "good",
-      label: "90% – 99%",
-      range: "90% ≤ Achievement < 100%",
-      cssClass: "sg-good",
-      filter: function(r) { return r.achievePct !== null && r.achievePct >= 90 && r.achievePct < 100; }
+      key:     "good",
+      label:   "90% – 99%",
+      range:   "90% – 99%",
+      filter:  function(r) { return r.achievePct !== null && r.achievePct >= 90 && r.achievePct < 100; }
     },
     {
-      key: "average",
-      label: "80% – 89%",
-      range: "80% ≤ Achievement < 90%",
-      cssClass: "sg-average",
-      filter: function(r) { return r.achievePct !== null && r.achievePct >= 80 && r.achievePct < 90; }
+      key:     "average",
+      label:   "80% – 89%",
+      range:   "80% – 89%",
+      filter:  function(r) { return r.achievePct !== null && r.achievePct >= 80 && r.achievePct < 90; }
     },
     {
-      key: "poor",
-      label: "Below 80%",
-      range: "Achievement < 80%",
-      cssClass: "sg-poor",
-      filter: function(r) {
-        // Include employees with achievePct < 80 OR achievePct === null (no expected target)
-        return r.achievePct === null || r.achievePct < 80;
-      }
+      key:     "poor",
+      label:   "Below 80%",
+      range:   "< 80%",
+      filter:  function(r) { return r.achievePct === null || r.achievePct < 80; }
     }
   ];
 
-  // Sort employees within each slab by achievePct desc, then by name
-  function slabSort(a, b) {
-    var pa = a.achievePct !== null ? a.achievePct : -1;
-    var pb = b.achievePct !== null ? b.achievePct : -1;
-    if (pb !== pa) return pb - pa;   // highest % first
-    return a.name.localeCompare(b.name);
-  }
+  var frag = document.createDocumentFragment();
 
-  var html = "";
-  slabs.forEach(function(slab) {
-    var members = kpiRows.filter(slab.filter).sort(slabSort);
+  SLABS.forEach(function(slab, idx) {
+    var members = kpiRows
+      .filter(slab.filter)
+      .sort(function(a, b) {
+        /* Sort by achievePct desc, then name asc */
+        var pa = a.achievePct !== null ? a.achievePct : -1;
+        var pb = b.achievePct !== null ? b.achievePct : -1;
+        return pb !== pa ? pb - pa : a.name.localeCompare(b.name);
+      });
 
-    var empRows = "";
+    /* Build employee pills */
+    var pillsHTML = "";
     if (members.length === 0) {
-      empRows = '<div class="slab-empty-msg">No employees in this range</div>';
+      pillsHTML = '<span class="slab-none-msg">No employees in this range</span>';
     } else {
       members.forEach(function(r) {
-        var pctTxt = r.achievePct !== null ? r.achievePct + "%" : "—";
-        empRows +=
-          '<div class="slab-emp-row">' +
-            '<span class="slab-emp-name">' + _escHtml(r.name) + '</span>' +
-            '<span class="slab-emp-pct">' + pctTxt + '</span>' +
-          '</div>';
+        var pct = r.achievePct !== null ? r.achievePct + "%" : "—";
+        pillsHTML +=
+          '<span class="slab-name-pill slab-pill-' + slab.key + '">' +
+            _esc(r.name) +
+            '<span class="slab-name-pill-pct">' + pct + '</span>' +
+          '</span>';
       });
     }
 
-    html +=
-      '<div class="slab-group-card ' + slab.cssClass + '">' +
-        '<div class="slab-group-top">' +
-          '<div class="slab-group-label">' +
-            '<span class="slab-group-label-dot"></span>' +
-            _escHtml(slab.label) +
-            '<span class="slab-group-count">' + members.length + '</span>' +
-          '</div>' +
-          '<div class="slab-range-badge">' + slab.range + '</div>' +
-        '</div>' +
-        '<div class="slab-group-body">' + empRows + '</div>' +
-      '</div>';
-  });
-
-  grid.innerHTML = html;
-}
-
-/* Small HTML-escape helper (prevents XSS if names have < > & chars) */
-function _escHtml(str) {
-  return String(str)
-    .replace(/&/g,"&amp;")
-    .replace(/</g,"&lt;")
-    .replace(/>/g,"&gt;")
-    .replace(/"/g,"&quot;");
-}
-
-/* ── RENDER TABLE ────────────────────────────────────────────────── */
-function renderTable() {
-  var rows = sortedRows();
-  rowCountEl.textContent = rows.length + " row" + (rows.length!==1?"s":"");
-
-  if (!rows.length) {
-    kpiTbody.innerHTML = '<tr><td colspan="11" class="empty-kpi">No employees match the current filter.</td></tr>';
-    return;
-  }
-
-  var tAssign   = rows.reduce(function(s,r){ return s+r.assignTasks;    },0);
-  var tDone     = rows.reduce(function(s,r){ return s+r.doneTasks;      },0);
-  var tWorkDays = rows.reduce(function(s,r){ return s+r.workDays;       },0);
-  var tExpected = rows.reduce(function(s,r){ return s+r.expectedTarget; },0);
-  var tDiff     = tDone - tExpected;
-  var avgPD     = rows.length ? rows.reduce(function(s,r){ return s+r.perDayAvg; },0)/rows.length : 0;
-  var tAchieve  = tExpected>0 ? Math.round((tDone/tExpected)*100) : null;
-  var tSlab     = getSlabInfo(tAchieve);
-  var tgt       = Math.max(0, parseFloat(dailyTarget.value)||0);
-
-  var frag = document.createDocumentFragment();
-
-  rows.forEach(function(row, index) {
-    var tr   = document.createElement("tr");
-    tr.className = "perf-" + row.perf;
-    var slab = getSlabInfo(row.achievePct);
-    var achTxt = row.achievePct!==null ? row.achievePct+"%" : "\u2014";
+    var tr = document.createElement("tr");
+    tr.className = "slab-row-" + slab.key;
 
     tr.innerHTML =
-      '<td style="text-align:center;color:var(--text3);font-size:12px;">'+(index+1)+'</td>'+
-      '<td class="name-cell"><span class="emp-name">'+row.name+'</span></td>'+
-      '<td style="text-align:center;">'+fmtDay(row.workDays)+'</td>'+
-      '<td style="text-align:center;font-weight:700;">'+row.assignTasks+'</td>'+
-      '<td style="text-align:center;" class="mono">'+fmtNum(row.dailyTargetValue)+'</td>'+
-      '<td style="text-align:center;font-weight:700;">'+row.doneTasks+'</td>'+
-      '<td style="text-align:center;" class="mono">'+row.perDayAvg.toFixed(2)+'</td>'+
-      '<td style="text-align:center;" class="mono">'+fmtNum(row.expectedTarget)+'</td>'+
-      '<td style="text-align:center;"><span class="diff-chip '+diffCls(row.difference)+'">'+fmtDiff(row.difference)+'</span></td>'+
-      '<td style="text-align:center;"><span class="achieve-pct '+slab.achCls+'">'+achTxt+'</span></td>'+
-      '<td style="text-align:center;"><span class="slab-chip '+slab.cls+'">'+slab.label+'</span></td>';
+      /* Col 1: Slab label with coloured left bar */
+      '<td style="text-align:left;">' +
+        '<div class="slab-label-cell">' +
+          '<div class="slab-label-bar slab-bar-' + slab.key + '"></div>' +
+          '<div>' +
+            '<div class="slab-label-text">' + _esc(slab.label) + '</div>' +
+            '<div class="slab-range-text">Achievement ' + slab.range + '</div>' +
+          '</div>' +
+        '</div>' +
+      '</td>' +
+      /* Col 2: Achievement range badge */
+      '<td style="text-align:center;">' +
+        '<span class="slab-ach-badge slab-ach-' + slab.key + '">' + slab.range + '</span>' +
+      '</td>' +
+      /* Col 3: Count */
+      '<td style="text-align:center;">' +
+        '<span class="slab-count-badge slab-cnt-' + slab.key + '">' + members.length + '</span>' +
+      '</td>' +
+      /* Col 4: Employee name pills */
+      '<td style="text-align:left;">' +
+        '<div class="slab-names-wrap">' + pillsHTML + '</div>' +
+      '</td>';
+
     frag.appendChild(tr);
   });
 
-  /* Total / summary row */
+  tbody.innerHTML = "";
+  tbody.appendChild(frag);
+}
+
+/* Tiny HTML-escape helper */
+function _esc(str) {
+  return String(str)
+    .replace(/&/g,"&amp;").replace(/</g,"&lt;")
+    .replace(/>/g,"&gt;").replace(/"/g,"&quot;");
+}
+
+/* ── RENDER TABLE (grouped by slab) ────────────────────────────────
+   Renders the KPI table with Excel-style coloured group header rows
+   separating each slab section. Within each slab, employees are sorted
+   by achievementPct desc then name asc.
+   sortCol / sortDir only affect within-group order when user clicks headers.
+─────────────────────────────────────────────────────────────────── */
+function renderTable() {
+  var COLSPAN = 10;
+
+  /* Slab definitions — order top to bottom in table */
+  var GROUPS = [
+    { key: "excellent", ghClass: "kpi-gh-excellent",
+      label: "Achievement ≥ 100%",
+      filter: function(r){ return r.achievePct !== null && r.achievePct >= 100; } },
+    { key: "good",      ghClass: "kpi-gh-good",
+      label: "Achievement 90% – 99%",
+      filter: function(r){ return r.achievePct !== null && r.achievePct >= 90 && r.achievePct < 100; } },
+    { key: "average",   ghClass: "kpi-gh-average",
+      label: "Achievement 80% – 89%",
+      filter: function(r){ return r.achievePct !== null && r.achievePct >= 80 && r.achievePct < 90; } },
+    { key: "poor",      ghClass: "kpi-gh-poor",
+      label: "Achievement < 80%",
+      filter: function(r){ return r.achievePct === null || r.achievePct < 80; } },
+  ];
+
+  /* Apply search/filter from filteredRows, then split into groups */
+  var baseRows = filteredRows;  // already search+filter applied
+
+  /* Within each group, sort by user-selected column or default (achievePct desc) */
+  function sortGroup(arr) {
+    return arr.slice().sort(function(a, b) {
+      if (sortCol === "serial" || sortCol === "slab") {
+        /* Default: highest achievePct first, then name */
+        var pa = a.achievePct !== null ? a.achievePct : -1;
+        var pb = b.achievePct !== null ? b.achievePct : -1;
+        return pb !== pa ? pb - pa : a.name.localeCompare(b.name);
+      }
+      if (sortCol === "name") return sortDir * a.name.localeCompare(b.name);
+      var va = a[sortCol], vb = b[sortCol];
+      if (va == null && vb == null) return 0;
+      if (va == null) return sortDir;
+      if (vb == null) return -sortDir;
+      return sortDir * (va - vb);
+    });
+  }
+
+  var totalRows = 0;
+  GROUPS.forEach(function(g) {
+    totalRows += baseRows.filter(g.filter).length;
+  });
+
+  rowCountEl.textContent = totalRows + " row" + (totalRows !== 1 ? "s" : "");
+
+  if (totalRows === 0) {
+    kpiTbody.innerHTML =
+      '<tr><td colspan="' + COLSPAN + '" class="empty-kpi">No employees match the current filter.</td></tr>';
+    return;
+  }
+
+  var frag = document.createDocumentFragment();
+  var overallIndex = 0;  // running serial number across groups
+
+  /* Grand totals (for total row) */
+  var gTotAssign = 0, gTotDone = 0, gTotWorkDays = 0,
+      gTotExpected = 0, gSumPerDay = 0, gCount = 0;
+
+  GROUPS.forEach(function(group) {
+    var members = sortGroup(baseRows.filter(group.filter));
+    if (members.length === 0) return;   // skip empty groups entirely
+
+    /* ── Group header row ── */
+    var ghTr = document.createElement("tr");
+    ghTr.className = "kpi-group-header " + group.ghClass;
+    ghTr.innerHTML =
+      '<td colspan="' + COLSPAN + '">' +
+        '<div class="kpi-gh-inner">' +
+          '<span class="kpi-gh-dot"></span>' +
+          group.label +
+          '<span class="kpi-gh-count">' + members.length + ' employee' +
+            (members.length !== 1 ? 's' : '') + '</span>' +
+        '</div>' +
+      '</td>';
+    frag.appendChild(ghTr);
+
+    /* ── Employee rows inside this group ── */
+    members.forEach(function(row) {
+      overallIndex++;
+      var achTxt = row.achievePct !== null ? row.achievePct + "%" : "—";
+
+      gTotAssign   += row.assignTasks;
+      gTotDone     += row.doneTasks;
+      gTotWorkDays += row.workDays;
+      gTotExpected += row.expectedTarget;
+      gSumPerDay   += row.perDayAvg;
+      gCount++;
+
+      var tr = document.createElement("tr");
+      tr.className = "kpi-group-row perf-" + row.perf;
+      tr.innerHTML =
+        '<td style="text-align:center;color:var(--text3);font-size:12px;">' + overallIndex + '</td>' +
+        '<td class="name-cell"><span class="emp-name">' + _esc(row.name) + '</span></td>' +
+        '<td style="text-align:center;">' + fmtDay(row.workDays) + '</td>' +
+        '<td style="text-align:center;font-weight:700;">' + row.assignTasks + '</td>' +
+        '<td style="text-align:center;" class="mono">' + fmtNum(row.dailyTargetValue) + '</td>' +
+        '<td style="text-align:center;font-weight:700;">' + row.doneTasks + '</td>' +
+        '<td style="text-align:center;" class="mono">' + row.perDayAvg.toFixed(2) + '</td>' +
+        '<td style="text-align:center;" class="mono">' + fmtNum(row.expectedTarget) + '</td>' +
+        '<td style="text-align:center;"><span class="diff-chip ' + diffCls(row.difference) + '">' + fmtDiff(row.difference) + '</span></td>' +
+        '<td style="text-align:center;"><span class="achieve-pct ' + getSlabInfo(row.achievePct).achCls + '">' + achTxt + '</span></td>';
+      frag.appendChild(tr);
+    });
+  });
+
+  /* ── Grand total row ── */
+  var gDiff     = gTotDone - gTotExpected;
+  var gAchieve  = gTotExpected > 0 ? Math.round((gTotDone / gTotExpected) * 100) : null;
+  var avgPerDay = gCount > 0 ? gSumPerDay / gCount : 0;
+  var tgt       = Math.max(0, parseFloat(dailyTarget.value) || 0);
+
   var totalTr = document.createElement("tr");
   totalTr.className = "total-row";
   totalTr.innerHTML =
-    '<td style="text-align:center;">\u2014</td>'+
-    '<td class="name-cell">\u03a3 Total / Avg</td>'+
-    '<td style="text-align:center;">'+fmtDay(tWorkDays)+'</td>'+
-    '<td style="text-align:center;">'+tAssign+'</td>'+
-    '<td class="mono" style="text-align:center;">'+fmtNum(tgt)+'</td>'+
-    '<td style="text-align:center;">'+tDone+'</td>'+
-    '<td class="mono" style="text-align:center;">'+avgPD.toFixed(2)+'</td>'+
-    '<td class="mono" style="text-align:center;">'+fmtNum(tExpected)+'</td>'+
-    '<td style="text-align:center;"><span class="diff-chip '+diffCls(tDiff)+'">'+fmtDiff(tDiff)+'</span></td>'+
-    '<td style="text-align:center;">'+(tAchieve!==null?tAchieve+"%":"\u2014")+'</td>'+
-    '<td style="text-align:center;"><span class="slab-chip '+tSlab.cls+'">'+tSlab.label+'</span></td>';
+    '<td style="text-align:center;">—</td>' +
+    '<td class="name-cell">Σ Total / Avg</td>' +
+    '<td style="text-align:center;">' + fmtDay(gTotWorkDays) + '</td>' +
+    '<td style="text-align:center;">' + gTotAssign + '</td>' +
+    '<td class="mono" style="text-align:center;">' + fmtNum(tgt) + '</td>' +
+    '<td style="text-align:center;">' + gTotDone + '</td>' +
+    '<td class="mono" style="text-align:center;">' + avgPerDay.toFixed(2) + '</td>' +
+    '<td class="mono" style="text-align:center;">' + fmtNum(gTotExpected) + '</td>' +
+    '<td style="text-align:center;"><span class="diff-chip ' + diffCls(gDiff) + '">' + fmtDiff(gDiff) + '</span></td>' +
+    '<td style="text-align:center;">' + (gAchieve !== null ? gAchieve + "%" : "—") + '</td>';
   frag.appendChild(totalTr);
 
   kpiTbody.innerHTML = "";
@@ -1542,19 +1658,18 @@ function exportCSV() {
   var esc  = function(v){ return '"'+String(v).replace(/"/g,'""')+'"'; };
   var hdrs = ["No.","Employee","Work Days","Assign Tasks","Daily Target",
               "Done Task","Per Day Avg Task","Expected Target","Difference",
-              "Achievement %","Performance Slab"];
+              "Achievement %"];
   var rows = sortedRows();
   var lines = [hdrs.map(esc).join(",")];
 
   rows.forEach(function(row, i) {
-    var slab   = getSlabInfo(row.achievePct);
     var achTxt = row.achievePct!==null ? row.achievePct+"%" : "\u2014";
     lines.push([
       esc(i+1), esc(row.name), esc(fmtDay(row.workDays)),
       esc(row.assignTasks), esc(fmtNum(row.dailyTargetValue)),
       esc(row.doneTasks), esc(row.perDayAvg.toFixed(2)),
       esc(fmtNum(row.expectedTarget)), esc(fmtDiff(row.difference)),
-      esc(achTxt), esc(slab.label)
+      esc(achTxt)
     ].join(","));
   });
 
