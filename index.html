@@ -1653,8 +1653,8 @@ function renderHoursTable(masterMap) {
           ? (expHrs / 8).toFixed(0)                      // whole number → no decimal
           : (expHrs / 8).toFixed(1))                     // fractional → 1 decimal
       : "—";
-    const days    = expSec / 28800;                      // for avg/day calc (8h = 28800s)
-    const avg     = days > 0 ? actual / days : 0;
+    const days    = expSec / 28800;                      // keep work-days base at 8 hours
+    const avg     = days > 0 ? (actual / days) * (8 / 6.5) : 0;
 
     const tr = document.createElement("tr");
     tr.innerHTML = `
