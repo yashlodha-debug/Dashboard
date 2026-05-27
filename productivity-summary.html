@@ -1,0 +1,1315 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <!-- ─── THEME INIT: before first paint — no flash ─── -->
+  <script>
+    (function(){
+      var s=localStorage.getItem('pp-theme');
+      document.documentElement.setAttribute('data-theme',(s==='light'||s==='dark')?s:'dark');
+    })();
+  </script>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Productivity Summary — Petpooja</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <style>
+  /* ════════════════════════════════════════════════════════
+     DESIGN TOKENS — identical to dashboard.html / kpi-report.html
+  ════════════════════════════════════════════════════════ */
+  :root {
+    --font:       "DM Sans", system-ui, sans-serif;
+    --font-mono:  "DM Mono", monospace;
+    --radius-sm:  10px;
+    --radius:     16px;
+    --radius-lg:  24px;
+    --transition: 0.22s cubic-bezier(0.4,0,0.2,1);
+    --target-hrs: 6;   /* productive hours per employee per day */
+  }
+  [data-theme="dark"] {
+    --bg:              #080d14;
+    --surface:         #141c2b;
+    --surface2:        #1a2336;
+    --surface3:        #1f2d42;
+    --border:          rgba(255,255,255,0.07);
+    --border2:         rgba(255,255,255,0.12);
+    --text:            #f1f5f9;
+    --text2:           #94a3b8;
+    --text3:           #64748b;
+    --accent:          #3b82f6;
+    --accent2:         #1d4ed8;
+    --accent-glow:     rgba(59,130,246,0.25);
+    --card-shadow:     0 1px 3px rgba(0,0,0,.5),0 8px 24px rgba(0,0,0,.35);
+    --header-bg:       rgba(8,13,20,0.88);
+    --table-head:      #0d1421;
+    --table-alt:       rgba(255,255,255,0.025);
+    --table-hover:     rgba(59,130,246,0.07);
+    --scrollbar-track: #141c2b;
+    --scrollbar-thumb: #2d3f5a;
+  }
+  [data-theme="light"] {
+    --bg:              #f0f4f8;
+    --surface:         #ffffff;
+    --surface2:        #f8fafc;
+    --surface3:        #f1f5f9;
+    --border:          rgba(0,0,0,0.07);
+    --border2:         rgba(0,0,0,0.12);
+    --text:            #0f172a;
+    --text2:           #475569;
+    --text3:           #94a3b8;
+    --accent:          #2563eb;
+    --accent2:         #1d4ed8;
+    --accent-glow:     rgba(37,99,235,0.15);
+    --card-shadow:     0 1px 3px rgba(0,0,0,.08),0 8px 24px rgba(0,0,0,.06);
+    --header-bg:       rgba(240,244,248,0.92);
+    --table-head:      #1e293b;
+    --table-alt:       rgba(0,0,0,0.02);
+    --table-hover:     rgba(37,99,235,0.05);
+    --scrollbar-track: #f1f5f9;
+    --scrollbar-thumb: #cbd5e1;
+  }
+
+  /* ════════════════════════════════════════════════════════
+     RESET & BASE
+  ════════════════════════════════════════════════════════ */
+  *,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+  html{scroll-behavior:smooth;}
+  body{
+    font-family:var(--font);font-size:14px;line-height:1.5;
+    color:var(--text);background:var(--bg);min-height:100vh;
+    overflow-x:hidden;transition:background var(--transition),color var(--transition);
+  }
+  a{color:inherit;text-decoration:none;}
+  ::-webkit-scrollbar{width:6px;height:6px;}
+  ::-webkit-scrollbar-track{background:var(--scrollbar-track);}
+  ::-webkit-scrollbar-thumb{background:var(--scrollbar-thumb);border-radius:99px;}
+  body::before{
+    content:"";position:fixed;inset:0;pointer-events:none;z-index:0;opacity:.025;
+    background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+    background-size:128px;
+  }
+
+  /* ════════════════════════════════════════════════════════
+     LAYOUT
+  ════════════════════════════════════════════════════════ */
+  .layout{display:flex;min-height:100vh;position:relative;z-index:1;}
+
+  /* ── SIDEBAR ── */
+  .sidebar{
+    width:240px;min-height:100vh;background:var(--surface);
+    border-right:1px solid var(--border);display:flex;flex-direction:column;
+    position:sticky;top:0;height:100vh;overflow-y:auto;flex-shrink:0;z-index:100;
+    transition:transform var(--transition),background var(--transition);
+  }
+  .sidebar-logo{display:flex;align-items:center;gap:10px;padding:22px 20px 18px;border-bottom:1px solid var(--border);}
+  .sidebar-logo img{height:28px;filter:brightness(1.1);}
+  .sidebar-logo-label{font-size:11px;font-weight:600;color:var(--text3);text-transform:uppercase;letter-spacing:.08em;}
+  .sidebar-section{padding:16px 12px 8px;}
+  .sidebar-section-label{font-size:10px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--text3);padding:0 8px;margin-bottom:6px;}
+  .sidebar-nav{display:flex;flex-direction:column;gap:2px;}
+  .nav-item{
+    display:flex;align-items:center;gap:10px;padding:9px 10px;border-radius:var(--radius-sm);
+    color:var(--text2);font-weight:500;font-size:13.5px;cursor:pointer;
+    transition:all var(--transition);border:1px solid transparent;
+  }
+  .nav-item:hover{background:var(--surface2);color:var(--text);border-color:var(--border);}
+  .nav-item.active{background:linear-gradient(135deg,rgba(59,130,246,.15),rgba(29,78,216,.1));color:var(--accent);border-color:rgba(59,130,246,.2);font-weight:600;}
+  .nav-icon{width:18px;height:18px;flex-shrink:0;opacity:.8;}
+  .nav-badge{margin-left:auto;background:var(--accent);color:#fff;font-size:10px;font-weight:700;padding:1px 6px;border-radius:99px;}
+  .sidebar-footer{margin-top:auto;padding:14px 12px;border-top:1px solid var(--border);}
+  .sidebar-overlay{
+    display:none;position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:99;
+    backdrop-filter:blur(2px);opacity:0;pointer-events:none;transition:opacity var(--transition);
+  }
+  .sidebar-overlay.open{opacity:1;pointer-events:auto;}
+
+  /* ── MAIN ── */
+  .main{flex:1;min-width:0;display:flex;flex-direction:column;}
+
+  /* ── TOPBAR ── */
+  .topbar{
+    position:sticky;top:0;z-index:50;display:flex;align-items:center;
+    justify-content:space-between;gap:16px;padding:14px 28px;
+    background:var(--header-bg);backdrop-filter:blur(16px) saturate(180%);
+    -webkit-backdrop-filter:blur(16px) saturate(180%);
+    border-bottom:1px solid var(--border);transition:background var(--transition);
+  }
+  .topbar-left{display:flex;align-items:center;gap:16px;}
+  .topbar-right{display:flex;align-items:center;gap:10px;flex-wrap:wrap;}
+  .page-title{font-size:17px;font-weight:700;color:var(--text);}
+  .page-subtitle{font-size:12px;color:var(--text3);margin-top:1px;}
+  .menu-toggle{
+    display:none;align-items:center;justify-content:center;
+    width:38px;height:38px;border-radius:var(--radius-sm);
+    border:1px solid var(--border);background:var(--surface2);
+    cursor:pointer;transition:all var(--transition);color:var(--text2);
+  }
+  .menu-toggle:hover{background:var(--surface3);color:var(--text);}
+
+  /* ── BUTTONS ── */
+  .btn{
+    display:inline-flex;align-items:center;justify-content:center;gap:6px;
+    height:38px;padding:0 16px;border-radius:var(--radius-sm);
+    font-family:var(--font);font-size:13px;font-weight:600;
+    cursor:pointer;transition:all var(--transition);white-space:nowrap;border:1px solid transparent;
+  }
+  .btn-primary{background:var(--accent);color:#fff;}
+  .btn-primary:hover{background:var(--accent2);box-shadow:0 0 0 4px var(--accent-glow);}
+  .btn-ghost{background:var(--surface);color:var(--text2);border-color:var(--border);}
+  .btn-ghost:hover{background:var(--surface2);color:var(--text);border-color:var(--border2);}
+  .btn-success{background:linear-gradient(135deg,#16a34a,#15803d);color:#fff;}
+  .btn-success:hover{box-shadow:0 0 0 4px rgba(34,197,94,.2);}
+  .btn-danger{background:linear-gradient(135deg,#dc2626,#b91c1c);color:#fff;}
+  .btn-danger:hover{box-shadow:0 0 0 4px rgba(239,68,68,.2);}
+
+  .theme-toggle{
+    width:38px;height:38px;border-radius:var(--radius-sm);
+    border:1px solid var(--border);background:var(--surface);color:var(--text2);
+    cursor:pointer;display:flex;align-items:center;justify-content:center;
+    transition:all var(--transition);
+  }
+  .theme-toggle:hover{background:var(--surface2);color:var(--text);}
+
+  /* ════════════════════════════════════════════════════════
+     PAGE BODY
+  ════════════════════════════════════════════════════════ */
+  .page-body{padding:24px 28px;flex:1;}
+
+  /* ════════════════════════════════════════════════════════
+     TARGET HOURS CONFIG BAR
+  ════════════════════════════════════════════════════════ */
+  .config-bar{
+    display:flex;align-items:center;justify-content:space-between;
+    gap:14px;flex-wrap:wrap;margin-bottom:20px;
+    padding:14px 18px;
+    background:var(--surface);border:1px solid var(--border);
+    border-radius:var(--radius-lg);box-shadow:var(--card-shadow);
+  }
+  .config-bar-left{display:flex;align-items:center;gap:14px;flex-wrap:wrap;}
+  .config-bar-right{display:flex;align-items:center;gap:10px;flex-wrap:wrap;}
+
+  .config-field{
+    display:flex;align-items:center;gap:8px;
+    background:var(--surface2);border:1px solid var(--border);
+    border-radius:var(--radius-sm);padding:6px 12px;height:38px;
+    transition:border-color var(--transition);
+  }
+  .config-field:focus-within{border-color:var(--accent);}
+  .config-field label{font-size:11px;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:.05em;white-space:nowrap;}
+  .config-field input[type="number"],
+  .config-field input[type="text"]{
+    border:none;outline:none;background:transparent;
+    color:var(--text);font-family:var(--font);font-size:13px;font-weight:600;
+    width:56px;text-align:center;
+  }
+  .config-label{font-size:12px;color:var(--text3);font-weight:500;}
+
+  /* ════════════════════════════════════════════════════════
+     DATA ENTRY PANEL
+  ════════════════════════════════════════════════════════ */
+  .entry-card{
+    background:var(--surface);border:1px solid var(--border);
+    border-radius:var(--radius-lg);box-shadow:var(--card-shadow);
+    overflow:hidden;margin-bottom:20px;
+  }
+  .entry-card-header{
+    display:flex;align-items:center;justify-content:space-between;
+    padding:14px 18px;border-bottom:1px solid var(--border);gap:12px;
+  }
+  .entry-card-title{
+    font-size:14px;font-weight:700;color:var(--text);
+    display:flex;align-items:center;gap:8px;
+  }
+  .entry-card-dot{width:8px;height:8px;border-radius:2px;flex-shrink:0;}
+  .entry-card-sub{font-size:11.5px;color:var(--text3);margin-top:2px;}
+  .entry-card-actions{display:flex;align-items:center;gap:8px;flex-wrap:wrap;}
+  .file-input{display:none;}
+  .upload-status{
+    font-size:12px;color:var(--text3);padding:10px 18px 0;
+    min-height:22px;
+  }
+  .upload-status.error{color:#ef4444;}
+  .upload-status.success{color:#22c55e;}
+  .upload-status.warn{color:#f59e0b;}
+
+  /* Entry table */
+  .entry-table-wrap{overflow:auto;}
+  .entry-table{
+    width:100%;border-collapse:collapse;font-size:13px;
+  }
+  .entry-table thead{background:var(--table-head);}
+  .entry-table thead th{
+    padding:9px 12px;font-size:10px;font-weight:700;text-transform:uppercase;
+    letter-spacing:.06em;color:rgba(255,255,255,.82);white-space:nowrap;
+    border-bottom:1px solid var(--border);text-align:left;
+  }
+  [data-theme="light"] .entry-table thead th{color:rgba(255,255,255,.88);}
+  .entry-table td{
+    padding:6px 8px;border-bottom:1px solid var(--border);vertical-align:middle;
+  }
+  .entry-table tbody tr:nth-child(even) td{background:var(--table-alt);}
+  .entry-table tbody tr:hover td{background:var(--table-hover);}
+
+  /* Inline inputs */
+  .entry-input{
+    width:100%;border:1px solid transparent;border-radius:8px;
+    padding:5px 9px;background:transparent;
+    color:var(--text);font-family:var(--font-mono);font-size:12.5px;font-weight:500;
+    outline:none;transition:all var(--transition);
+  }
+  .entry-input:focus{
+    background:var(--surface2);border-color:var(--accent);
+    box-shadow:0 0 0 2px var(--accent-glow);
+  }
+  .entry-input::placeholder{color:var(--text3);}
+  .entry-input.name-input{font-family:var(--font);font-size:13px;}
+
+  /* Row number */
+  .row-num{
+    font-size:11px;color:var(--text3);text-align:center;
+    padding:6px 8px;font-weight:600;width:40px;
+  }
+
+  /* Delete row button */
+  .del-btn{
+    width:28px;height:28px;border-radius:7px;border:1px solid var(--border);
+    background:transparent;color:var(--text3);cursor:pointer;
+    display:flex;align-items:center;justify-content:center;
+    transition:all var(--transition);
+  }
+  .del-btn:hover{background:rgba(239,68,68,.12);border-color:rgba(239,68,68,.3);color:#ef4444;}
+
+  /* Format hint */
+  .format-hint{
+    font-size:11px;color:var(--text3);padding:10px 18px;
+    border-top:1px solid var(--border);
+    background:var(--surface2);
+  }
+  .format-hint code{
+    background:var(--surface3);border:1px solid var(--border);
+    border-radius:5px;padding:1px 5px;font-family:var(--font-mono);font-size:10.5px;
+    color:var(--accent);
+  }
+
+  /* ════════════════════════════════════════════════════════
+     RESULT SECTION
+  ════════════════════════════════════════════════════════ */
+  .result-section{display:none;}
+  .result-section.visible{display:block;}
+
+  /* ── Summary KPI cards ── */
+  .summary-grid{
+    display:grid;grid-template-columns:repeat(5,1fr);gap:14px;
+    margin-bottom:20px;
+  }
+  .sum-card{
+    background:var(--surface);border:1px solid var(--border);
+    border-radius:var(--radius-lg);padding:16px 18px;box-shadow:var(--card-shadow);
+    position:relative;overflow:hidden;
+    transition:transform var(--transition),box-shadow var(--transition);
+  }
+  .sum-card:hover{transform:translateY(-2px);box-shadow:0 2px 8px rgba(0,0,0,.4),0 14px 36px rgba(0,0,0,.35);}
+  .sum-card::before{content:"";position:absolute;inset:0;background:linear-gradient(140deg,rgba(255,255,255,.04) 0%,transparent 60%);pointer-events:none;}
+  .sum-card-icon{width:34px;height:34px;border-radius:10px;display:flex;align-items:center;justify-content:center;margin-bottom:10px;}
+  .sum-card-label{font-size:10.5px;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:.06em;}
+  .sum-card-value{font-size:1.5rem;font-weight:700;color:var(--text);line-height:1.15;margin-top:6px;letter-spacing:-.03em;font-family:var(--font-mono);}
+  .sum-card-sub{font-size:11px;color:var(--text3);margin-top:4px;}
+
+  /* ── Result table card ── */
+  .table-card{
+    background:var(--surface);border:1px solid var(--border);
+    border-radius:var(--radius-lg);box-shadow:var(--card-shadow);overflow:hidden;
+    margin-bottom:20px;
+  }
+  .table-card-header{
+    display:flex;align-items:center;justify-content:space-between;
+    padding:15px 20px;border-bottom:1px solid var(--border);gap:12px;
+  }
+  .table-card-title{font-size:14px;font-weight:700;color:var(--text);display:flex;align-items:center;gap:8px;}
+  .table-card-dot{width:8px;height:8px;border-radius:2px;flex-shrink:0;}
+  .table-card-sub{font-size:11.5px;color:var(--text3);margin-top:2px;}
+
+  /* Result table */
+  .result-table-wrap{overflow:auto;}
+  .result-table{width:100%;border-collapse:collapse;font-size:13px;}
+  .result-table thead{background:var(--table-head);}
+  .result-table thead th{
+    position:sticky;top:0;z-index:2;background:var(--table-head);
+    color:rgba(255,255,255,.82);font-size:10px;font-weight:700;
+    text-transform:uppercase;letter-spacing:.06em;
+    padding:10px 14px;white-space:nowrap;border-bottom:1px solid var(--border);
+    text-align:center;
+  }
+  .result-table thead th.left{text-align:left;}
+  [data-theme="light"] .result-table thead th{color:rgba(255,255,255,.88);background:#1e293b;}
+  .result-table td{
+    padding:10px 14px;color:var(--text);font-weight:500;
+    white-space:nowrap;border-bottom:1px solid var(--border);
+    text-align:center;font-variant-numeric:tabular-nums;
+    transition:background var(--transition);
+  }
+  .result-table td.left{text-align:left;}
+  .result-table tbody tr:nth-child(even) td{background:var(--table-alt);}
+  .result-table tbody tr:hover td{background:var(--table-hover);}
+
+  /* Total row */
+  .total-row td{
+    font-weight:700!important;background:rgba(59,130,246,.08)!important;
+    color:var(--accent)!important;border-top:1px solid rgba(59,130,246,.15);
+    font-family:var(--font-mono);
+  }
+  .total-row td.left{text-align:left!important;}
+
+  /* Performance chips */
+  .perf-chip{
+    display:inline-flex;align-items:center;gap:5px;
+    padding:3px 9px;border-radius:99px;
+    font-size:10.5px;font-weight:700;white-space:nowrap;
+  }
+  .chip-top     {background:rgba(34,197,94,.14); color:#22c55e;border:1px solid rgba(34,197,94,.25);}
+  .chip-good    {background:rgba(59,130,246,.12); color:#60a5fa;border:1px solid rgba(59,130,246,.22);}
+  .chip-low     {background:rgba(239,68,68,.12);  color:#ef4444;border:1px solid rgba(239,68,68,.22);}
+  .chip-avg     {background:rgba(245,158,11,.12); color:#f59e0b;border:1px solid rgba(245,158,11,.22);}
+  [data-theme="light"] .chip-top {color:#15803d;}
+  [data-theme="light"] .chip-good{color:#1d4ed8;}
+  [data-theme="light"] .chip-low {color:#dc2626;}
+  [data-theme="light"] .chip-avg {color:#b45309;}
+
+  /* Utilization bar */
+  .util-bar-wrap{display:flex;align-items:center;gap:8px;}
+  .util-bar-bg{flex:1;height:5px;border-radius:99px;background:var(--surface3);overflow:hidden;min-width:50px;}
+  .util-bar-fill{height:100%;border-radius:99px;transition:width .5s ease;}
+  .util-pct{font-size:11px;font-weight:700;font-family:var(--font-mono);min-width:38px;text-align:right;}
+
+  /* ── Performance Insights cards ── */
+  .insights-grid{
+    display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin-bottom:20px;
+  }
+  .insight-card{
+    background:var(--surface);border:1px solid var(--border);
+    border-radius:var(--radius-lg);padding:16px 18px;box-shadow:var(--card-shadow);
+  }
+  .insight-title{font-size:12px;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:.05em;margin-bottom:10px;display:flex;align-items:center;gap:6px;}
+  .insight-emp{display:flex;align-items:center;justify-content:space-between;padding:7px 10px;border-radius:var(--radius-sm);background:var(--surface2);border:1px solid var(--border);margin-bottom:6px;}
+  .insight-emp:last-child{margin-bottom:0;}
+  .insight-emp-name{font-size:12.5px;font-weight:600;color:var(--text);}
+  .insight-emp-val{font-size:12px;font-weight:700;font-family:var(--font-mono);color:var(--text2);}
+
+  /* ════════════════════════════════════════════════════════
+     ANIMATIONS
+  ════════════════════════════════════════════════════════ */
+  @keyframes fadeUp{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:translateY(0)}}
+  @keyframes spin{from{transform:rotate(0deg)}to{transform:rotate(360deg)}}
+  .fade-up{animation:fadeUp .35s ease both;}
+  .fade-up-1{animation-delay:.05s;}
+  .fade-up-2{animation-delay:.10s;}
+  .fade-up-3{animation-delay:.15s;}
+
+  /* ════════════════════════════════════════════════════════
+     RESPONSIVE
+  ════════════════════════════════════════════════════════ */
+  @media(max-width:1200px){.summary-grid{grid-template-columns:repeat(3,1fr);}}
+  @media(max-width:960px){
+    .sidebar{position:fixed;left:0;top:0;bottom:0;transform:translateX(-100%);z-index:200;}
+    .sidebar.open{transform:translateX(0);}
+    .sidebar-overlay{display:block;}
+    .menu-toggle{display:flex;}
+    .page-body{padding:16px;}
+    .topbar{padding:12px 16px;}
+    .insights-grid{grid-template-columns:1fr 1fr;}
+  }
+  @media(max-width:640px){
+    .summary-grid{grid-template-columns:1fr 1fr;}
+    .insights-grid{grid-template-columns:1fr;}
+  }
+  @media(max-width:480px){
+    .summary-grid{grid-template-columns:1fr;}
+  }
+  </style>
+</head>
+<body>
+
+<div class="sidebar-overlay" id="sidebarOverlay" onclick="closeSidebar()"></div>
+
+<div class="layout">
+
+  <!-- ══════════════════════════════════ SIDEBAR ══════════════════════════════════ -->
+  <aside class="sidebar" id="sidebar">
+    <div class="sidebar-logo">
+      <img src="https://d28ewddc5mocr5.cloudfront.net/images/logos-new/pp-logo-new.svg" alt="Petpooja">
+    </div>
+
+    <div class="sidebar-section">
+      <div class="sidebar-section-label">Overview</div>
+      <nav class="sidebar-nav">
+        <a class="nav-item" href="index.html">
+          <svg class="nav-icon" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/></svg>
+          Dashboard
+        </a>
+      </nav>
+    </div>
+
+    <div class="sidebar-section">
+      <div class="sidebar-section-label">Reports</div>
+      <nav class="sidebar-nav">
+        <a class="nav-item" href="category-summary.html">
+          <svg class="nav-icon" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M16 8v8m-4-5v5m-4-2v2m-2 4h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
+          Quarter Performance
+        </a>
+        <a class="nav-item" href="kpi-report.html">
+          <svg class="nav-icon" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/></svg>
+          KPI Report
+        </a>
+        <a class="nav-item active" href="productivity-summary.html">
+          <svg class="nav-icon" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+          Productivity Summary
+        </a>
+      </nav>
+    </div>
+
+    <div class="sidebar-footer">
+      <div class="nav-item" style="cursor:default;gap:8px;">
+        <svg style="width:14px;height:14px;opacity:.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path stroke-linecap="round" stroke-linejoin="round" d="M12 8v4l3 3"/></svg>
+        <span style="font-size:11px;color:var(--text3)" id="sidebarTime">--:--</span>
+      </div>
+    </div>
+  </aside>
+
+  <!-- ══════════════════════════════════ MAIN ══════════════════════════════════ -->
+  <div class="main">
+
+    <!-- Topbar -->
+    <header class="topbar">
+      <div class="topbar-left">
+        <button class="menu-toggle" onclick="toggleSidebar()" aria-label="Menu">
+          <svg width="18" height="18" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M4 6h16M4 12h16M4 18h16"/></svg>
+        </button>
+        <div>
+          <div class="page-title">Productivity Summary</div>
+          <div class="page-subtitle">Employee actual vs expected hours · team utilization &amp; required headcount</div>
+        </div>
+      </div>
+      <div class="topbar-right">
+        <button class="theme-toggle" onclick="toggleTheme()" title="Toggle theme">
+          <svg id="themeIcon" width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"/></svg>
+        </button>
+      </div>
+    </header>
+
+    <!-- Page Body -->
+    <div class="page-body">
+
+      <!-- Config bar -->
+      <div class="config-bar fade-up">
+        <div class="config-bar-left">
+          <svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="var(--text3)" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/><path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
+          <div class="config-field">
+            <label for="targetHrs">Target Hrs/Day</label>
+            <input type="number" id="targetHrs" value="6" min="1" max="12" step="0.5">
+            <span class="config-label">hrs per employee per day</span>
+          </div>
+        </div>
+        <div class="config-bar-right">
+          <button class="btn btn-primary" onclick="calculate()">
+            <svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 11h.01M12 11h.01M15 11h.01M4 19h16a2 2 0 002-2V7a2 2 0 00-2-2H4a2 2 0 00-2 2v10a2 2 0 002 2z"/></svg>
+            Calculate
+          </button>
+          <button class="btn btn-success" onclick="exportCSV()" id="exportBtn" style="display:none;">
+            <svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
+            Export CSV
+          </button>
+        </div>
+      </div>
+
+      <!-- Data entry -->
+      <div class="entry-card fade-up fade-up-1">
+        <div class="entry-card-header">
+          <div>
+            <div class="entry-card-title">
+              <span class="entry-card-dot" style="background:#3b82f6;"></span>
+              Employee Data Entry
+            </div>
+            <div class="entry-card-sub">Enter employee name, actual time (HH:MM:SS) and work days</div>
+          </div>
+          <div class="entry-card-actions">
+            <button class="btn btn-ghost" onclick="addRow()">
+              <svg width="13" height="13" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4"/></svg>
+              Add Row
+            </button>
+            <label class="btn btn-ghost" for="employeeUpload">
+              <svg width="13" height="13" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"/></svg>
+              Upload Excel File
+            </label>
+            <input class="file-input" id="employeeUpload" type="file" accept=".xlsx,.xls,.csv" onchange="handleEmployeeUpload(event)">
+            <button class="btn btn-danger" onclick="clearAll()" style="height:34px;padding:0 12px;font-size:12px;">
+              <svg width="12" height="12" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
+              Clear All
+            </button>
+          </div>
+        </div>
+        <div class="upload-status" id="uploadStatus"></div>
+        <div class="entry-table-wrap">
+          <table class="entry-table">
+            <thead>
+              <tr>
+                <th style="width:40px;">#</th>
+                <th style="min-width:160px;">Employee Name</th>
+                <th style="min-width:140px;">Actual Time (HH:MM:SS)</th>
+                <th style="min-width:120px;">Work Days</th>
+                <th style="width:44px;"></th>
+              </tr>
+            </thead>
+            <tbody id="entryTbody"></tbody>
+          </table>
+        </div>
+        <div class="format-hint">
+          <strong>Time format:</strong> <code>HH:MM:SS</code> — e.g. <code>33:17:36</code> &nbsp;·&nbsp;
+          <strong>Work Days:</strong> decimals allowed — e.g. <code>12.5</code>, <code>14</code>, <code>15.5</code>
+        </div>
+      </div>
+
+      <!-- Results -->
+      <div class="result-section" id="resultSection">
+
+        <!-- Summary KPI cards -->
+        <div class="summary-grid fade-up">
+          <div class="sum-card">
+            <div class="sum-card-icon" style="background:rgba(59,130,246,.12);">
+              <svg width="18" height="18" fill="none" viewBox="0 0 24 24" stroke="#3b82f6" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+            </div>
+            <div class="sum-card-label">Total Actual Hours</div>
+            <div class="sum-card-value" id="rTotalActual">—</div>
+            <div class="sum-card-sub">combined team hours</div>
+          </div>
+          <div class="sum-card">
+            <div class="sum-card-icon" style="background:rgba(34,197,94,.12);">
+              <svg width="18" height="18" fill="none" viewBox="0 0 24 24" stroke="#22c55e" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
+            </div>
+            <div class="sum-card-label">Total Work Days</div>
+            <div class="sum-card-value" id="rTotalDays">—</div>
+            <div class="sum-card-sub">across all employees</div>
+          </div>
+          <div class="sum-card">
+            <div class="sum-card-icon" style="background:rgba(245,158,11,.12);">
+              <svg width="18" height="18" fill="none" viewBox="0 0 24 24" stroke="#f59e0b" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/></svg>
+            </div>
+            <div class="sum-card-label">Overall Avg / Day</div>
+            <div class="sum-card-value" id="rOverallAvg">—</div>
+            <div class="sum-card-sub">team average per work day</div>
+          </div>
+          <div class="sum-card">
+            <div class="sum-card-icon" style="background:rgba(168,85,247,.12);">
+              <svg width="18" height="18" fill="none" viewBox="0 0 24 24" stroke="#a855f7" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
+            </div>
+            <div class="sum-card-label">Required Employees</div>
+            <div class="sum-card-value" id="rRequired">—</div>
+            <div class="sum-card-sub" id="rRequiredSub">at <span id="rTargetDisp">6</span>h/day target</div>
+          </div>
+          <div class="sum-card">
+            <div class="sum-card-icon" style="background:rgba(6,182,212,.12);">
+              <svg width="18" height="18" fill="none" viewBox="0 0 24 24" stroke="#06b6d4" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"/></svg>
+            </div>
+            <div class="sum-card-label">Team Utilization</div>
+            <div class="sum-card-value" id="rUtilization">—</div>
+            <div class="sum-card-sub">(Avg/Day ÷ <span id="rTargetDisp2">6</span>h) × 100</div>
+          </div>
+        </div>
+
+        <!-- Performance Insights -->
+        <div class="insights-grid fade-up fade-up-1" id="insightsGrid"></div>
+
+        <!-- Main result table -->
+        <div class="table-card fade-up fade-up-2">
+          <div class="table-card-header">
+            <div>
+              <div class="table-card-title">
+                <span class="table-card-dot" style="background:#3b82f6;"></span>
+                Employee Productivity Summary
+              </div>
+              <div class="table-card-sub">Actual vs Expected · Avg/Day · Utilization per employee</div>
+            </div>
+            <span id="resultRowCount" style="font-size:12px;font-weight:600;color:var(--text3);">— employees</span>
+          </div>
+          <div class="result-table-wrap">
+            <table class="result-table">
+              <thead>
+                <tr>
+                  <th class="left" style="width:36px;">#</th>
+                  <th class="left" style="min-width:150px;">Employee</th>
+                  <th style="min-width:110px;">Actual</th>
+                  <th style="min-width:110px;">Expected</th>
+                  <th style="min-width:90px;">Work Days</th>
+                  <th style="min-width:110px;">Avg / Day</th>
+                  <th style="min-width:140px;">Utilization %</th>
+                  <th style="min-width:110px;">Performance</th>
+                </tr>
+              </thead>
+              <tbody id="resultTbody"></tbody>
+            </table>
+          </div>
+        </div>
+
+      </div><!-- /result-section -->
+
+    </div><!-- /page-body -->
+  </div><!-- /main -->
+</div><!-- /layout -->
+
+<script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+<script>
+/* ════════════════════════════════════════════════════════════════════
+   THEME / SIDEBAR
+════════════════════════════════════════════════════════════════════ */
+function toggleTheme() {
+  var h = document.documentElement;
+  var next = h.getAttribute('data-theme') === 'dark' ? 'light' : 'dark';
+  h.setAttribute('data-theme', next);
+  try { localStorage.setItem('pp-theme', next); } catch(e) {}
+  syncIcon(next === 'dark');
+}
+function syncIcon(isDark) {
+  var el = document.getElementById('themeIcon');
+  if (!el) return;
+  el.innerHTML = isDark
+    ? '<path stroke-linecap="round" stroke-linejoin="round" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"/>'
+    : '<path stroke-linecap="round" stroke-linejoin="round" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z"/>';
+}
+syncIcon(document.documentElement.getAttribute('data-theme') === 'dark');
+
+function toggleSidebar()  { document.getElementById('sidebar').classList.toggle('open');  document.getElementById('sidebarOverlay').classList.toggle('open');  }
+function closeSidebar()   { document.getElementById('sidebar').classList.remove('open');   document.getElementById('sidebarOverlay').classList.remove('open');   }
+
+(function tick(){
+  var el = document.getElementById('sidebarTime');
+  if (el) el.textContent = new Date().toLocaleTimeString('en-IN',{hour:'2-digit',minute:'2-digit',second:'2-digit'});
+  setTimeout(tick, 1000);
+})();
+
+/* ════════════════════════════════════════════════════════════════════
+   TIME HELPERS  (all arithmetic in whole SECONDS — no float drift)
+════════════════════════════════════════════════════════════════════ */
+
+/* Parse "H:MM:SS", "HH:MM:SS", "H:MM" → total seconds (integer) */
+function parseTime(str) {
+  if (!str || typeof str !== 'string') return NaN;
+  var s = str.trim().replace(/\s+/g, '');
+  if (!s) return NaN;
+  var parts = s.split(':').map(Number);
+  if (parts.some(isNaN)) return NaN;
+  if (parts.length === 3) return parts[0]*3600 + parts[1]*60 + parts[2];
+  if (parts.length === 2) return parts[0]*3600 + parts[1]*60;
+  if (parts.length === 1) return parts[0]*3600;
+  return NaN;
+}
+
+/* Format integer seconds → "HH:MM:SS" (handles > 24 hours correctly) */
+function fmtTime(totalSec) {
+  if (isNaN(totalSec) || totalSec < 0) return '—';
+  var sec  = Math.round(totalSec);
+  var h    = Math.floor(sec / 3600);
+  var m    = Math.floor((sec % 3600) / 60);
+  var s    = sec % 60;
+  return h + ':' + String(m).padStart(2,'0') + ':' + String(s).padStart(2,'0');
+}
+
+/* Divide seconds by float days → seconds per day */
+function divSecByDays(sec, days) {
+  if (!days || days === 0) return 0;
+  return Math.round(sec / days);   // round to nearest second
+}
+
+/* Format decimal work days nicely */
+function fmtDays(v) {
+  if (isNaN(v) || v === null) return '—';
+  return v % 1 === 0 ? v.toFixed(0) : v.toFixed(1);
+}
+
+/* Format number nicely */
+function fmtNum(v, dp) {
+  return isNaN(v) ? '—' : v.toFixed(dp === undefined ? 2 : dp);
+}
+
+/* ════════════════════════════════════════════════════════════════════
+   ENTRY TABLE
+════════════════════════════════════════════════════════════════════ */
+var rowCount = 0;
+
+function attrEsc(str) {
+  return esc(str).replace(/'/g,'&#39;');
+}
+
+function addRow(name, actual, days) {
+  rowCount++;
+  var id  = 'row-' + rowCount;
+  var tbody = document.getElementById('entryTbody');
+  var tr = document.createElement('tr');
+  tr.id  = id;
+  tr.dataset.rowId = rowCount;
+
+  tr.innerHTML =
+    '<td class="row-num">' + tbody.children.length + 1 + '</td>' +
+    '<td><input class="entry-input name-input" type="text" placeholder="Employee name" value="' + attrEsc(name||'') + '"></td>' +
+    '<td><input class="entry-input" type="text" placeholder="33:17:36" value="' + attrEsc(actual||'') + '" oninput="validateTimeInput(this)"></td>' +
+    '<td><input class="entry-input" type="number" placeholder="12.5" min="0" step="0.5" style="width:100%" value="' + attrEsc(days!==undefined?days:'') + '"></td>' +
+    '<td><button class="del-btn" onclick="deleteRow(\'' + id + '\')" title="Remove row">' +
+      '<svg width="13" height="13" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/></svg>' +
+    '</button></td>';
+
+  tbody.appendChild(tr);
+  reindexRows();
+}
+
+function deleteRow(id) {
+  var tr = document.getElementById(id);
+  if (tr) tr.remove();
+  reindexRows();
+}
+
+function reindexRows() {
+  var rows = document.getElementById('entryTbody').querySelectorAll('tr');
+  rows.forEach(function(tr, i) { var n = tr.querySelector('.row-num'); if(n) n.textContent = i+1; });
+}
+
+function clearAll() {
+  document.getElementById('entryTbody').innerHTML = '';
+  rowCount = 0;
+  hideResults();
+  // Add 5 empty rows
+  for (var i = 0; i < 5; i++) addRow();
+}
+
+function setUploadStatus(msg, type) {
+  var el = document.getElementById('uploadStatus');
+  if (!el) return;
+  el.className = 'upload-status' + (type ? ' ' + type : '');
+  el.textContent = msg || '';
+}
+
+function handleEmployeeUpload(event) {
+  var input = event.target;
+  var file = input.files && input.files[0];
+  if (!file) return;
+
+  var ext = (file.name.split('.').pop() || '').toLowerCase();
+  if (['xlsx','xls','csv'].indexOf(ext) === -1) {
+    setUploadStatus('Invalid file format. Upload .xlsx, .xls, or .csv.', 'error');
+    input.value = '';
+    return;
+  }
+
+  setUploadStatus('Reading ' + file.name + '...', '');
+
+  if (ext === 'csv') {
+    readCsvFile(file, input);
+    return;
+  }
+
+  if (typeof XLSX === 'undefined') {
+    setUploadStatus('Excel parser could not load. Check your internet connection or upload a CSV file.', 'error');
+    input.value = '';
+    return;
+  }
+
+  var reader = new FileReader();
+  reader.onerror = function() {
+    setUploadStatus('Unable to read the selected Excel file.', 'error');
+    input.value = '';
+  };
+  reader.onload = function(e) {
+    try {
+      var data = new Uint8Array(e.target.result);
+      var workbook = XLSX.read(data, { type:'array', cellDates:true });
+      var firstSheet = workbook.SheetNames[0];
+      if (!firstSheet) throw new Error('No sheets found.');
+      var sheet = workbook.Sheets[firstSheet];
+      var rows = XLSX.utils.sheet_to_json(sheet, { header:1, defval:'', raw:false });
+      importEmployeeRows(rows, file.name);
+    } catch (err) {
+      setUploadStatus('Invalid Excel file. Please check the file and try again.', 'error');
+    } finally {
+      input.value = '';
+    }
+  };
+  reader.readAsArrayBuffer(file);
+}
+
+function readCsvFile(file, input) {
+  var reader = new FileReader();
+  reader.onerror = function() {
+    setUploadStatus('Unable to read the selected CSV file.', 'error');
+    input.value = '';
+  };
+  reader.onload = function(e) {
+    try {
+      importEmployeeRows(parseCsv(e.target.result || ''), file.name);
+    } catch (err) {
+      setUploadStatus('Invalid CSV file. Please check the file and try again.', 'error');
+    } finally {
+      input.value = '';
+    }
+  };
+  reader.readAsText(file);
+}
+
+function parseCsv(text) {
+  var rows = [], row = [], cur = '', inQuotes = false;
+  for (var i = 0; i < text.length; i++) {
+    var ch = text[i], next = text[i+1];
+    if (ch === '"' && inQuotes && next === '"') { cur += '"'; i++; continue; }
+    if (ch === '"') { inQuotes = !inQuotes; continue; }
+    if (ch === ',' && !inQuotes) { row.push(cur); cur = ''; continue; }
+    if ((ch === '\n' || ch === '\r') && !inQuotes) {
+      if (ch === '\r' && next === '\n') i++;
+      row.push(cur); rows.push(row); row = []; cur = '';
+      continue;
+    }
+    cur += ch;
+  }
+  row.push(cur);
+  if (row.length > 1 || String(row[0]).trim()) rows.push(row);
+  return rows;
+}
+
+function importEmployeeRows(rows, fileName) {
+  rows = (rows || []).filter(function(row) {
+    return row && row.some(function(cell) { return cleanCell(cell) !== ''; });
+  });
+  if (rows.length < 2) {
+    setUploadStatus('No usable employee data found in ' + fileName + '.', 'error');
+    return;
+  }
+
+  var headers = rows[0].map(cleanCell);
+  var map = mapUploadColumns(headers);
+  if (map.name === -1) {
+    setUploadStatus('Missing required column: Employee Name.', 'error');
+    return;
+  }
+  if (map.actual === -1) {
+    setUploadStatus('Missing required column: Actual Time.', 'error');
+    return;
+  }
+  if (map.days === -1) {
+    setUploadStatus('Missing required column: Work Days.', 'error');
+    return;
+  }
+
+  removeBlankEntryRows();
+  var seen = existingEmployeeNames();
+  var added = 0, duplicates = 0, skipped = [];
+
+  rows.slice(1).forEach(function(row, idx) {
+    var sourceRow = idx + 2;
+    var rec = normalizeUploadRow(row, map);
+    if (!rec.name && !rec.actual && !rec.days) return;
+
+    if (!rec.name) { skipped.push('Row ' + sourceRow + ': missing employee name'); return; }
+    if (!rec.actual || isNaN(parseTime(rec.actual))) { skipped.push('Row ' + sourceRow + ' "' + rec.name + '": invalid or missing time'); return; }
+    if (!rec.days || isNaN(parseFloat(rec.days)) || parseFloat(rec.days) <= 0) { skipped.push('Row ' + sourceRow + ' "' + rec.name + '": invalid or missing work days'); return; }
+
+    var key = employeeNameKey(rec.name);
+    if (seen[key]) { duplicates++; return; }
+    seen[key] = true;
+    addRow(rec.name, rec.actual, rec.days);
+    added++;
+  });
+
+  if (added > 0) {
+    setUploadStatus('Imported ' + added + ' row' + (added === 1 ? '' : 's') + ' from ' + fileName + (duplicates ? ' (' + duplicates + ' duplicate skipped).' : '.'), skipped.length ? 'warn' : 'success');
+    try { calculate(); } catch(e) {}
+  } else {
+    setUploadStatus('No new rows imported from ' + fileName + (duplicates ? '; duplicates were skipped.' : '.'), 'warn');
+  }
+
+  if (skipped.length) {
+    alert('Some uploaded rows were skipped:\n\n' + skipped.slice(0, 12).join('\n') + (skipped.length > 12 ? '\n...and ' + (skipped.length - 12) + ' more.' : ''));
+  }
+}
+
+function mapUploadColumns(headers) {
+  var normalized = headers.map(normalizeHeader);
+  function find(aliases) {
+    for (var i = 0; i < normalized.length; i++) {
+      for (var j = 0; j < aliases.length; j++) {
+        if (normalized[i] === aliases[j] || normalized[i].indexOf(aliases[j]) !== -1) return i;
+      }
+    }
+    return -1;
+  }
+  return {
+    name: find(['employeename','employee','empname','name']),
+    actual: find(['actualtime','actualhours','totaltime','timespent','duration','hoursworked','workhours']),
+    days: find(['workdays','workingdays','daysworked','presentdays','days'])
+  };
+}
+
+function normalizeUploadRow(row, map) {
+  var name = cleanCell(row[map.name]);
+  var actual = map.actual !== -1 ? normalizeDurationCell(row[map.actual]) : '';
+  var days = map.days !== -1 ? normalizeNumberCell(row[map.days]) : '';
+  return { name:name, actual:actual, days:days };
+}
+
+function normalizeHeader(value) {
+  return cleanCell(value).toLowerCase().replace(/[^a-z0-9]/g, '');
+}
+
+function cleanCell(value) {
+  return String(value == null ? '' : value).replace(/\s+/g, ' ').trim();
+}
+
+function normalizeNumberCell(value) {
+  var cleaned = cleanCell(value).replace(/,/g, '');
+  var match = cleaned.match(/-?\d+(\.\d+)?/);
+  return match ? trimTrailingZeros(parseFloat(match[0])) : '';
+}
+
+function normalizeDurationCell(value) {
+  var sec = durationToSeconds(value);
+  return isNaN(sec) ? cleanCell(value) : fmtTime(sec);
+}
+
+function durationToSeconds(value) {
+  var str = cleanCell(value);
+  if (!str) return NaN;
+  if (str.indexOf(':') !== -1) return parseTime(str);
+  var n = parseFloat(str.replace(/,/g, ''));
+  if (isNaN(n)) return NaN;
+  return Math.round(n * 3600);
+}
+
+function trimTrailingZeros(num) {
+  if (isNaN(num)) return '';
+  return String(Math.round(num * 100) / 100).replace(/\.0+$/,'').replace(/(\.\d*[1-9])0+$/,'$1');
+}
+
+function removeBlankEntryRows() {
+  var tbody = document.getElementById('entryTbody');
+  Array.prototype.slice.call(tbody.querySelectorAll('tr')).forEach(function(tr) {
+    var inputs = tr.querySelectorAll('input');
+    var isBlank = Array.prototype.every.call(inputs, function(inp) { return !inp.value.trim(); });
+    if (isBlank) tr.remove();
+  });
+  reindexRows();
+}
+
+function existingEmployeeNames() {
+  var names = {};
+  getEntryRows().forEach(function(r) {
+    if (r.name) names[employeeNameKey(r.name)] = true;
+  });
+  return names;
+}
+
+function employeeNameKey(name) {
+  return cleanCell(name).toLowerCase();
+}
+
+function validateTimeInput(inp) {
+  var val = inp.value.trim();
+  var ok  = /^\d+:[0-5]\d:[0-5]\d$/.test(val) || /^\d+:[0-5]\d$/.test(val) || val === '';
+  inp.style.borderColor = (!ok && val) ? 'rgba(239,68,68,.6)' : '';
+}
+
+function getEntryRows() {
+  var rows = document.getElementById('entryTbody').querySelectorAll('tr');
+  var result = [];
+  rows.forEach(function(tr) {
+    var inputs = tr.querySelectorAll('input');
+    if (inputs.length < 3) return;
+    var name  = inputs[0].value.trim();
+    var time  = inputs[1].value.trim();
+    var days  = parseFloat(inputs[2].value);
+    if (!name && !time && isNaN(days)) return;  // skip fully empty rows
+    result.push({ name: name||'(unnamed)', rawTime: time, rawDays: inputs[2].value, days: days });
+  });
+  return result;
+}
+
+/* ════════════════════════════════════════════════════════════════════
+   CALCULATE
+════════════════════════════════════════════════════════════════════ */
+var lastResult = null;
+
+function calculate() {
+  var targetHrsSec = Math.round((parseFloat(document.getElementById('targetHrs').value) || 6) * 3600);
+  var targetHrs    = targetHrsSec / 3600;
+
+  var rawRows = getEntryRows();
+  if (!rawRows.length) { alert('Please enter at least one employee row.'); return; }
+
+  var errors = [];
+  var rows   = [];
+
+  rawRows.forEach(function(r, i) {
+    var sec  = parseTime(r.rawTime);
+    var days = r.days;
+
+    if (isNaN(sec))  errors.push('Row ' + (i+1) + ' "' + r.name + '": invalid time "' + r.rawTime + '"');
+    if (isNaN(days) || days <= 0) errors.push('Row ' + (i+1) + ' "' + r.name + '": invalid work days "' + r.rawDays + '"');
+
+    if (!isNaN(sec) && !isNaN(days) && days > 0) {
+      var expectedSec  = Math.round(days * targetHrsSec);   // Work Days × target hrs in seconds
+      var avgDaySec    = divSecByDays(sec, days);           // Actual ÷ Work Days
+      var utilPct      = (avgDaySec / targetHrsSec) * 100; // (Avg/Day ÷ Target) × 100
+
+      rows.push({
+        name: r.name,
+        actualSec:   sec,
+        workDays:    days,
+        expectedSec: expectedSec,
+        avgDaySec:   avgDaySec,
+        utilPct:     utilPct,
+      });
+    }
+  });
+
+  if (errors.length) {
+    alert('Please fix these issues:\n\n' + errors.join('\n'));
+    return;
+  }
+
+  if (!rows.length) { alert('No valid rows to calculate.'); return; }
+
+  /* ── Team totals ── */
+  var totalActualSec  = rows.reduce(function(s,r){ return s + r.actualSec; }, 0);
+  var totalWorkDays   = rows.reduce(function(s,r){ return s + r.workDays;  }, 0);
+  var totalExpectedSec= rows.reduce(function(s,r){ return s + r.expectedSec; }, 0);
+
+  /*
+    Overall Avg/Day = Total Actual Hours ÷ Total Work Days
+    (correct weighted average — not average of individual averages)
+  */
+  var overallAvgSec   = divSecByDays(totalActualSec, totalWorkDays);
+  var overallUtilPct  = (overallAvgSec / targetHrsSec) * 100;
+
+  /*
+    Required Employees = Total Actual Hours ÷ (Target Hrs × Avg Work Days per Employee)
+    = Overall Avg Daily Workload ÷ Target Hrs
+    where Overall Avg Daily Workload (in hrs) = overallAvgSec / 3600
+  */
+  var avgDaysPerEmp  = totalWorkDays / rows.length;
+  var totalActualHrs = totalActualSec / 3600;
+  var requiredEmps   = totalActualHrs / (targetHrs * avgDaysPerEmp);
+
+  lastResult = { rows: rows, totalActualSec, totalWorkDays, totalExpectedSec, overallAvgSec, overallUtilPct, requiredEmps, targetHrs, targetHrsSec };
+
+  renderResults(lastResult);
+}
+
+/* ════════════════════════════════════════════════════════════════════
+   RENDER RESULTS
+════════════════════════════════════════════════════════════════════ */
+function renderResults(d) {
+  /* ── Summary cards ── */
+  document.getElementById('rTotalActual').textContent  = fmtTime(d.totalActualSec);
+  document.getElementById('rTotalDays').textContent    = fmtDays(d.totalWorkDays);
+  document.getElementById('rOverallAvg').textContent   = fmtTime(d.overallAvgSec);
+  document.getElementById('rRequired').textContent     = fmtNum(d.requiredEmps, 1);
+  document.getElementById('rUtilization').textContent  = fmtNum(d.overallUtilPct, 1) + '%';
+  document.getElementById('rTargetDisp').textContent   = d.targetHrs;
+  document.getElementById('rTargetDisp2').textContent  = d.targetHrs;
+
+  /* ── Performance insights ── */
+  renderInsights(d);
+
+  /* ── Main table ── */
+  var rows   = d.rows.slice().sort(function(a,b){ return b.avgDaySec - a.avgDaySec; });
+  var tbody  = document.getElementById('resultTbody');
+  var frag   = document.createDocumentFragment();
+
+  document.getElementById('resultRowCount').textContent = rows.length + ' employee' + (rows.length!==1?'s':'');
+
+  rows.forEach(function(row, i) {
+    /* Performance tier */
+    var tier = perfTier(row.avgDaySec, d.targetHrsSec, d.overallAvgSec);
+
+    /* Utilization bar */
+    var barPct  = Math.min(row.utilPct, 150);   // cap bar at 150% for display
+    var barClr  = row.utilPct >= 100 ? '#22c55e' : row.utilPct >= 80 ? '#f59e0b' : '#ef4444';
+    var barW    = Math.min((barPct / 150) * 100, 100).toFixed(1);
+
+    var tr = document.createElement('tr');
+    tr.innerHTML =
+      '<td class="left" style="color:var(--text3);font-size:12px;">' + (i+1) + '</td>' +
+      '<td class="left" style="font-weight:600;">' + esc(row.name) + '</td>' +
+      '<td style="font-family:var(--font-mono);font-size:12.5px;">' + fmtTime(row.actualSec) + '</td>' +
+      '<td style="font-family:var(--font-mono);font-size:12.5px;">' + fmtTime(row.expectedSec) + '</td>' +
+      '<td>' + fmtDays(row.workDays) + '</td>' +
+      '<td style="font-family:var(--font-mono);font-size:12.5px;font-weight:700;">' + fmtTime(row.avgDaySec) + '</td>' +
+      '<td>' +
+        '<div class="util-bar-wrap">' +
+          '<div class="util-bar-bg"><div class="util-bar-fill" style="width:' + barW + '%;background:' + barClr + ';"></div></div>' +
+          '<span class="util-pct" style="color:' + barClr + ';">' + fmtNum(row.utilPct,1) + '%</span>' +
+        '</div>' +
+      '</td>' +
+      '<td><span class="perf-chip ' + tier.cls + '">' + tier.label + '</span></td>';
+    frag.appendChild(tr);
+  });
+
+  /* Total row */
+  var totalTr = document.createElement('tr');
+  totalTr.className = 'total-row';
+  totalTr.innerHTML =
+    '<td class="left">—</td>' +
+    '<td class="left">Σ Team Total / Avg</td>' +
+    '<td style="font-family:var(--font-mono);">' + fmtTime(d.totalActualSec) + '</td>' +
+    '<td style="font-family:var(--font-mono);">' + fmtTime(d.totalExpectedSec) + '</td>' +
+    '<td>' + fmtDays(d.totalWorkDays) + '</td>' +
+    '<td style="font-family:var(--font-mono);">' + fmtTime(d.overallAvgSec) + '</td>' +
+    '<td>' +
+      '<div class="util-bar-wrap">' +
+        '<div class="util-bar-bg"><div class="util-bar-fill" style="width:' + Math.min((Math.min(d.overallUtilPct,150)/150)*100,100).toFixed(1) + '%;background:var(--accent);"></div></div>' +
+        '<span class="util-pct" style="color:var(--accent);">' + fmtNum(d.overallUtilPct,1) + '%</span>' +
+      '</div>' +
+    '</td>' +
+    '<td>—</td>';
+  frag.appendChild(totalTr);
+
+  tbody.innerHTML = '';
+  tbody.appendChild(frag);
+
+  /* Show section */
+  var section = document.getElementById('resultSection');
+  section.classList.add('visible');
+  document.getElementById('exportBtn').style.display = '';
+  section.scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
+
+/* ── Performance tier classification ── */
+function perfTier(avgDaySec, targetSec, overallAvgSec) {
+  var ratio = avgDaySec / targetSec;
+  if (ratio >= 1.0)  return { cls:'chip-top',  label:'Top Performer'   };
+  if (ratio >= 0.85) return { cls:'chip-good', label:'Good'            };
+  if (ratio >= 0.70) return { cls:'chip-avg',  label:'Average'         };
+  return                    { cls:'chip-low',  label:'Needs Attention' };
+}
+
+/* ── Performance Insights panel ── */
+function renderInsights(d) {
+  var sorted = d.rows.slice().sort(function(a,b){ return b.avgDaySec - a.avgDaySec; });
+  var n      = sorted.length;
+  var topN   = Math.min(3, n);
+  var lowN   = Math.min(3, n);
+
+  var topRows = sorted.slice(0, topN);
+  var lowRows = sorted.slice(Math.max(0, n - lowN)).reverse();
+
+  function empRowHTML(r, showBar) {
+    var barClr = r.utilPct>=100?'#22c55e':r.utilPct>=80?'#f59e0b':'#ef4444';
+    return '<div class="insight-emp">' +
+      '<span class="insight-emp-name">' + esc(r.name) + '</span>' +
+      '<span class="insight-emp-val" style="color:' + barClr + ';">' + fmtTime(r.avgDaySec) + '</span>' +
+    '</div>';
+  }
+
+  var html =
+    /* Top performers */
+    '<div class="insight-card">' +
+    '<div class="insight-title" style="color:#22c55e;">' +
+      '<svg width="13" height="13" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z"/></svg>' +
+      'Top Performers — Avg/Day' +
+    '</div>' +
+    topRows.map(empRowHTML).join('') +
+    '</div>' +
+
+    /* Low performers */
+    '<div class="insight-card">' +
+    '<div class="insight-title" style="color:#ef4444;">' +
+      '<svg width="13" height="13" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M13 17h8m0 0V9m0 8l-8-8-4 4-6-6"/></svg>' +
+      'Needs Attention — Avg/Day' +
+    '</div>' +
+    lowRows.map(empRowHTML).join('') +
+    '</div>' +
+
+    /* Utilization summary */
+    '<div class="insight-card">' +
+    '<div class="insight-title" style="color:#06b6d4;">' +
+      '<svg width="13" height="13" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"/></svg>' +
+      'Team Utilization' +
+    '</div>' +
+    '<div class="insight-emp">' +
+      '<span class="insight-emp-name">Team Average</span>' +
+      '<span class="insight-emp-val" style="color:var(--accent);">' + fmtNum(d.overallUtilPct,1) + '%</span>' +
+    '</div>' +
+    '<div class="insight-emp">' +
+      '<span class="insight-emp-name">Required Employees</span>' +
+      '<span class="insight-emp-val" style="color:#a855f7;">' + fmtNum(d.requiredEmps,1) + '</span>' +
+    '</div>' +
+    '<div class="insight-emp">' +
+      '<span class="insight-emp-name">Target Hrs/Day</span>' +
+      '<span class="insight-emp-val">' + d.targetHrs + ' hrs</span>' +
+    '</div>' +
+    '</div>';
+
+  document.getElementById('insightsGrid').innerHTML = html;
+}
+
+function hideResults() {
+  document.getElementById('resultSection').classList.remove('visible');
+  document.getElementById('exportBtn').style.display = 'none';
+}
+
+/* ════════════════════════════════════════════════════════════════════
+   EXPORT CSV
+════════════════════════════════════════════════════════════════════ */
+function exportCSV() {
+  if (!lastResult) { alert('Calculate first.'); return; }
+  var d      = lastResult;
+  var esc_   = function(v){ return '"' + String(v).replace(/"/g,'""') + '"'; };
+  var rows   = d.rows.slice().sort(function(a,b){ return b.avgDaySec - a.avgDaySec; });
+  var headers= ['No.','Employee','Actual','Expected','Work Days','Avg/Day','Utilization %','Performance'];
+  var lines  = [headers.map(esc_).join(',')];
+
+  rows.forEach(function(r, i) {
+    var tier = perfTier(r.avgDaySec, d.targetHrsSec, d.overallAvgSec);
+    lines.push([
+      esc_(i+1), esc_(r.name),
+      esc_(fmtTime(r.actualSec)), esc_(fmtTime(r.expectedSec)),
+      esc_(fmtDays(r.workDays)), esc_(fmtTime(r.avgDaySec)),
+      esc_(fmtNum(r.utilPct,1)+'%'), esc_(tier.label)
+    ].join(','));
+  });
+
+  /* Summary footer */
+  lines.push('');
+  lines.push([esc_('TEAM SUMMARY'),'','','','','','',''].join(','));
+  lines.push([esc_('Total Actual Hours'), esc_(fmtTime(d.totalActualSec)),'','','','','',''].join(','));
+  lines.push([esc_('Total Work Days'),    esc_(fmtDays(d.totalWorkDays)), '','','','','',''].join(','));
+  lines.push([esc_('Overall Avg/Day'),    esc_(fmtTime(d.overallAvgSec)), '','','','','',''].join(','));
+  lines.push([esc_('Required Employees'), esc_(fmtNum(d.requiredEmps,1)), '','','','','',''].join(','));
+  lines.push([esc_('Team Utilization %'), esc_(fmtNum(d.overallUtilPct,1)+'%'),'','','','','',''].join(','));
+  lines.push([esc_('Target Hrs/Day'),     esc_(d.targetHrs+' hrs'),       '','','','','',''].join(','));
+
+  var blob = new Blob([lines.join('\n')], {type:'text/csv;charset=utf-8;'});
+  var url  = URL.createObjectURL(blob);
+  var a    = document.createElement('a');
+  a.href   = url;
+  a.download = 'productivity-summary-' + new Date().toISOString().slice(0,10) + '.csv';
+  a.click();
+  URL.revokeObjectURL(url);
+}
+
+/* ════════════════════════════════════════════════════════════════════
+   UTILS
+════════════════════════════════════════════════════════════════════ */
+function esc(str) {
+  return String(str).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+/* Re-calculate automatically when target hours changes */
+document.getElementById('targetHrs').addEventListener('change', function() {
+  if (lastResult) calculate();
+});
+
+/* ════════════════════════════════════════════════════════════════════
+   INIT
+════════════════════════════════════════════════════════════════════ */
+window.addEventListener('load', function() {
+  // Start with 8 blank rows
+  for (var i = 0; i < 8; i++) addRow();
+});
+</script>
+</body>
+</html>
