@@ -1004,6 +1004,145 @@
         radial-gradient(ellipse at 20% 0%, rgba(99,102,241,0.07), transparent 50%),
         radial-gradient(ellipse at 80% 100%, rgba(251,146,60,0.05), transparent 50%);
     }
+
+  /* ═══════════════════════════════════════════════════
+     SETTINGS MODAL
+  ═══════════════════════════════════════════════════ */
+  .settings-overlay {
+    display: none;
+    position: fixed; inset: 0; z-index: 500;
+    background: rgba(0,0,0,.55);
+    backdrop-filter: blur(4px);
+    -webkit-backdrop-filter: blur(4px);
+    align-items: center; justify-content: center;
+    animation: settingsFadeIn .18s ease;
+  }
+  .settings-overlay.open { display: flex; }
+  @keyframes settingsFadeIn { from{opacity:0} to{opacity:1} }
+
+  .settings-modal {
+    background: var(--surface);
+    border: 1px solid var(--border2);
+    border-radius: var(--radius-lg);
+    box-shadow: 0 8px 40px rgba(0,0,0,.6), 0 2px 8px rgba(0,0,0,.4);
+    width: 480px; max-width: calc(100vw - 32px);
+    max-height: calc(100vh - 40px);
+    display: flex; flex-direction: column;
+    animation: settingsSlideUp .2s ease;
+  }
+  @keyframes settingsSlideUp { from{transform:translateY(16px);opacity:0} to{transform:translateY(0);opacity:1} }
+
+  .settings-modal-header {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 16px 20px; border-bottom: 1px solid var(--border);
+    flex-shrink: 0;
+  }
+  .settings-modal-title {
+    font-size: 15px; font-weight: 700; color: var(--text);
+    display: flex; align-items: center; gap: 8px;
+  }
+  .settings-close-btn {
+    width: 30px; height: 30px; border-radius: 8px;
+    border: 1px solid var(--border); background: transparent;
+    color: var(--text3); cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+    transition: all var(--transition);
+  }
+  .settings-close-btn:hover { background: var(--surface2); color: var(--text); }
+
+  .settings-modal-body {
+    padding: 18px 20px; overflow-y: auto; flex: 1;
+    display: flex; flex-direction: column; gap: 22px;
+  }
+  .settings-section { display: flex; flex-direction: column; gap: 10px; }
+  .settings-section-label {
+    font-size: 12px; font-weight: 700; color: var(--text);
+    text-transform: uppercase; letter-spacing: .05em;
+    display: flex; align-items: center; gap: 6px;
+  }
+  .settings-section-sub { font-size: 12px; color: var(--text3); margin-top: -4px; }
+
+  /* Time input row */
+  .settings-time-row {
+    display: flex; align-items: center; gap: 10px; flex-wrap: wrap;
+  }
+  .settings-time-field {
+    display: flex; flex-direction: column; gap: 4px;
+  }
+  .settings-time-field label {
+    font-size: 10px; font-weight: 700; color: var(--text3);
+    text-transform: uppercase; letter-spacing: .06em;
+  }
+  .settings-time-field input {
+    width: 72px; height: 38px;
+    border: 1px solid var(--border); border-radius: var(--radius-sm);
+    background: var(--surface2); color: var(--text);
+    font-family: var(--font-mono); font-size: 16px; font-weight: 700;
+    text-align: center; outline: none;
+    transition: border-color var(--transition), box-shadow var(--transition);
+  }
+  .settings-time-field input:focus {
+    border-color: var(--accent);
+    box-shadow: 0 0 0 3px var(--accent-glow);
+  }
+  .settings-time-sep {
+    font-size: 22px; font-weight: 700; color: var(--text3);
+    margin-top: 18px;
+  }
+  .settings-time-preview {
+    font-size: 12px; font-weight: 600; color: var(--accent);
+    background: rgba(59,130,246,.1); border: 1px solid rgba(59,130,246,.2);
+    border-radius: var(--radius-sm); padding: 6px 12px;
+    font-family: var(--font-mono); margin-top: 18px; white-space: nowrap;
+  }
+
+  /* Employee list */
+  .settings-emp-toolbar {
+    display: flex; align-items: center; gap: 8px; flex-wrap: wrap;
+  }
+  .settings-chip-btn {
+    height: 28px; padding: 0 10px; border-radius: 7px;
+    border: 1px solid var(--border); background: var(--surface2);
+    color: var(--text2); font-size: 11.5px; font-weight: 600;
+    cursor: pointer; transition: all var(--transition); font-family: var(--font);
+  }
+  .settings-chip-btn:hover { background: var(--surface3); color: var(--text); border-color: var(--border2); }
+  .settings-emp-count { font-size: 11.5px; color: var(--text3); margin-left: auto; font-weight: 600; }
+
+  .settings-emp-list {
+    display: flex; flex-direction: column; gap: 4px;
+    max-height: 220px; overflow-y: auto;
+    background: var(--surface2); border: 1px solid var(--border);
+    border-radius: var(--radius-sm); padding: 8px;
+  }
+  .settings-emp-empty { font-size: 12px; color: var(--text3); text-align: center; padding: 16px; font-style: italic; }
+  .settings-emp-row {
+    display: flex; align-items: center; gap: 10px;
+    padding: 7px 10px; border-radius: 8px;
+    cursor: pointer; transition: background var(--transition);
+    user-select: none;
+  }
+  .settings-emp-row:hover { background: var(--surface3); }
+  .settings-emp-row input[type="checkbox"] {
+    width: 15px; height: 15px; cursor: pointer; accent-color: var(--accent);
+    flex-shrink: 0;
+  }
+  .settings-emp-row label {
+    font-size: 13px; font-weight: 500; color: var(--text);
+    cursor: pointer; flex: 1;
+  }
+
+  .settings-modal-footer {
+    display: flex; align-items: center; justify-content: flex-end; gap: 10px;
+    padding: 14px 20px; border-top: 1px solid var(--border);
+    flex-shrink: 0;
+  }
+
+  /* Settings changed indicator on button */
+  #settingsBtn.has-custom {
+    border-color: var(--accent); color: var(--accent);
+    box-shadow: 0 0 0 2px var(--accent-glow);
+  }
   </style>
 </head>
 <body>
@@ -1091,8 +1230,78 @@
         <button class="theme-toggle" id="themeToggle" onclick="toggleTheme()" title="Toggle theme">
           <svg id="themeIcon" width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"/></svg>
         </button>
+        <button class="theme-toggle" id="settingsBtn" onclick="openSettings()" title="Dashboard Settings">
+          <svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/><circle cx="12" cy="12" r="3"/></svg>
+        </button>
       </div>
     </header>
+
+    <!-- ══ SETTINGS MODAL ══════════════════════════════════════════ -->
+    <div id="settingsOverlay" class="settings-overlay" onclick="closeSettingsIfBg(event)">
+      <div class="settings-modal" id="settingsModal">
+
+        <div class="settings-modal-header">
+          <div class="settings-modal-title">
+            <svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/><circle cx="12" cy="12" r="3"/></svg>
+            Dashboard Settings
+          </div>
+          <button class="settings-close-btn" onclick="closeSettings()">
+            <svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/></svg>
+          </button>
+        </div>
+
+        <div class="settings-modal-body">
+
+          <!-- Per Working Day Time -->
+          <div class="settings-section">
+            <div class="settings-section-label">
+              <svg width="13" height="13" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path stroke-linecap="round" stroke-linejoin="round" d="M12 6v6l4 2"/></svg>
+              Per Working Day Time
+            </div>
+            <div class="settings-section-sub">Target productive hours per employee per day</div>
+            <div class="settings-time-row">
+              <div class="settings-time-field">
+                <label>Hours</label>
+                <input type="number" id="settingHours" min="0" max="12" step="1" value="6">
+              </div>
+              <span class="settings-time-sep">:</span>
+              <div class="settings-time-field">
+                <label>Minutes</label>
+                <input type="number" id="settingMins" min="0" max="59" step="5" value="30">
+              </div>
+              <span class="settings-time-preview" id="settingTimePreview">= 6:30:00 / day</span>
+            </div>
+          </div>
+
+          <!-- Employee Filter -->
+          <div class="settings-section">
+            <div class="settings-section-label">
+              <svg width="13" height="13" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
+              Employee Filter
+            </div>
+            <div class="settings-section-sub">Select which employees to show in the Average Time table. Uncheck to hide.</div>
+            <div class="settings-emp-toolbar">
+              <button class="settings-chip-btn" onclick="selectAllEmps()">Select All</button>
+              <button class="settings-chip-btn" onclick="deselectAllEmps()">Deselect All</button>
+              <span id="settingsEmpCount" class="settings-emp-count">0 selected</span>
+            </div>
+            <div class="settings-emp-list" id="settingsEmpList">
+              <div class="settings-emp-empty">Load data first to see employee list.</div>
+            </div>
+          </div>
+
+        </div>
+
+        <div class="settings-modal-footer">
+          <button class="btn btn-ghost" onclick="closeSettings()" style="height:36px;padding:0 14px;font-size:13px;">Cancel</button>
+          <button class="btn btn-primary" onclick="saveSettings()" style="height:36px;padding:0 14px;font-size:13px;">
+            <svg width="13" height="13" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>
+            Save &amp; Apply
+          </button>
+        </div>
+
+      </div>
+    </div>
 
     <!-- Page Body -->
     <div class="page-body">
@@ -1398,8 +1607,38 @@ updateClock();
 /* ═══════════════════════════════════════════════════
    CONFIG
 ═══════════════════════════════════════════════════ */
-const sheetURL  = "https://docs.google.com/spreadsheets/d/1-VxbQ_IaRMKtDH--2JDeqvGFrb_Or3D0kG-mGLu7dG8/export?format=csv&gid=1747930222";
-const masterURL = "https://docs.google.com/spreadsheets/d/1-VxbQ_IaRMKtDH--2JDeqvGFrb_Or3D0kG-mGLu7dG8/export?format=csv&gid=1007217209";
+const sheetURL        = "https://docs.google.com/spreadsheets/d/1-VxbQ_IaRMKtDH--2JDeqvGFrb_Or3D0kG-mGLu7dG8/export?format=csv&gid=1747930222";
+const masterURL       = "https://docs.google.com/spreadsheets/d/1-VxbQ_IaRMKtDH--2JDeqvGFrb_Or3D0kG-mGLu7dG8/export?format=csv&gid=1007217209";
+// Attendance roster — same as KPI Report (Attendance 2026 tab)
+const attendanceURL   = "https://docs.google.com/spreadsheets/d/1b08Kfoh48N8pWIxWHp2gmjV9Wj_VNRXdlvTWlAN7wB4/export?format=csv&gid=421022727";
+
+/* ─── SETTINGS — localStorage keys ─── */
+const SETTINGS_KEY = "pp-dashboard-settings-v1";
+const SETTINGS_DEFAULTS = {
+  perDayHours:   6,       // hours component of per-day target
+  perDayMins:    30,      // minutes component
+  hiddenEmps:    [],      // array of normName strings to hide in Average Time table
+};
+
+/* Load settings once at startup, used throughout */
+function loadSettings() {
+  try {
+    const raw = localStorage.getItem(SETTINGS_KEY);
+    if (!raw) return { ...SETTINGS_DEFAULTS };
+    return { ...SETTINGS_DEFAULTS, ...JSON.parse(raw) };
+  } catch(e) { return { ...SETTINGS_DEFAULTS }; }
+}
+function saveSettingsToStorage(s) {
+  try { localStorage.setItem(SETTINGS_KEY, JSON.stringify(s)); } catch(e) {}
+}
+
+/* Current active settings (mutable) */
+let settings = loadSettings();
+
+/* Per-day target in seconds — computed from settings */
+function getPerDaySec() {
+  return (settings.perDayHours * 3600) + (settings.perDayMins * 60);
+}
 
 const fromInput  = document.getElementById("fromDate");
 const toInput    = document.getElementById("toDate");
@@ -1407,11 +1646,13 @@ const errorBanner = document.getElementById("errorBanner");
 const refreshBtn  = document.getElementById("refreshButton");
 const statusText  = document.getElementById("statusText");
 
-let lastDataHash = "";
-let hoursData    = {};
+let lastDataHash      = "";
+let hoursData         = {};
 let masterDataPromise = null;
-let timer  = null;
-let isLoading = false;
+let attendanceCache   = null;    // Map: "YYYY-MM-DD" → Set<normName>
+let knownEmployees    = [];      // updated each load — used by settings
+let timer             = null;
+let isLoading         = false;
 
 /* ═══════════════════════════════════════════════════
    UI HELPERS
@@ -1639,34 +1880,303 @@ function renderEmployeeCategoryTable(ec) {
 }
 
 /* ═══════════════════════════════════════════════════
+   ATTENDANCE ROSTER FETCH  (same logic as KPI report)
+   Sheet: Attendance 2026 — gid=421022727
+   Structure: Row 0 = header, Row 1+ = MM/DD/YYYY | Name1 | Name2...
+   NOTE: this sheet's date column is MM/DD/YYYY, NOT the same DD/MM/YYYY
+   format used by the main task sheet's "Assign Date" column. The two
+   sheets were typed/formatted independently in Google Sheets — verified
+   against the live Attendance 2026 tab on 2026-06-17.
+═══════════════════════════════════════════════════ */
+async function loadAttendanceRoster() {
+  // Only serve cache if it was a successful fetch
+  if (attendanceCache) return { map: attendanceCache, ok: true };
+
+  try {
+    console.log("[Attendance] Fetching:", attendanceURL);
+    const res = await fetch(attendanceURL, { cache: "no-cache" });
+    if (!res.ok) throw new Error(`HTTP ${res.status} — ensure sheet is shared as "Anyone with link can view"`);
+    const csv  = await res.text();
+    const rows = parseCSV(csv);
+
+    console.log(`[Attendance] CSV rows parsed: ${rows.length}`);
+    if (rows.length < 2) throw new Error("Sheet has no data rows. Check GID is correct.");
+
+    // Debug: show first 3 rows to verify structure
+    console.log("[Attendance] Row 0 (header):", rows[0]);
+    console.log("[Attendance] Row 1 (first data):", rows[1]);
+
+    const map = {};
+    let datesParsed = 0;
+
+    for (let i = 1; i < rows.length; i++) {
+      const row = rows[i];
+      // Col 0 = Date (MM/DD/YYYY — this sheet's own date format, confirmed against
+      // the live "Attendance 2026" tab: 06/01/2026 → 06/17/2026 reads as Jun 1 → Jun 17,
+      // which is month-first. This is DIFFERENT from the main task sheet's DD/MM/YYYY —
+      // do not "fix" this to match that one.), Col 1 = pipe-separated employee names
+      const dateCell = (row[0] || "").trim();
+      const nameCell = (row[1] || "").trim();
+      if (!dateCell || !nameCell) continue;
+
+      // Parse date: MM/DD/YYYY
+      const parts = dateCell.split("/");
+      if (parts.length !== 3) continue;
+      const [mm, dd, yyyy] = parts.map(p => p.trim());
+      if (!yyyy || !mm || !dd) continue;
+
+      const mmNum = parseInt(mm), ddNum = parseInt(dd);
+      if (mmNum < 1 || mmNum > 12 || ddNum < 1 || ddNum > 31) continue; // guard against stray/garbled cells
+
+      const dateObj = new Date(parseInt(yyyy), mmNum - 1, ddNum);
+      if (isNaN(dateObj.getTime())) continue;
+
+      const dateStr = `${yyyy}-${mm.padStart(2,"0")}-${dd.padStart(2,"0")}`;
+
+      // Build Set<normName> for this date
+      if (!map[dateStr]) map[dateStr] = new Set();
+      nameCell.split("|").forEach(raw => {
+        const n = normalizeName(raw);
+        if (n) map[dateStr].add(n);
+      });
+      datesParsed++;
+    }
+
+    console.log(`[Attendance] Dates parsed: ${datesParsed}, Date keys: ${Object.keys(map).length}`);
+    if (Object.keys(map).length) {
+      // Show sample: first date and its employees
+      const sampleDate = Object.keys(map).sort()[0];
+      console.log(`[Attendance] Sample — ${sampleDate}:`, [...map[sampleDate]]);
+    }
+
+    // Only cache on success
+    attendanceCache = map;
+    return { map, ok: true };
+
+  } catch(e) {
+    console.error("[Attendance] Fetch failed:", e.message);
+    // Do NOT cache failures — allow retry on next Refresh
+    return { map: {}, ok: false, error: e.message };
+  }
+}
+
+/* Single source of truth: returns the list of matched YYYY-MM-DD date strings
+   for one employee within [from, to]. countRosterDays() below is just .length
+   of this — keeping ONE implementation so Work Days can never drift out of
+   sync with what's actually in the Attendance Roster. */
+function getMatchedRosterDates(attMap, empNormName, from, to) {
+  const matched = [];
+  const cur = new Date(from.getFullYear(), from.getMonth(), from.getDate());
+  const end = new Date(to.getFullYear(),   to.getMonth(),   to.getDate());
+
+  while (cur <= end) {
+    const yyyy = cur.getFullYear();
+    const mm   = String(cur.getMonth() + 1).padStart(2, "0");
+    const dd   = String(cur.getDate()).padStart(2, "0");
+    const ds   = `${yyyy}-${mm}-${dd}`;
+    if (attMap[ds] && attMap[ds].has(empNormName)) matched.push(ds);
+    cur.setDate(cur.getDate() + 1);
+  }
+  return matched;
+}
+
+/* Count exact working days for one employee within [from, to] date range.
+   Iterates day-by-day; checks Set membership (exact normName match — no partials). */
+function countRosterDays(attMap, empNormName, from, to) {
+  return getMatchedRosterDates(attMap, empNormName, from, to).length;
+}
+
+/* ═══════════════════════════════════════════════════
+   SETTINGS MODAL LOGIC
+═══════════════════════════════════════════════════ */
+function openSettings() {
+  // Populate time fields from current settings
+  document.getElementById("settingHours").value = settings.perDayHours;
+  document.getElementById("settingMins").value  = String(settings.perDayMins).padStart(2,"0");
+  updateTimePreview();
+
+  // Populate employee list from known employees
+  buildEmpList();
+
+  document.getElementById("settingsOverlay").classList.add("open");
+  document.body.style.overflow = "hidden";
+}
+
+function closeSettings() {
+  document.getElementById("settingsOverlay").classList.remove("open");
+  document.body.style.overflow = "";
+}
+
+function closeSettingsIfBg(e) {
+  if (e.target === document.getElementById("settingsOverlay")) closeSettings();
+}
+
+function updateTimePreview() {
+  const h  = parseInt(document.getElementById("settingHours").value) || 0;
+  const m  = parseInt(document.getElementById("settingMins").value)  || 0;
+  const s  = h*3600 + m*60;
+  document.getElementById("settingTimePreview").textContent =
+    `= ${h}:${String(m).padStart(2,"0")}:00 / day`;
+}
+document.getElementById("settingHours")?.addEventListener("input", updateTimePreview);
+document.getElementById("settingMins")?.addEventListener("input", updateTimePreview);
+
+function buildEmpList() {
+  const list  = document.getElementById("settingsEmpList");
+  const count = document.getElementById("settingsEmpCount");
+  const names = knownEmployees.slice().sort();
+
+  if (!names.length) {
+    list.innerHTML = '<div class="settings-emp-empty">No employee data loaded yet. Refresh dashboard first.</div>';
+    if (count) count.textContent = "0 selected";
+    return;
+  }
+
+  list.innerHTML = "";
+  names.forEach(name => {
+    const nn       = normalizeName(name);
+    const hidden   = settings.hiddenEmps.includes(nn);
+    const checked  = !hidden;
+    const row      = document.createElement("div");
+    row.className  = "settings-emp-row";
+    const id       = "semp_" + nn.replace(/\s/g, "_");
+    row.innerHTML  = `
+      <input type="checkbox" id="${id}" ${checked ? "checked" : ""} data-nn="${nn}">
+      <label for="${id}">${name}</label>`;
+    row.addEventListener("click", e => {
+      if (e.target.tagName !== "INPUT") {
+        const cb = row.querySelector("input");
+        cb.checked = !cb.checked;
+      }
+      updateEmpCount();
+    });
+    list.appendChild(row);
+  });
+  updateEmpCount();
+}
+
+function updateEmpCount() {
+  const total   = document.querySelectorAll("#settingsEmpList input[type=checkbox]").length;
+  const checked = document.querySelectorAll("#settingsEmpList input[type=checkbox]:checked").length;
+  const el      = document.getElementById("settingsEmpCount");
+  if (el) el.textContent = `${checked} / ${total} selected`;
+}
+
+function selectAllEmps() {
+  document.querySelectorAll("#settingsEmpList input[type=checkbox]").forEach(cb => cb.checked = true);
+  updateEmpCount();
+}
+function deselectAllEmps() {
+  document.querySelectorAll("#settingsEmpList input[type=checkbox]").forEach(cb => cb.checked = false);
+  updateEmpCount();
+}
+
+function saveSettings() {
+  const h = Math.max(0, Math.min(12, parseInt(document.getElementById("settingHours").value) || 0));
+  const m = Math.max(0, Math.min(59, parseInt(document.getElementById("settingMins").value)  || 0));
+
+  // Collect hidden employees (unchecked)
+  const hidden = [];
+  document.querySelectorAll("#settingsEmpList input[type=checkbox]").forEach(cb => {
+    if (!cb.checked) hidden.push(cb.getAttribute("data-nn"));
+  });
+
+  const changed = (h !== settings.perDayHours || m !== settings.perDayMins ||
+                   JSON.stringify(hidden) !== JSON.stringify(settings.hiddenEmps));
+
+  settings.perDayHours = h;
+  settings.perDayMins  = m;
+  settings.hiddenEmps  = hidden;
+  saveSettingsToStorage(settings);
+
+  // Mark settings button if non-default values are set
+  const btn = document.getElementById("settingsBtn");
+  const isDefault = h === SETTINGS_DEFAULTS.perDayHours &&
+                    m === SETTINGS_DEFAULTS.perDayMins &&
+                    hidden.length === 0;
+  btn?.classList.toggle("has-custom", !isDefault);
+
+  closeSettings();
+
+  // Re-render Average Time table immediately if data is loaded
+  if (changed && Object.keys(hoursData).length) {
+    renderHoursTable(_lastAttResult, _lastFrom, _lastTo);
+  }
+}
+
+// Store last attendance result for re-render on settings change
+let _lastAttResult = { map: {}, ok: false };
+let _lastFrom = null, _lastTo = null;
+
+/* ═══════════════════════════════════════════════════
    RENDER: HOURS TABLE  (with Working Days column)
 ═══════════════════════════════════════════════════ */
-function renderHoursTable(masterMap) {
-  const people = Object.keys(hoursData).sort();
-  if (!people.length) { emptyRow("hoursTable","No duration data found.", 5); return; }
-  const tbody   = document.getElementById("hoursTable");
+function renderHoursTable(attResult, from, to) {
+  // Persist for settings re-render
+  _lastAttResult = attResult || { map: {}, ok: false };
+  if (from) _lastFrom = from;
+  if (to)   _lastTo   = to;
+
+  const attMap  = _lastAttResult.map || {};
+  const attOk   = _lastAttResult.ok === true && Object.keys(attMap).length > 0;
+  const perDay  = getPerDaySec();   // settings default: 6h30m = 23400s
+
+  // Build employee list from task duration data
+  let people = Object.keys(hoursData).sort();
+  knownEmployees = people.slice();   // expose to Settings modal
+
+  // Apply hidden filter from Settings
+  if (settings.hiddenEmps && settings.hiddenEmps.length) {
+    people = people.filter(n => !settings.hiddenEmps.includes(normalizeName(n)));
+  }
+
+  if (!people.length) { emptyRow("hoursTable", "No duration data found.", 5); return; }
+
+  const tbody    = document.getElementById("hoursTable");
   const fragment = document.createDocumentFragment();
 
+  // Show subtitle on card if roster is unavailable
+  const cardSub = document.querySelector(".hours-card .card-subtitle");
+  if (cardSub) {
+    cardSub.textContent = attOk
+      ? "Actual vs expected effort"
+      : "⚠ Roster unavailable — refresh to retry. Work Days will show 0.";
+    cardSub.style.color = attOk ? "" : "var(--c-pending)";
+  }
+
+  console.log(`[HoursTable] attOk=${attOk}, employees=${people.length}, dateRange=${_lastFrom} → ${_lastTo}`);
+
   people.forEach(name => {
-    const actual  = hoursData[name];
-    const expRaw  = masterMap[normalizeName(name)]?.workingHours || "0";
-    const expSec  = parseExpectedHours(expRaw);          // in seconds
-    const expHrs  = expSec / 3600;                       // convert to hours
-    const workDays = expHrs > 0
-      ? (expHrs / 8 % 1 === 0
-          ? (expHrs / 8).toFixed(0)                      // whole number → no decimal
-          : (expHrs / 8).toFixed(1))                     // fractional → 1 decimal
-      : "—";
-    const days    = expSec / 28800;                      // keep work-days base at 8 hours
-    const avg     = days > 0 ? (actual / days) * (8 / 6.5) : 0;
+    const actual = hoursData[name];   // total seconds from task sheet
+    const nn     = normalizeName(name);
+
+    // ── WORK DAYS: count dates where employee appears in Attendance Roster ──
+    // Logic: iterate every date in [from,to], check Set<normName>.has(nn)
+    let workDays = 0, matchedDates = [];
+    if (attOk && _lastFrom && _lastTo) {
+      matchedDates = getMatchedRosterDates(attMap, nn, _lastFrom, _lastTo);
+      workDays = matchedDates.length;
+    }
+
+    console.log(`  ${name} (${nn}): workDays=${workDays}, actual=${secondsToTime(actual)}, matchedDates=`, matchedDates);
+
+    const wdText = workDays > 0
+      ? (workDays % 1 === 0 ? String(workDays) : workDays.toFixed(1))
+      : (attOk ? "0" : "—");
+
+    // ── EXPECTED = Work Days × Per Working Day Time (from Settings) ──
+    const expectedSec = workDays > 0 ? Math.round(workDays * perDay) : 0;
+
+    // ── AVG/DAY = Actual / Work Days ──
+    const avgSec = workDays > 0 ? Math.round(actual / workDays) : 0;
 
     const tr = document.createElement("tr");
     tr.innerHTML = `
       <td class="name-cell" style="font-size:12.5px;">${name}</td>
       <td style="font-family:var(--font-mono);font-size:11.5px;">${secondsToTime(actual)}</td>
-      <td style="font-size:12.5px;">${formatExpectedHours(expRaw)}</td>
-      <td><span class="wd-chip">${workDays}</span></td>
-      <td style="font-family:var(--font-mono);font-size:11.5px;"><strong>${secondsToTime(avg)}</strong></td>`;
+      <td style="font-family:var(--font-mono);font-size:11.5px;">${expectedSec > 0 ? secondsToTime(expectedSec) : "—"}</td>
+      <td><span class="wd-chip">${wdText}</span></td>
+      <td style="font-family:var(--font-mono);font-size:11.5px;"><strong>${avgSec > 0 ? secondsToTime(avgSec) : "—"}</strong></td>`;
     fragment.appendChild(tr);
   });
 
@@ -1968,15 +2478,19 @@ async function loadData(fromDate, toDate, options={}) {
   isLoading=true; setBtnState(); setStatus("Refreshing…"); clearError();
   showSkeletons();
 
+  // Reset attendance cache on force refresh so failed fetches are retried
+  if (options.force) attendanceCache = null;
+
   try {
     const [fy,fm,fd]=fromDate.split("-"); const from=new Date(fy,fm-1,fd);
     const [ty,tm,td]=toDate.split("-");   const to=new Date(ty,tm-1,td); to.setHours(23,59,59,999);
     const today=new Date(), yearStart=new Date(today.getFullYear(),0,1), yearEnd=new Date(today.getFullYear(),11,31,23,59,59,999);
 
-    // Fetch both sheets in parallel for speed
-    const [sheetRes, masterMap] = await Promise.all([
+    // Fetch all 3 sources in parallel (attendance is non-critical — graceful failure)
+    const [sheetRes, masterMap, attResult] = await Promise.all([
       fetch(sheetURL,{cache:"no-cache"}),
-      loadMasterData()
+      loadMasterData(),
+      loadAttendanceRoster()
     ]);
     if(!sheetRes.ok) throw new Error(`Sheet fetch failed: ${sheetRes.status}`);
     const csv=await sheetRes.text();
@@ -2062,7 +2576,7 @@ async function loadData(fromDate, toDate, options={}) {
 
     // Render critical tables immediately (above fold)
     renderActivityTable(activity, masterMap);
-    renderHoursTable(masterMap);
+    renderHoursTable(attResult, from, to);
 
     // Update metric cards
     document.getElementById("totalTasks").textContent        = total;
@@ -2103,6 +2617,13 @@ window.addEventListener("load", ()=>{
   fromInput.value=formatDate(first);
   toInput.value=formatDate(today);
   setBtnState();
+
+  // Mark settings button if user has saved non-default settings
+  const isDefaultSettings = settings.perDayHours === SETTINGS_DEFAULTS.perDayHours &&
+                            settings.perDayMins  === SETTINGS_DEFAULTS.perDayMins &&
+                            settings.hiddenEmps.length === 0;
+  document.getElementById("settingsBtn")?.classList.toggle("has-custom", !isDefaultSettings);
+
   loadData(fromInput.value, toInput.value, {force:true});
 });
 </script>
