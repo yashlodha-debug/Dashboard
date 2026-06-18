@@ -1279,7 +1279,7 @@
               <svg width="13" height="13" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
               Employee Filter
             </div>
-            <div class="settings-section-sub">Select which employees to show in the Average Time table. Uncheck to hide.</div>
+            <div class="settings-section-sub">Select which employees to include across the entire dashboard. Uncheck to hide globally.</div>
             <div class="settings-emp-toolbar">
               <button class="settings-chip-btn" onclick="selectAllEmps()">Select All</button>
               <button class="settings-chip-btn" onclick="deselectAllEmps()">Deselect All</button>
@@ -1653,6 +1653,13 @@ let attendanceCache   = null;    // Map: "YYYY-MM-DD" → Set<normName>
 let knownEmployees    = [];      // updated each load — used by settings
 let timer             = null;
 let isLoading         = false;
+
+/* ── Raw row store — every parsed row is saved here so filters can re-aggregate from scratch ── */
+/* Each entry: { dname, nname, rel, status, dur, rawDate, fd, task } */
+let _allRows      = [];   // date-range rows (from<=fd<=to)
+let _yearRows     = [];   // full-year rows  (for status/month charts)
+let _rawMasterMap = {};   // masterMap from last load
+let _hoursDataFull = {};  // unfiltered name→totalSeconds (for Settings modal knownEmployees)
 
 /* ═══════════════════════════════════════════════════
    UI HELPERS
@@ -2071,6 +2078,113 @@ function deselectAllEmps() {
   updateEmpCount();
 }
 
+/* ═══════════════════════════════════════════════════
+   AGGREGATE + RENDER
+   Single source of truth: re-aggregates from _allRows
+   every time the employee filter or date range changes.
+   _allRows already contains only rows within the selected
+   date range (set by loadData). Employee filter is applied
+   here at aggregation time so every widget sees the same
+   filtered dataset.
+═══════════════════════════════════════════════════ */
+function applyFiltersAndRender() {
+  const hidden = settings.hiddenEmps || [];
+
+  /* Is this display-name excluded by the employee filter? */
+  function isHidden(dname) {
+    return hidden.length > 0 && hidden.includes(normalizeName(dname));
+  }
+
+  /* ── Accumulators ── */
+  let total=0, inventory=0, poc=0, recipe=0, raw=0, other=0;
+  const activity={}, relatedStatus={}, employeeCategory={}, chartData={}, hoursFiltered={};
+
+  /* ── Single pass over date-range rows ── */
+  _allRows.forEach(r => {
+    if (isHidden(r.dname)) return;   // skip filtered-out employees
+
+    total++;
+
+    /* Metric cards */
+    const t = r.task;
+    if (t==="inventory"||t==="purchase"||t==="client standard") inventory++;
+    else if (t==="poc standard") poc++;
+    if      (r.rel==="Recipe & Material") recipe++;
+    else if (r.rel==="Raw Material")      raw++;
+    else                                  other++;
+
+    /* Hours */
+    hoursFiltered[r.dname] = (hoursFiltered[r.dname]||0) + r.dur;
+
+    /* Employee category */
+    if (!employeeCategory[r.dname]) employeeCategory[r.dname]={raw:0,recipe:0,rework:0,other:0,total:0};
+    if      (r.rel==="Raw Material")      employeeCategory[r.dname].raw++;
+    else if (r.rel==="Recipe & Material") employeeCategory[r.dname].recipe++;
+    else if (r.rel==="Rework")            employeeCategory[r.dname].rework++;
+    else                                  employeeCategory[r.dname].other++;
+    employeeCategory[r.dname].total++;
+
+    /* Related/category status */
+    if (!relatedStatus[r.rel]) relatedStatus[r.rel]=mkAccum();
+    countStatus(relatedStatus[r.rel], r.status);
+
+    /* Day-wise chart */
+    if (!chartData[r.rawDate]) chartData[r.rawDate]={total:0,done:0,working:0,pending:0,hold:0,close:0,next:0};
+    chartData[r.rawDate].total++;
+    const s=r.status;
+    if      (s.includes("done"))    chartData[r.rawDate].done++;
+    else if (s.includes("working")) chartData[r.rawDate].working++;
+    else if (s.includes("pending")) chartData[r.rawDate].pending++;
+    else if (s.includes("hold"))    chartData[r.rawDate].hold++;
+    else if (s.includes("close"))   chartData[r.rawDate].close++;
+    else if (s.includes("next"))    chartData[r.rawDate].next++;
+
+    /* Activity table */
+    if (!activity[r.dname]) activity[r.dname]=mkAccum();
+    countStatus(activity[r.dname], r.status);
+  });
+
+  /* ── Year-level charts: re-aggregate from _yearRows (always full year) ── */
+  const yearStatus={done:0,close:0,hold:0,pending:0};
+  const monthData={};
+  _yearRows.forEach(r => {
+    if (isHidden(r.dname)) return;   // apply same employee filter to year charts
+    const s=r.status;
+    if      (s.includes("done"))    yearStatus.done++;
+    else if (s.includes("close"))   yearStatus.close++;
+    else if (s.includes("hold"))    yearStatus.hold++;
+    else if (s.includes("pending")) yearStatus.pending++;
+    if (!monthData[r.mk]) monthData[r.mk]={raw:0,recipe:0,other:0,rework:0};
+    if      (r.rel==="Raw Material")      monthData[r.mk].raw++;
+    else if (r.rel==="Recipe & Material") monthData[r.mk].recipe++;
+    else if (r.rel==="Rework")            monthData[r.mk].rework++;
+    else                                  monthData[r.mk].other++;
+  });
+
+  /* ── Swap hoursData so renderHoursTable uses filtered data ── */
+  const _savedHoursData = hoursData;
+  hoursData = hoursFiltered;
+
+  /* ── Render everything ── */
+  renderActivityTable(activity, _rawMasterMap);
+  renderHoursTable(_lastAttResult, _lastFrom, _lastTo);
+  hoursData = _savedHoursData;   // restore
+
+  document.getElementById("totalTasks").textContent        = total;
+  document.getElementById("inventoryCount").textContent    = inventory;
+  document.getElementById("pocCount").textContent          = poc;
+  document.getElementById("recipeCount").textContent       = recipe;
+  document.getElementById("rawCount").textContent          = raw;
+  document.getElementById("otherRelatedCount").textContent = other;
+
+  renderEmployeeCategoryTable(employeeCategory);
+  renderRelatedTable(relatedStatus);
+  renderTaskChart(chartData);
+  renderStatusChart(yearStatus);
+  renderMonthChart(monthData);
+}
+
+
 function saveSettings() {
   const h = Math.max(0, Math.min(12, parseInt(document.getElementById("settingHours").value) || 0));
   const m = Math.max(0, Math.min(59, parseInt(document.getElementById("settingMins").value)  || 0));
@@ -2098,9 +2212,9 @@ function saveSettings() {
 
   closeSettings();
 
-  // Re-render Average Time table immediately if data is loaded
-  if (changed && Object.keys(hoursData).length) {
-    renderHoursTable(_lastAttResult, _lastFrom, _lastTo);
+  // Re-render ALL dashboard sections with updated filter + perDay settings
+  if (changed && _allRows.length) {
+    applyFiltersAndRender();
   }
 }
 
@@ -2121,14 +2235,9 @@ function renderHoursTable(attResult, from, to) {
   const attOk   = _lastAttResult.ok === true && Object.keys(attMap).length > 0;
   const perDay  = getPerDaySec();   // settings default: 6h30m = 23400s
 
-  // Build employee list from task duration data
+  // hoursData is pre-filtered by applyFiltersAndRender before this is called.
+  // Never filter here — the caller is responsible for the correct dataset.
   let people = Object.keys(hoursData).sort();
-  knownEmployees = people.slice();   // expose to Settings modal
-
-  // Apply hidden filter from Settings
-  if (settings.hiddenEmps && settings.hiddenEmps.length) {
-    people = people.filter(n => !settings.hiddenEmps.includes(normalizeName(n)));
-  }
 
   if (!people.length) { emptyRow("hoursTable", "No duration data found.", 5); return; }
 
@@ -2495,7 +2604,7 @@ async function loadData(fromDate, toDate, options={}) {
     if(!sheetRes.ok) throw new Error(`Sheet fetch failed: ${sheetRes.status}`);
     const csv=await sheetRes.text();
     if (!options.force && csv===lastDataHash) { setStatus(`Up to date · ${new Date().toLocaleTimeString()}`); isLoading=false; setBtnState(); return; }
-    lastDataHash=csv; hoursData={};
+    lastDataHash=csv; hoursData={}; _allRows=[]; _yearRows=[];
 
     const rows=parseCSV(csv);
     const headers=(rows[0]||[]).map(h=>h.trim());
@@ -2510,11 +2619,7 @@ async function loadData(fromDate, toDate, options={}) {
     if ([idx.date,idx.task,idx.related,idx.assigned,idx.status].some(i=>i===-1))
       throw new Error("Missing required sheet columns.");
 
-    let total=0,inventory=0,poc=0,recipe=0,raw=0,other=0;
-    const activity={}, relatedStatus={}, employeeCategory={}, chartData={}, monthData={};
-    const yearStatus={done:0,close:0,hold:0,pending:0};
-
-    // Single-pass data processing
+    // Single-pass: collect ALL rows into _allRows (date-filtered) and _yearRows (year-filtered)
     const dataLen=rows.length;
     for(let i=1;i<dataLen;i++){
       const row=rows[i];
@@ -2523,83 +2628,39 @@ async function loadData(fromDate, toDate, options={}) {
       const fd=new Date(parts[2],parts[1]-1,parts[0]); if(isNaN(fd.getTime())) continue;
       const rel=normalizeRelated(row[idx.related]);
       const status=(row[idx.status]||"").toLowerCase().trim().replace(/\s+/g," ");
-
-      if (fd>=yearStart&&fd<=yearEnd) {
-        if(status.includes("done"))    yearStatus.done++;
-        else if(status.includes("close"))  yearStatus.close++;
-        else if(status.includes("hold"))   yearStatus.hold++;
-        else if(status.includes("pending"))yearStatus.pending++;
-        const mk=`${parts[2]}-${parts[1]}`;
-        if(!monthData[mk]) monthData[mk]={raw:0,recipe:0,other:0,rework:0};
-        if(rel==="Raw Material") monthData[mk].raw++;
-        else if(rel==="Recipe & Material") monthData[mk].recipe++;
-        else if(rel==="Rework") monthData[mk].rework++;
-        else monthData[mk].other++;
-      }
-
-      if(fd<from||fd>to) continue;
-      total++;
-      const task=(row[idx.task]||"").toLowerCase().trim();
-      if(task==="inventory"||task==="purchase"||task==="client standard") inventory++;
-      else if(task==="poc standard") poc++;
-      if(rel==="Recipe & Material") recipe++;
-      else if(rel==="Raw Material") raw++;
-      else other++;
-
       const nname=normalizeName(row[idx.assigned]); if(!nname) continue;
       const dname=toDisplayName(nname);
-      const dur=idx.dur>=0?row[idx.dur]:"0:00:00";
-      hoursData[dname]=(hoursData[dname]||0)+timeToSeconds(dur||"0:00:00");
+      const durSec=idx.dur>=0 ? timeToSeconds(row[idx.dur]||"0:00:00") : 0;
+      const task=(row[idx.task]||"").toLowerCase().trim();
 
-      if(!employeeCategory[dname]) employeeCategory[dname]={raw:0,recipe:0,rework:0,other:0,total:0};
-      if(rel==="Raw Material") employeeCategory[dname].raw++;
-      else if(rel==="Recipe & Material") employeeCategory[dname].recipe++;
-      else if(rel==="Rework") employeeCategory[dname].rework++;
-      else employeeCategory[dname].other++;
-      employeeCategory[dname].total++;
+      // Year-level row (for status donut + month chart — full year, no date-range filter)
+      if (fd>=yearStart&&fd<=yearEnd) {
+        const mk=`${parts[2]}-${parts[1]}`;
+        _yearRows.push({ dname, nname, rel, status, mk });
+      }
 
-      if(!relatedStatus[rel]) relatedStatus[rel]=mkAccum();
-      countStatus(relatedStatus[rel],status);
+      // Date-range row
+      if(fd<from||fd>to) continue;
+      _allRows.push({ dname, nname, rel, status, dur:durSec, rawDate, fd, task });
 
-      if(!chartData[rawDate]) chartData[rawDate]={total:0,done:0,working:0,pending:0,hold:0,close:0,next:0};
-      chartData[rawDate].total++;
-      if(status.includes("done"))    chartData[rawDate].done++;
-      else if(status.includes("working")) chartData[rawDate].working++;
-      else if(status.includes("pending")) chartData[rawDate].pending++;
-      else if(status.includes("hold"))    chartData[rawDate].hold++;
-      else if(status.includes("close"))   chartData[rawDate].close++;
-      else if(status.includes("next"))    chartData[rawDate].next++;
-
-      if(!activity[dname]) activity[dname]=mkAccum();
-      countStatus(activity[dname],status);
+      // hoursData: unfiltered total — used only for knownEmployees list in Settings modal
+      hoursData[dname]=(hoursData[dname]||0)+durSec;
     }
 
-    // Render critical tables immediately (above fold)
-    renderActivityTable(activity, masterMap);
-    renderHoursTable(attResult, from, to);
+    // Save context needed by renderHoursTable and Settings modal
+    _rawMasterMap  = masterMap;
+    _lastAttResult = attResult || { map:{}, ok:false };
+    _lastFrom = from;
+    _lastTo   = to;
 
-    // Update metric cards
-    document.getElementById("totalTasks").textContent        = total;
-    document.getElementById("inventoryCount").textContent    = inventory;
-    document.getElementById("pocCount").textContent          = poc;
-    document.getElementById("recipeCount").textContent       = recipe;
-    document.getElementById("rawCount").textContent          = raw;
-    document.getElementById("otherRelatedCount").textContent = other;
+    // knownEmployees drives the Settings employee checkbox list — must be full/unfiltered
+    knownEmployees = Object.keys(hoursData).sort();
+    _hoursDataFull = { ...hoursData };
 
     setStatus(`Updated · ${new Date().toLocaleTimeString()}`);
 
-    // Defer below-fold renders to idle time — keeps main thread free
-    scheduleIdle(()=>{
-      renderRelatedTable(relatedStatus);
-      renderEmployeeCategoryTable(employeeCategory);
-    });
-    scheduleIdle(()=>{
-      renderTaskChart(chartData);
-    });
-    scheduleIdle(()=>{
-      renderStatusChart(yearStatus);
-      renderMonthChart(monthData);
-    });
+    // Single call: re-aggregate with current employee filter and render everything
+    applyFiltersAndRender();
 
   } catch(e) {
     console.error(e);
