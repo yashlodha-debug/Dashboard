@@ -1661,9 +1661,9 @@ function renderTable() {
 function exportCSV() {
   if (!filteredRows.length) { alert("No data to export."); return; }
   var esc  = function(v){ return '"'+String(v).replace(/"/g,'""')+'"'; };
-  var hdrs = ["No.","Employee","Work Days","Assign Tasks","Daily Target",
-              "Done Task","Per Day Avg Task","Expected Target","Difference",
-              "Achievement %"];
+  var hdrs = ["No.","Employee","Work Days","Expected Target","Assign Tasks",
+              "Done Task","Daily Target","Per Day Avg Task","Difference",
+              "Achievement %"]; 
   var rows = sortedRows();
   var lines = [hdrs.map(esc).join(",")];
 
