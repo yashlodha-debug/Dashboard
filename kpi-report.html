@@ -11,14 +11,15 @@
   </script>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>KPI Report — Petpooja</title>
+  <title>Quarter Performance — Petpooja</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;1,9..40,400&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <style>
-  /* ══════════════════════════════════════════════════════
-     DESIGN TOKENS  (identical to dashboard.html)
-  ══════════════════════════════════════════════════════ */
+  /* ═══════════════════════════════════════════════════════
+     DESIGN TOKENS — identical to index.html & kpi-report.html
+  ═══════════════════════════════════════════════════════ */
   :root {
     --font:       "DM Sans", system-ui, sans-serif;
     --font-mono:  "DM Mono", monospace;
@@ -26,99 +27,120 @@
     --radius:     16px;
     --radius-lg:  24px;
     --transition: 0.22s cubic-bezier(0.4,0,0.2,1);
-    --c-done:    #22c55e;
-    --c-working: #f59e0b;
-    --c-pending: #ef4444;
-    --daily-target: 2;          /* tasks / day — adjust as needed */
+    --c-done:     #22c55e;
+    --c-working:  #f59e0b;
+    --c-pending:  #ef4444;
+    --c-assign:   #06b6d4;
+    --c-hold:     #a855f7;
+    --c-close:    #64748b;
   }
 
   /* ── DARK ── */
   [data-theme="dark"] {
-    --bg:               #080d14;
-    --bg2:              #0d1421;
-    --surface:          #141c2b;
-    --surface2:         #1a2336;
-    --surface3:         #1f2d42;
-    --border:           rgba(255,255,255,0.07);
-    --border2:          rgba(255,255,255,0.12);
-    --text:             #f1f5f9;
-    --text2:            #94a3b8;
-    --text3:            #64748b;
-    --accent:           #3b82f6;
-    --accent2:          #1d4ed8;
-    --accent-glow:      rgba(59,130,246,0.25);
-    --card-shadow:      0 1px 3px rgba(0,0,0,0.5), 0 8px 24px rgba(0,0,0,0.35);
-    --header-bg:        rgba(8,13,20,0.88);
-    --table-head:       #0d1421;
-    --table-alt:        rgba(255,255,255,0.025);
-    --table-hover:      rgba(59,130,246,0.07);
-    --scrollbar-track:  #141c2b;
-    --scrollbar-thumb:  #2d3f5a;
-    --input-bg:         #0d1421;
-    --kpi-green-bg:     rgba(34,197,94,0.10);
-    --kpi-yellow-bg:    rgba(245,158,11,0.10);
-    --kpi-red-bg:       rgba(239,68,68,0.10);
+    --bg:              #080d14;
+    --bg2:             #0d1421;
+    --surface:         #141c2b;
+    --surface2:        #1a2336;
+    --surface3:        #1f2d42;
+    --border:          rgba(255,255,255,0.07);
+    --border2:         rgba(255,255,255,0.12);
+    --text:            #f1f5f9;
+    --text2:           #94a3b8;
+    --text3:           #64748b;
+    --accent:          #3b82f6;
+    --accent2:         #1d4ed8;
+    --accent-glow:     rgba(59,130,246,0.25);
+    --card-shadow:     0 1px 3px rgba(0,0,0,.5),0 8px 24px rgba(0,0,0,.35);
+    --header-bg:       rgba(8,13,20,0.88);
+    --table-head:      #0d1421;
+    --table-alt:       rgba(255,255,255,0.025);
+    --table-hover:     rgba(59,130,246,0.07);
+    --scrollbar-track: #141c2b;
+    --scrollbar-thumb: #2d3f5a;
+    /* category cell colours for dark */
+    --cell-recipe-bg:  rgba(59,130,246,0.12);
+    --cell-recipe-txt: #93c5fd;
+    --cell-raw-bg:     rgba(34,197,94,0.10);
+    --cell-raw-txt:    #86efac;
+    --cell-done-bg:    rgba(34,197,94,0.08);
+    --cell-done-txt:   #4ade80;
+    --cell-close-bg:   rgba(6,182,212,0.08);
+    --cell-close-txt:  #22d3ee;
+    --cell-hold-bg:    rgba(168,85,247,0.08);
+    --cell-hold-txt:   #c084fc;
+    --cell-rework-bg:  rgba(251,146,60,0.08);
+    --cell-rework-txt: #fdba74;
+    --cell-other-bg:   rgba(239,68,68,0.08);
+    --cell-other-txt:  #fca5a5;
+    --cell-total-bg:   rgba(59,130,246,0.14);
+    --cell-total-txt:  #60a5fa;
   }
 
   /* ── LIGHT ── */
   [data-theme="light"] {
-    --bg:               #f0f4f8;
-    --bg2:              #e8eef5;
-    --surface:          #ffffff;
-    --surface2:         #f8fafc;
-    --surface3:         #f1f5f9;
-    --border:           rgba(0,0,0,0.07);
-    --border2:          rgba(0,0,0,0.12);
-    --text:             #0f172a;
-    --text2:            #475569;
-    --text3:            #94a3b8;
-    --accent:           #2563eb;
-    --accent2:          #1d4ed8;
-    --accent-glow:      rgba(37,99,235,0.15);
-    --card-shadow:      0 1px 3px rgba(0,0,0,0.08), 0 8px 24px rgba(0,0,0,0.06);
-    --header-bg:        rgba(240,244,248,0.92);
-    --table-head:       #1e293b;
-    --table-alt:        rgba(0,0,0,0.02);
-    --table-hover:      rgba(37,99,235,0.05);
-    --scrollbar-track:  #f1f5f9;
-    --scrollbar-thumb:  #cbd5e1;
-    --input-bg:         #ffffff;
-    --kpi-green-bg:     rgba(22,163,74,0.08);
-    --kpi-yellow-bg:    rgba(234,179,8,0.08);
-    --kpi-red-bg:       rgba(239,68,68,0.08);
+    --bg:              #f0f4f8;
+    --bg2:             #e8eef5;
+    --surface:         #ffffff;
+    --surface2:        #f8fafc;
+    --surface3:        #f1f5f9;
+    --border:          rgba(0,0,0,0.07);
+    --border2:         rgba(0,0,0,0.12);
+    --text:            #0f172a;
+    --text2:           #475569;
+    --text3:           #94a3b8;
+    --accent:          #2563eb;
+    --accent2:         #1d4ed8;
+    --accent-glow:     rgba(37,99,235,0.15);
+    --card-shadow:     0 1px 3px rgba(0,0,0,.08),0 8px 24px rgba(0,0,0,.06);
+    --header-bg:       rgba(240,244,248,0.92);
+    --table-head:      #1e293b;
+    --table-alt:       rgba(0,0,0,0.02);
+    --table-hover:     rgba(37,99,235,0.05);
+    --scrollbar-track: #f1f5f9;
+    --scrollbar-thumb: #cbd5e1;
+    --cell-recipe-bg:  rgba(37,99,235,0.08);
+    --cell-recipe-txt: #1d4ed8;
+    --cell-raw-bg:     rgba(22,163,74,0.07);
+    --cell-raw-txt:    #15803d;
+    --cell-done-bg:    rgba(22,163,74,0.06);
+    --cell-done-txt:   #16a34a;
+    --cell-close-bg:   rgba(8,145,178,0.07);
+    --cell-close-txt:  #0e7490;
+    --cell-hold-bg:    rgba(126,34,206,0.06);
+    --cell-hold-txt:   #7e22ce;
+    --cell-rework-bg:  rgba(194,65,12,0.07);
+    --cell-rework-txt: #c2410c;
+    --cell-other-bg:   rgba(185,28,28,0.06);
+    --cell-other-txt:  #b91c1c;
+    --cell-total-bg:   rgba(37,99,235,0.08);
+    --cell-total-txt:  #1d4ed8;
   }
 
-  /* ══════════════════════════════════════════════════════
+  /* ═══════════════════════════════════════════════════════
      RESET & BASE
-  ══════════════════════════════════════════════════════ */
-  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-  html { scroll-behavior: smooth; }
+  ═══════════════════════════════════════════════════════ */
+  *,*::before,*::after { box-sizing:border-box; margin:0; padding:0; }
+  html { scroll-behavior:smooth; }
   body {
-    font-family: var(--font);
-    font-size: 14px;
-    line-height: 1.5;
-    color: var(--text);
-    background: var(--bg);
-    min-height: 100vh;
-    overflow-x: hidden;
-    transition: background var(--transition), color var(--transition);
+    font-family:var(--font); font-size:14px; line-height:1.5;
+    color:var(--text); background:var(--bg); min-height:100vh;
+    overflow-x:hidden; transition:background var(--transition),color var(--transition);
   }
-  a { color: inherit; text-decoration: none; }
-  ::-webkit-scrollbar { width: 6px; height: 6px; }
-  ::-webkit-scrollbar-track  { background: var(--scrollbar-track); }
-  ::-webkit-scrollbar-thumb  { background: var(--scrollbar-thumb); border-radius: 99px; }
+  a { color:inherit; text-decoration:none; }
+  ::-webkit-scrollbar { width:6px; height:6px; }
+  ::-webkit-scrollbar-track  { background:var(--scrollbar-track); }
+  ::-webkit-scrollbar-thumb  { background:var(--scrollbar-thumb); border-radius:99px; }
 
-  /* noise overlay */
+  /* noise */
   body::before {
-    content:""; position:fixed; inset:0; pointer-events:none; z-index:0;
-    opacity:.025;
+    content:""; position:fixed; inset:0; pointer-events:none; z-index:0; opacity:.025;
     background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
     background-repeat:repeat; background-size:128px;
   }
 
-  /* ══════════════════════════════════════════════════════
+  /* ═══════════════════════════════════════════════════════
      LAYOUT
-  ══════════════════════════════════════════════════════ */
+  ═══════════════════════════════════════════════════════ */
   .layout { display:flex; min-height:100vh; position:relative; z-index:1; }
 
   /* ── SIDEBAR ── */
@@ -128,7 +150,7 @@
     display:flex; flex-direction:column;
     position:sticky; top:0; height:100vh; overflow-y:auto;
     flex-shrink:0; z-index:100;
-    transition:transform var(--transition), background var(--transition);
+    transition:transform var(--transition),background var(--transition);
   }
   .sidebar-logo {
     display:flex; align-items:center; gap:10px;
@@ -170,8 +192,7 @@
     display:flex; align-items:center; justify-content:space-between; gap:16px;
     padding:14px 28px;
     background:var(--header-bg);
-    backdrop-filter:blur(16px) saturate(180%);
-    -webkit-backdrop-filter:blur(16px) saturate(180%);
+    backdrop-filter:blur(16px) saturate(180%); -webkit-backdrop-filter:blur(16px) saturate(180%);
     border-bottom:1px solid var(--border);
     transition:background var(--transition);
   }
@@ -200,8 +221,6 @@
   .btn-primary:disabled { opacity:.55; cursor:wait; box-shadow:none; }
   .btn-ghost { background:var(--surface); color:var(--text2); border-color:var(--border); }
   .btn-ghost:hover { background:var(--surface2); color:var(--text); border-color:var(--border2); }
-  .btn-success { background:linear-gradient(135deg,#16a34a,#15803d); color:#fff; }
-  .btn-success:hover { box-shadow:0 0 0 4px rgba(34,197,94,.2); }
 
   /* Date group */
   .date-group {
@@ -237,286 +256,178 @@
   }
   .theme-toggle {
     width:38px; height:38px; border-radius:var(--radius-sm);
-    border:1px solid var(--border); background:var(--surface);
-    color:var(--text2); cursor:pointer;
-    display:flex; align-items:center; justify-content:center;
+    border:1px solid var(--border); background:var(--surface); color:var(--text2);
+    cursor:pointer; display:flex; align-items:center; justify-content:center;
     transition:all var(--transition);
   }
   .theme-toggle:hover { background:var(--surface2); color:var(--text); }
 
-  /* ══════════════════════════════════════════════════════
+  /* ═══════════════════════════════════════════════════════
      PAGE BODY
-  ══════════════════════════════════════════════════════ */
+  ═══════════════════════════════════════════════════════ */
   .page-body { padding:24px 28px; flex:1; }
 
-  /* ── ERROR BANNER ── */
+  /* Error */
   .error-banner {
-    display:none; align-items:center; gap:10px;
-    margin-bottom:20px; padding:13px 16px;
-    border-radius:var(--radius); border:1px solid rgba(239,68,68,.3);
-    background:rgba(239,68,68,.08); color:#fca5a5;
-    font-size:13px; font-weight:500;
+    display:none; align-items:center; gap:10px; margin-bottom:20px;
+    padding:13px 16px; border-radius:var(--radius);
+    border:1px solid rgba(239,68,68,.3); background:rgba(239,68,68,.08);
+    color:#fca5a5; font-size:13px; font-weight:500;
   }
   .error-banner.visible { display:flex; }
 
-  /* ══════════════════════════════════════════════════════
-     KPI SUMMARY CARDS
-  ══════════════════════════════════════════════════════ */
-  .kpi-summary-grid {
-    display:grid;
-    grid-template-columns:repeat(4,1fr);
-    gap:16px;
-    margin-bottom:22px;
+  /* ═══════════════════════════════════════════════════════
+     SUMMARY KPI CARDS
+  ═══════════════════════════════════════════════════════ */
+  .summary-cards {
+    display:grid; grid-template-columns:repeat(4,1fr); gap:16px; margin-bottom:22px;
   }
-  .kpi-sum-card {
-    background:var(--surface);
-    border:1px solid var(--border);
-    border-radius:var(--radius-lg);
-    padding:20px 22px;
-    box-shadow:var(--card-shadow);
-    display:flex; flex-direction:column; gap:10px;
-    position:relative; overflow:hidden;
-    transition:transform var(--transition), box-shadow var(--transition);
+  .sum-card {
+    background:var(--surface); border:1px solid var(--border);
+    border-radius:var(--radius-lg); padding:18px 20px;
+    box-shadow:var(--card-shadow); position:relative; overflow:hidden;
+    transition:transform var(--transition),box-shadow var(--transition);
   }
-  .kpi-sum-card:hover { transform:translateY(-3px); box-shadow:0 2px 8px rgba(0,0,0,.45),0 16px 40px rgba(0,0,0,.4); }
-  .kpi-sum-card::before {
+  .sum-card:hover { transform:translateY(-3px); box-shadow:0 2px 8px rgba(0,0,0,.4),0 14px 36px rgba(0,0,0,.38); }
+  .sum-card::before {
     content:""; position:absolute; inset:0;
     background:linear-gradient(140deg,rgba(255,255,255,.04) 0%,transparent 60%);
     pointer-events:none;
   }
-  .kpi-sum-icon {
-    width:40px; height:40px; border-radius:12px;
+  .sum-card-label { font-size:11px; font-weight:700; color:var(--text3); text-transform:uppercase; letter-spacing:.06em; }
+  .sum-card-value { font-size:2rem; font-weight:700; color:var(--text); line-height:1.15; margin-top:8px; letter-spacing:-.04em; font-variant-numeric:tabular-nums; }
+  .sum-card-sub   { font-size:11.5px; color:var(--text3); margin-top:5px; }
+  .sum-card-icon  {
+    position:absolute; top:16px; right:16px;
+    width:36px; height:36px; border-radius:10px;
     display:flex; align-items:center; justify-content:center;
-    flex-shrink:0;
-  }
-  .kpi-sum-top { display:flex; align-items:flex-start; justify-content:space-between; }
-  .kpi-sum-label { font-size:11.5px; font-weight:600; color:var(--text3); text-transform:uppercase; letter-spacing:.06em; }
-  .kpi-sum-value { font-size:2rem; font-weight:700; color:var(--text); line-height:1.1; letter-spacing:-.04em; font-variant-numeric:tabular-nums; }
-  .kpi-sum-sub { font-size:11.5px; color:var(--text3); font-weight:500; }
-  .kpi-sum-badge {
-    display:inline-flex; align-items:center; gap:4px;
-    padding:2px 8px; border-radius:99px;
-    font-size:10.5px; font-weight:700;
-  }
-  .badge-green  { background:rgba(34,197,94,.15);  color:#4ade80; }
-  .badge-yellow { background:rgba(245,158,11,.15); color:#fbbf24; }
-  .badge-blue   { background:rgba(59,130,246,.15); color:#60a5fa; }
-
-  /* ── BEST PERFORMER CARD ── */
-  .best-card { border-color:rgba(250,204,21,.2) !important; }
-  .best-card::after {
-    content:""; position:absolute; bottom:-18px; right:-18px;
-    width:80px; height:80px; border-radius:50%;
-    background:rgba(250,204,21,.08);
-    pointer-events:none;
   }
 
-  /* ══════════════════════════════════════════════════════
-     TOOLBAR (search + target + export)
-  ══════════════════════════════════════════════════════ */
-  .kpi-toolbar {
-    display:flex; align-items:center; justify-content:space-between;
-    gap:12px; flex-wrap:wrap;
-    margin-bottom:16px;
-  }
-  .kpi-toolbar-left  { display:flex; align-items:center; gap:10px; flex-wrap:wrap; }
-  .kpi-toolbar-right { display:flex; align-items:center; gap:10px; flex-wrap:wrap; }
-
-  .search-box {
-    display:flex; align-items:center; gap:8px;
+  /* ═══════════════════════════════════════════════════════
+     CARD PANEL  (reused from dashboard)
+  ═══════════════════════════════════════════════════════ */
+  .card {
     background:var(--surface); border:1px solid var(--border);
-    border-radius:var(--radius-sm); padding:0 14px;
-    height:38px; transition:border-color var(--transition);
-    min-width:220px;
+    border-radius:var(--radius-lg); box-shadow:var(--card-shadow); overflow:hidden;
+    transition:background var(--transition),border-color var(--transition);
   }
-  .search-box:focus-within { border-color:var(--accent); }
-  .search-box svg { color:var(--text3); flex-shrink:0; }
-  .search-box input {
-    border:none; outline:none; background:transparent;
-    color:var(--text); font-family:var(--font); font-size:13px;
-    width:100%; placeholder-color:var(--text3);
-  }
-
-  .target-group {
-    display:flex; align-items:center; gap:8px;
-    background:var(--surface); border:1px solid var(--border);
-    border-radius:var(--radius-sm); padding:0 14px; height:38px;
-    font-size:13px; font-weight:500; color:var(--text2);
-  }
-  .target-group label { font-size:11px; font-weight:600; color:var(--text3); text-transform:uppercase; letter-spacing:.05em; white-space:nowrap; }
-  .target-group input[type="number"] {
-    border:none; outline:none; background:transparent;
-    color:var(--text); font-family:var(--font); font-size:13px; font-weight:600;
-    width:48px; text-align:center;
-  }
-
-  .filter-chip {
-    display:inline-flex; align-items:center; gap:6px;
-    height:38px; padding:0 14px; border-radius:var(--radius-sm);
-    border:1px solid var(--border); background:var(--surface);
-    font-size:12.5px; font-weight:600; color:var(--text2);
-    cursor:pointer; transition:all var(--transition);
-  }
-  .filter-chip:hover, .filter-chip.active { border-color:var(--accent); color:var(--accent); background:rgba(59,130,246,.08); }
-  .filter-chip.all     { }
-  .filter-chip.f-green.active  { border-color:#22c55e; color:#22c55e; background:rgba(34,197,94,.08); }
-  .filter-chip.f-yellow.active { border-color:#f59e0b; color:#f59e0b; background:rgba(245,158,11,.08); }
-  .filter-chip.f-red.active    { border-color:#ef4444; color:#ef4444; background:rgba(239,68,68,.08); }
-
-  /* ══════════════════════════════════════════════════════
-     KPI TABLE CARD
-  ══════════════════════════════════════════════════════ */
-  .table-card {
-    background:var(--surface);
-    border:1px solid var(--border);
-    border-radius:var(--radius-lg);
-    box-shadow:var(--card-shadow);
-    overflow:hidden;
-  }
-  .table-card-header {
+  .card-header {
     display:flex; align-items:center; justify-content:space-between;
-    padding:16px 20px; border-bottom:1px solid var(--border); gap:12px;
+    padding:15px 20px; border-bottom:1px solid var(--border); gap:12px;
   }
-  .table-card-title {
+  .card-header-left { display:flex; flex-direction:column; gap:3px; }
+  .card-title {
     font-size:14px; font-weight:700; color:var(--text);
     display:flex; align-items:center; gap:8px;
   }
-  .table-card-dot { width:8px; height:8px; border-radius:2px; flex-shrink:0; }
-  .table-card-sub { font-size:11.5px; color:var(--text3); margin-top:2px; }
-  .row-count-badge {
-    display:inline-flex; align-items:center;
-    height:24px; padding:0 10px; border-radius:var(--radius-sm);
-    font-size:11px; font-weight:700;
-    background:var(--surface2); color:var(--text2);
-    border:1px solid var(--border);
-  }
+  .card-title-dot { width:8px; height:8px; border-radius:2px; flex-shrink:0; }
+  .card-subtitle  { font-size:11.5px; color:var(--text3); }
 
-  /* Table */
-  .kpi-table-wrap { overflow:auto; max-height:580px; }
-  .kpi-table {
-    width:100%; border-collapse:collapse; font-size:13px;
-    table-layout:fixed;
-  }
-  .kpi-table thead { background:var(--table-head); }
-  .kpi-table thead th {
+  .section { margin-bottom:20px; }
+
+  /* ═══════════════════════════════════════════════════════
+     TABLE — summary
+  ═══════════════════════════════════════════════════════ */
+  .table-container { overflow:auto; }
+
+  table { width:100%; border-collapse:collapse; font-size:12.5px; }
+
+  thead { background:var(--table-head); }
+  thead th {
     position:sticky; top:0; z-index:2;
+    background:var(--table-head); color:rgba(255,255,255,.82);
+    font-size:10px; font-weight:700; text-transform:uppercase; letter-spacing:.06em;
+    padding:10px 12px; white-space:nowrap; border-bottom:1px solid var(--border);
+  }
+  [data-theme="light"] thead th { color:rgba(255,255,255,.88); background:#1e293b; }
+
+  /* Group header rows */
+  .thead-group th {
+    font-size:9px; font-weight:800; text-transform:uppercase; letter-spacing:.08em;
+    padding:7px 12px; border-bottom:none;
+    position:sticky; top:0; z-index:2;
+  }
+  .thead-group .gh-recipe { background:#1e3a5f; color:#93c5fd; }
+  .thead-group .gh-raw    { background:#14532d; color:#86efac; }
+  .thead-group .gh-other  { background:#1a1a2e; color:#c4b5fd; }
+
+  .thead-sub th {
+    position:sticky; top:28px; z-index:2;
     background:var(--table-head);
-    color:rgba(255,255,255,.8);
-    font-size:9.5px; font-weight:700; text-transform:uppercase; letter-spacing:.06em;
-    padding:10px 14px; white-space:nowrap;
-    border-bottom:1px solid var(--border);
-    cursor:pointer; user-select:none;
-    transition:background var(--transition);
   }
-  .kpi-table thead th:hover { background:rgba(255,255,255,.06); }
-  .kpi-table thead th.sorted-asc::after  { content:" ↑"; opacity:.7; }
-  .kpi-table thead th.sorted-desc::after { content:" ↓"; opacity:.7; }
-  [data-theme="light"] .kpi-table thead th { color:rgba(255,255,255,.85); background:#1e293b; }
-  [data-theme="light"] .kpi-table thead th:hover { background:#263548; }
+  [data-theme="light"] .thead-sub th { background:#1e293b; }
 
-  .kpi-table td {
-    padding:10px 14px; color:var(--text); font-weight:500;
+  td {
+    padding:9px 12px; color:var(--text); font-weight:500;
     white-space:nowrap; border-bottom:1px solid var(--border);
-    font-variant-numeric:tabular-nums;
+    text-align:center; font-variant-numeric:tabular-nums;
     transition:background var(--transition);
   }
-  .kpi-table td.name-cell { text-align:left; }
-  .kpi-table td:not(.name-cell) { text-align:center; }
-  .kpi-table tbody tr:nth-child(even) td { background:var(--table-alt); }
-  .kpi-table tbody tr:hover td { background:var(--table-hover); }
+  td.name-cell, th.name-cell { text-align:left; min-width:140px; }
+  tbody tr:nth-child(even) td { background:var(--table-alt); }
+  tbody tr:hover td { background:var(--table-hover); }
 
-  /* Rank cell */
-  .rank-cell {
-    display:inline-flex; align-items:center; justify-content:center;
-    width:24px; height:24px; border-radius:8px;
-    font-size:11px; font-weight:700; color:var(--text3);
-    background:var(--surface2);
-  }
-  .rank-cell.rank-1 { background:linear-gradient(135deg,#fbbf24,#f59e0b); color:#fff; }
-  .rank-cell.rank-2 { background:linear-gradient(135deg,#94a3b8,#64748b); color:#fff; }
-  .rank-cell.rank-3 { background:linear-gradient(135deg,#fb923c,#ea580c); color:#fff; }
+  /* Coloured category cells */
+  .c-recipe  { background:var(--cell-recipe-bg) !important; color:var(--cell-recipe-txt) !important; font-weight:700; }
+  .c-raw     { background:var(--cell-raw-bg)    !important; color:var(--cell-raw-txt)    !important; font-weight:700; }
+  .c-done    { background:var(--cell-done-bg)   !important; color:var(--cell-done-txt)   !important; }
+  .c-close   { background:var(--cell-close-bg)  !important; color:var(--cell-close-txt)  !important; }
+  .c-hold    { background:var(--cell-hold-bg)   !important; color:var(--cell-hold-txt)   !important; }
+  .c-rework  { background:var(--cell-rework-bg) !important; color:var(--cell-rework-txt) !important; }
+  .c-other   { background:var(--cell-other-bg)  !important; color:var(--cell-other-txt)  !important; }
+  .c-total   { background:var(--cell-total-bg)  !important; color:var(--cell-total-txt)  !important; font-weight:700; border-top:1px solid rgba(59,130,246,.2); }
+  .c-total td { color:var(--accent) !important; font-weight:700 !important; }
 
-  /* Name pill */
-  .emp-name { font-weight:600; font-size:13px; color:var(--text); }
-  .top-badge {
-    display:inline-flex; align-items:center; gap:3px;
-    padding:1px 6px; border-radius:99px;
-    font-size:9.5px; font-weight:700;
-    background:rgba(250,204,21,.15); color:#fbbf24;
-    margin-left:6px; vertical-align:middle;
-  }
-
-  /* Performance indicator row highlight */
-  .kpi-table tbody tr.perf-above td { background:var(--kpi-green-bg)  !important; }
-  .kpi-table tbody tr.perf-near  td { background:var(--kpi-yellow-bg) !important; }
-  .kpi-table tbody tr.perf-below td { background:var(--kpi-red-bg)    !important; }
-  .kpi-table tbody tr.perf-above:hover td { background:rgba(34,197,94,.16)  !important; }
-  .kpi-table tbody tr.perf-near:hover  td { background:rgba(245,158,11,.16) !important; }
-  .kpi-table tbody tr.perf-below:hover td { background:rgba(239,68,68,.16)  !important; }
-
-  /* Status badge chips inside table */
-  .perf-chip {
-    display:inline-flex; align-items:center; gap:5px;
-    padding:3px 9px; border-radius:99px;
-    font-size:10.5px; font-weight:700; white-space:nowrap;
-  }
-  .perf-chip.above  { background:rgba(34,197,94,.15);  color:#4ade80; }
-  .perf-chip.near   { background:rgba(245,158,11,.15); color:#fbbf24; }
-  .perf-chip.below  { background:rgba(239,68,68,.15);  color:#f87171; }
-  [data-theme="light"] .perf-chip.above { color:#16a34a; }
-  [data-theme="light"] .perf-chip.near  { color:#ca8a04; }
-  [data-theme="light"] .perf-chip.below { color:#dc2626; }
-
-  /* Mono value cells */
-  .mono { font-family:var(--font-mono); font-size:12px; }
-
-  .diff-chip {
-    display:inline-flex; align-items:center; justify-content:center;
-    min-width:64px; padding:4px 10px; border-radius:999px;
-    font-size:11px; font-weight:700; letter-spacing:.01em;
-  }
-  .diff-positive { background:rgba(34,197,94,.14); color:#22c55e; }
-  .diff-neutral  { background:rgba(148,163,184,.14); color:var(--text2); }
-  .diff-negative { background:rgba(239,68,68,.14); color:#ef4444; }
-  [data-theme="light"] .diff-positive { color:#15803d; }
-  [data-theme="light"] .diff-negative { color:#dc2626; }
-
-  /* Progress bar for completion rate */
-  .progress-wrap { display:flex; align-items:center; gap:8px; }
-  .progress-bar-bg {
-    flex:1; height:5px; border-radius:99px;
-    background:var(--surface3); overflow:hidden; min-width:48px;
-  }
-  .progress-bar-fill { height:100%; border-radius:99px; transition:width .5s ease; }
+  .empty-cell { padding:36px !important; text-align:center !important; color:var(--text3) !important; font-style:italic; font-weight:400 !important; }
 
   /* Total row */
-  .total-row td {
-    font-weight:700 !important;
-    background:rgba(59,130,246,.08) !important;
-    color:var(--accent) !important;
-    border-top:1px solid rgba(59,130,246,.15);
+  .total-row td { font-weight:700; background:rgba(59,130,246,.08) !important; color:var(--accent) !important; border-top:1px solid rgba(59,130,246,.15); }
+
+  /* ═══════════════════════════════════════════════════════
+     CHART SHELL — ORIGINAL (preserved exactly from source)
+  ═══════════════════════════════════════════════════════ */
+  .chart-wrap-original {
+    padding: 14px;
+  }
+  .chart-shell-original {
+    border-radius: 22px;
+    overflow: hidden;
+    border: 1px solid rgba(148, 163, 184, 0.18);
+    background:
+      radial-gradient(circle at top right, rgba(56, 189, 248, 0.18), transparent 28%),
+      radial-gradient(circle at bottom left, rgba(217, 70, 239, 0.14), transparent 32%),
+      linear-gradient(145deg, #14213d 0%, #1d2951 58%, #2d1f4f 100%);
+    box-shadow: inset 0 1px 0 rgba(255,255,255,0.06);
+  }
+  .chart-box-original {
+    position: relative;
+    min-height: 320px;
+    padding: 18px 16px 12px;
   }
 
-  /* Empty / skeleton */
-  .empty-kpi { padding:48px !important; text-align:center !important; color:var(--text3) !important; font-style:italic; font-weight:400 !important; }
+  /* ═══════════════════════════════════════════════════════
+     SKELETON
+  ═══════════════════════════════════════════════════════ */
   @keyframes shimmer { 0%{background-position:-600px 0} 100%{background-position:600px 0} }
   .skeleton {
     background:linear-gradient(90deg,var(--surface2) 25%,var(--surface3) 50%,var(--surface2) 75%);
     background-size:600px 100%; animation:shimmer 1.4s infinite; border-radius:4px;
   }
 
-  /* Animations */
-  @keyframes fadeUp { from{opacity:0;transform:translateY(14px)} to{opacity:1;transform:translateY(0)} }
-  @keyframes spin   { from{transform:rotate(0deg)} to{transform:rotate(360deg)} }
+  /* ═══════════════════════════════════════════════════════
+     ANIMATIONS
+  ═══════════════════════════════════════════════════════ */
+  @keyframes spin    { from{transform:rotate(0deg)} to{transform:rotate(360deg)} }
+  @keyframes fadeUp  { from{opacity:0;transform:translateY(14px)} to{opacity:1;transform:translateY(0)} }
   .fade-up   { animation:fadeUp .4s ease both; }
   .fade-up-1 { animation-delay:.05s; }
   .fade-up-2 { animation-delay:.10s; }
   .fade-up-3 { animation-delay:.15s; }
 
-  /* ══════════════════════════════════════════════════════
+  /* ═══════════════════════════════════════════════════════
      RESPONSIVE
-  ══════════════════════════════════════════════════════ */
-  @media (max-width:1100px) { .kpi-summary-grid { grid-template-columns:repeat(2,1fr); } }
+  ═══════════════════════════════════════════════════════ */
+  @media (max-width:1100px) { .summary-cards { grid-template-columns:repeat(2,1fr); } }
 
   @media (max-width:960px) {
     .sidebar { position:fixed; left:0; top:0; bottom:0; transform:translateX(-100%); z-index:200; }
@@ -526,240 +437,13 @@
     .page-body { padding:16px; }
     .topbar { padding:12px 16px; }
   }
-
   @media (max-width:640px) {
-    .kpi-summary-grid { grid-template-columns:1fr 1fr; }
-    .kpi-toolbar { flex-direction:column; align-items:stretch; }
-    .kpi-toolbar-left, .kpi-toolbar-right { flex-wrap:wrap; }
-    .search-box { min-width:0; width:100%; }
-  }
-  @media (max-width:480px) {
-    .kpi-summary-grid { grid-template-columns:1fr; }
-    .topbar-right { gap:6px; }
+    .summary-cards { grid-template-columns:1fr 1fr; }
+    .topbar-right { gap:8px; }
     .date-group input[type="date"] { width:100px; }
   }
-
-  /* ══ ACHIEVEMENT % + PERFORMANCE SLAB BADGES ══ */
-  .slab-chip {
-    display:inline-flex; align-items:center; gap:5px;
-    padding:3px 10px; border-radius:99px;
-    font-size:10px; font-weight:700; white-space:nowrap; letter-spacing:.02em;
-  }
-  .slab-excellent { background:rgba(34,197,94,.16);   color:#22c55e; border:1px solid rgba(34,197,94,.3); }
-  .slab-good      { background:rgba(59,130,246,.14);  color:#60a5fa; border:1px solid rgba(59,130,246,.28); }
-  .slab-average   { background:rgba(245,158,11,.14);  color:#f59e0b; border:1px solid rgba(245,158,11,.28); }
-  .slab-poor      { background:rgba(239,68,68,.14);   color:#ef4444; border:1px solid rgba(239,68,68,.28); }
-  .slab-none      { background:rgba(148,163,184,.10); color:var(--text3); border:1px solid var(--border); }
-  [data-theme="light"] .slab-excellent { color:#15803d; }
-  [data-theme="light"] .slab-good      { color:#1d4ed8; }
-  [data-theme="light"] .slab-average   { color:#b45309; }
-  [data-theme="light"] .slab-poor      { color:#dc2626; }
-  .achieve-pct { font-family:var(--font-mono); font-size:12px; font-weight:700; }
-  .achieve-pct.a-excellent { color:#22c55e; }
-  .achieve-pct.a-good      { color:#60a5fa; }
-  .achieve-pct.a-average   { color:#f59e0b; }
-  .achieve-pct.a-poor      { color:#ef4444; }
-  [data-theme="light"] .achieve-pct.a-excellent { color:#15803d; }
-  [data-theme="light"] .achieve-pct.a-good      { color:#1d4ed8; }
-  [data-theme="light"] .achieve-pct.a-average   { color:#b45309; }
-  [data-theme="light"] .achieve-pct.a-poor      { color:#dc2626; }
-
-  /* Attendance warning banner */
-  .att-warn {
-    display:none; align-items:flex-start; gap:10px;
-    margin-bottom:14px; padding:12px 16px;
-    border-radius:var(--radius);
-    border:1px solid rgba(245,158,11,.35);
-    background:rgba(245,158,11,.08);
-    color:#fbbf24; font-size:12.5px; font-weight:500; line-height:1.6;
-  }
-  [data-theme="light"] .att-warn { color:#b45309; }
-  .att-warn strong { font-weight:700; }
-
-
-  /* ═══ PERFORMANCE SLAB SUMMARY TABLE ═══ */
-  .slab-summary-table td { vertical-align: top; padding: 14px 16px; }
-  .slab-summary-table td.name-cell { text-align: left; }
-
-  /* Slab label cell — left column */
-  .slab-label-cell {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-  }
-  .slab-label-bar {
-    width: 4px;
-    border-radius: 99px;
-    align-self: stretch;
-    min-height: 24px;
-    flex-shrink: 0;
-  }
-  .slab-label-text {
-    font-size: 13px;
-    font-weight: 700;
-    color: var(--text);
-  }
-  .slab-range-text {
-    font-size: 10.5px;
-    color: var(--text3);
-    margin-top: 3px;
-    font-weight: 500;
-  }
-
-  /* Achievement badge */
-  .slab-ach-badge {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    padding: 4px 10px;
-    border-radius: 8px;
-    font-size: 11px;
-    font-weight: 700;
-    font-family: var(--font-mono);
-  }
-
-  /* Count badge */
-  .slab-count-badge {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    width: 28px;
-    height: 28px;
-    border-radius: 8px;
-    font-size: 12px;
-    font-weight: 700;
-  }
-
-  /* Employee names list in last column */
-  .slab-names-wrap {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 6px;
-    align-items: flex-start;
-    min-height: 32px;
-  }
-  .slab-name-pill {
-    display: inline-flex;
-    align-items: center;
-    gap: 5px;
-    padding: 4px 10px;
-    border-radius: 99px;
-    font-size: 12px;
-    font-weight: 600;
-    border: 1px solid;
-    white-space: nowrap;
-  }
-  .slab-name-pill-pct {
-    font-family: var(--font-mono);
-    font-size: 10px;
-    font-weight: 700;
-    opacity: 0.85;
-  }
-  .slab-none-msg {
-    font-size: 12px;
-    color: var(--text3);
-    font-style: italic;
-    padding: 4px 0;
-  }
-
-  /* Colour themes per slab */
-  /* Excellent — green */
-  .slab-row-excellent { background: rgba(34,197,94,0.04) !important; }
-  .slab-row-excellent:hover td { background: rgba(34,197,94,0.08) !important; }
-  .slab-bar-excellent  { background: #22c55e; }
-  .slab-ach-excellent  { background: rgba(34,197,94,0.14); color: #22c55e; }
-  .slab-cnt-excellent  { background: rgba(34,197,94,0.14); color: #22c55e; }
-  .slab-pill-excellent { background: rgba(34,197,94,0.10); color: #22c55e; border-color: rgba(34,197,94,0.25); }
-  [data-theme="light"] .slab-row-excellent { background: rgba(22,163,74,0.04) !important; }
-  [data-theme="light"] .slab-ach-excellent,
-  [data-theme="light"] .slab-cnt-excellent  { color: #15803d; }
-  [data-theme="light"] .slab-pill-excellent { color: #15803d; border-color: rgba(22,163,74,0.3); }
-
-  /* Good — blue */
-  .slab-row-good { background: rgba(59,130,246,0.04) !important; }
-  .slab-row-good:hover td { background: rgba(59,130,246,0.08) !important; }
-  .slab-bar-good  { background: #3b82f6; }
-  .slab-ach-good  { background: rgba(59,130,246,0.14); color: #60a5fa; }
-  .slab-cnt-good  { background: rgba(59,130,246,0.14); color: #60a5fa; }
-  .slab-pill-good { background: rgba(59,130,246,0.10); color: #60a5fa; border-color: rgba(59,130,246,0.25); }
-  [data-theme="light"] .slab-ach-good,
-  [data-theme="light"] .slab-cnt-good  { color: #1d4ed8; }
-  [data-theme="light"] .slab-pill-good { color: #1d4ed8; border-color: rgba(37,99,235,0.3); }
-
-  /* Average — amber */
-  .slab-row-average { background: rgba(245,158,11,0.04) !important; }
-  .slab-row-average:hover td { background: rgba(245,158,11,0.08) !important; }
-  .slab-bar-average  { background: #f59e0b; }
-  .slab-ach-average  { background: rgba(245,158,11,0.14); color: #f59e0b; }
-  .slab-cnt-average  { background: rgba(245,158,11,0.14); color: #f59e0b; }
-  .slab-pill-average { background: rgba(245,158,11,0.10); color: #f59e0b; border-color: rgba(245,158,11,0.25); }
-  [data-theme="light"] .slab-ach-average,
-  [data-theme="light"] .slab-cnt-average  { color: #b45309; }
-  [data-theme="light"] .slab-pill-average { color: #b45309; border-color: rgba(180,83,9,0.3); }
-
-  /* Poor — red */
-  .slab-row-poor { background: rgba(239,68,68,0.04) !important; }
-  .slab-row-poor:hover td { background: rgba(239,68,68,0.08) !important; }
-  .slab-bar-poor  { background: #ef4444; }
-  .slab-ach-poor  { background: rgba(239,68,68,0.14); color: #ef4444; }
-  .slab-cnt-poor  { background: rgba(239,68,68,0.14); color: #ef4444; }
-  .slab-pill-poor { background: rgba(239,68,68,0.10); color: #ef4444; border-color: rgba(239,68,68,0.25); }
-  [data-theme="light"] .slab-ach-poor,
-  [data-theme="light"] .slab-cnt-poor  { color: #dc2626; }
-  [data-theme="light"] .slab-pill-poor { color: #dc2626; border-color: rgba(220,38,38,0.3); }
-
-  /* ═══ KPI TABLE — SLAB GROUP HEADER ROWS ═══ */
-  tr.kpi-group-header td {
-    padding: 9px 16px 9px 14px;
-    font-size: 12px;
-    font-weight: 700;
-    letter-spacing: 0.04em;
-    border-bottom: none;
-    border-top: none;
-    color: #fff !important;
-    background: inherit !important;
-  }
-  /* Prevent hover override on group headers */
-  tbody tr.kpi-group-header:hover td { background: inherit !important; }
-
-  /* Four slab colours */
-  tr.kpi-gh-excellent { background: linear-gradient(90deg,#15803d,#16a34a) !important; }
-  tr.kpi-gh-good      { background: linear-gradient(90deg,#1d4ed8,#2563eb) !important; }
-  tr.kpi-gh-average   { background: linear-gradient(90deg,#b45309,#d97706) !important; }
-  tr.kpi-gh-poor      { background: linear-gradient(90deg,#b91c1c,#dc2626) !important; }
-
-  /* Group header dot + text alignment */
-  .kpi-gh-inner {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-  }
-  .kpi-gh-dot {
-    width: 8px; height: 8px;
-    border-radius: 50%;
-    background: rgba(255,255,255,0.7);
-    flex-shrink: 0;
-  }
-  .kpi-gh-count {
-    margin-left: 8px;
-    padding: 1px 8px;
-    border-radius: 99px;
-    background: rgba(255,255,255,0.2);
-    font-size: 10.5px;
-    font-weight: 700;
-    color: #fff;
-  }
-
-  /* Employee rows inside a group — subtle left indent */
-  tr.kpi-group-row td:first-child { padding-left: 18px; }
-
-  /* Empty group message */
-  tr.kpi-group-empty td {
-    font-size: 11.5px;
-    color: var(--text3) !important;
-    font-style: italic;
-    padding: 8px 24px !important;
-    background: transparent !important;
+  @media (max-width:480px) {
+    .summary-cards { grid-template-columns:1fr; }
   }
   </style>
 </head>
@@ -769,9 +453,9 @@
 
 <div class="layout">
 
-  <!-- ══════════════════════════════════════════════
+  <!-- ════════════════════════════════════
        SIDEBAR
-  ══════════════════════════════════════════════ -->
+  ════════════════════════════════════ -->
   <aside class="sidebar" id="sidebar">
     <div class="sidebar-logo">
       <img src="https://d28ewddc5mocr5.cloudfront.net/images/logos-new/pp-logo-new.svg" alt="Petpooja">
@@ -790,11 +474,11 @@
     <div class="sidebar-section">
       <div class="sidebar-section-label">Reports</div>
       <nav class="sidebar-nav">
-        <a class="nav-item" href="category-summary.html">
+        <a class="nav-item active" href="category-summary.html">
           <svg class="nav-icon" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M16 8v8m-4-5v5m-4-2v2m-2 4h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
           Quarter Performance
         </a>
-        <a class="nav-item active" href="kpi-report.html">
+        <a class="nav-item" href="kpi-report.html">
           <svg class="nav-icon" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/></svg>
           KPI Report
         </a>
@@ -806,16 +490,16 @@
     </div>
 
     <div class="sidebar-footer">
-      <div class="nav-item" style="cursor:default; gap:8px;">
+      <div class="nav-item" style="cursor:default;gap:8px;">
         <svg style="width:14px;height:14px;opacity:.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path stroke-linecap="round" stroke-linejoin="round" d="M12 8v4l3 3"/></svg>
         <span style="font-size:11px;color:var(--text3)" id="sidebarTime">--:--</span>
       </div>
     </div>
   </aside>
 
-  <!-- ══════════════════════════════════════════════
+  <!-- ════════════════════════════════════
        MAIN
-  ══════════════════════════════════════════════ -->
+  ════════════════════════════════════ -->
   <div class="main">
 
     <!-- TOPBAR -->
@@ -825,8 +509,8 @@
           <svg width="18" height="18" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M4 6h16M4 12h16M4 18h16"/></svg>
         </button>
         <div>
-          <div class="page-title">KPI Report</div>
-          <div class="page-subtitle">Employee performance — task completion &amp; time metrics</div>
+          <div class="page-title">Quarter Performance</div>
+          <div class="page-subtitle">Recipe &amp; Raw Material summary by employee</div>
         </div>
       </div>
       <div class="topbar-right">
@@ -861,172 +545,101 @@
         <span id="errorText"></span>
       </div>
 
-      <!-- Attendance file warning -->
-      <div class="att-warn" id="attWarn">
-        <svg width="15" height="15" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" style="flex-shrink:0;margin-top:2px"><path stroke-linecap="round" stroke-linejoin="round" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
-        <div id="attWarnMsg" style="flex:1;">
-          <strong>Attendance file not accessible</strong> — Work Days will show 0.
-          Ensure the <em>Yash Team Month Roster</em> sheet is shared as
-          <strong>"Anyone with link can view"</strong>.
-        </div>
-        <button onclick="retryAttendance()" style="margin-left:12px;padding:5px 12px;border-radius:8px;border:1px solid currentColor;background:transparent;color:inherit;font-size:11px;font-weight:700;cursor:pointer;white-space:nowrap;flex-shrink:0;">↻ Retry</button>
-      </div>
+      <!-- ── Summary KPI Cards ── -->
+      <div class="summary-cards fade-up">
 
-      <!-- ── KPI Summary Cards ── -->
-      <div class="kpi-summary-grid fade-up">
-
-        <div class="kpi-sum-card fade-up fade-up-1">
-          <div class="kpi-sum-top">
-            <div>
-              <div class="kpi-sum-label">Total Employees</div>
-              <div class="kpi-sum-value" id="sumTotalEmp">—</div>
-            </div>
-            <div class="kpi-sum-icon" style="background:rgba(59,130,246,.12);">
-              <svg width="20" height="20" fill="none" viewBox="0 0 24 24" stroke="#3b82f6" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
-            </div>
+        <div class="sum-card fade-up fade-up-1">
+          <div class="sum-card-label">Total Employees</div>
+          <div class="sum-card-value" id="cTotalEmp">—</div>
+          <div class="sum-card-sub">In selected range</div>
+          <div class="sum-card-icon" style="background:rgba(59,130,246,.12);">
+            <svg width="18" height="18" fill="none" viewBox="0 0 24 24" stroke="#3b82f6" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
           </div>
-          <div class="kpi-sum-sub" id="sumAvailEmp">— available today</div>
         </div>
 
-        <div class="kpi-sum-card fade-up fade-up-1">
-          <div class="kpi-sum-top">
-            <div>
-              <div class="kpi-sum-label">Total Tasks Done</div>
-              <div class="kpi-sum-value" id="sumTotalTasks">—</div>
-            </div>
-            <div class="kpi-sum-icon" style="background:rgba(34,197,94,.12);">
-              <svg width="20" height="20" fill="none" viewBox="0 0 24 24" stroke="#22c55e" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
-            </div>
+        <div class="sum-card fade-up fade-up-1">
+          <div class="sum-card-label">Total Recipe Tasks</div>
+          <div class="sum-card-value" id="cTotalRecipe">—</div>
+          <div class="sum-card-sub" id="cRecipeDone">— done</div>
+          <div class="sum-card-icon" style="background:rgba(99,102,241,.12);">
+            <svg width="18" height="18" fill="none" viewBox="0 0 24 24" stroke="#818cf8" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M19.428 15.428a2 2 0 00-1.022-.547l-2.387-.477a6 6 0 00-3.86.517l-.318.158a6 6 0 01-3.86.517L6.05 15.21a2 2 0 00-1.806.547M8 4h8l-1 1v5.172a2 2 0 00.586 1.414l5 5c1.26 1.26.367 3.414-1.415 3.414H4.828c-1.782 0-2.674-2.154-1.414-3.414l5-5A2 2 0 009 10.172V5L8 4z"/></svg>
           </div>
-          <div class="kpi-sum-sub" id="sumTotalTasksSub">across all employees</div>
         </div>
 
-        <div class="kpi-sum-card fade-up fade-up-2">
-          <div class="kpi-sum-top">
-            <div>
-              <div class="kpi-sum-label">Avg Productivity</div>
-              <div class="kpi-sum-value" id="sumAvgProd">—</div>
-            </div>
-            <div class="kpi-sum-icon" style="background:rgba(245,158,11,.12);">
-              <svg width="20" height="20" fill="none" viewBox="0 0 24 24" stroke="#f59e0b" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"/></svg>
-            </div>
+        <div class="sum-card fade-up fade-up-2">
+          <div class="sum-card-label">Total Raw Material</div>
+          <div class="sum-card-value" id="cTotalRaw">—</div>
+          <div class="sum-card-sub" id="cRawDone">— done</div>
+          <div class="sum-card-icon" style="background:rgba(34,197,94,.12);">
+            <svg width="18" height="18" fill="none" viewBox="0 0 24 24" stroke="#22c55e" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M4 7v10c0 2.21 3.582 4 8 4s8-1.79 8-4V7M4 7c0 2.21 3.582 4 8 4s8-1.79 8-4M4 7c0-2.21 3.582-4 8-4s8 1.79 8 4"/></svg>
           </div>
-          <div class="kpi-sum-sub" id="sumAvgProdSub">tasks per work day</div>
         </div>
 
-        <div class="kpi-sum-card best-card fade-up fade-up-2">
-          <div class="kpi-sum-top">
-            <div>
-              <div class="kpi-sum-label">🏆 Best Performer</div>
-              <div class="kpi-sum-value" id="sumBest" style="font-size:1.25rem;">—</div>
-            </div>
-            <div class="kpi-sum-icon" style="background:rgba(250,204,21,.12);">
-              <svg width="20" height="20" fill="none" viewBox="0 0 24 24" stroke="#fbbf24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z"/></svg>
-            </div>
+        <div class="sum-card fade-up fade-up-2">
+          <div class="sum-card-label">Rework + Other</div>
+          <div class="sum-card-value" id="cTotalOther">—</div>
+          <div class="sum-card-sub" id="cOtherSub">rework + other tasks</div>
+          <div class="sum-card-icon" style="background:rgba(251,146,60,.12);">
+            <svg width="18" height="18" fill="none" viewBox="0 0 24 24" stroke="#fb923c" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>
           </div>
-          <div class="kpi-sum-sub" id="sumBestSub">— tasks/day</div>
         </div>
 
       </div>
 
-      <!-- ── Toolbar ── -->
-      <div class="kpi-toolbar fade-up fade-up-2">
-        <div class="kpi-toolbar-left">
-          <div class="search-box">
-            <svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-4.35-4.35"/></svg>
-            <input type="text" id="searchInput" placeholder="Search employee…" autocomplete="off">
-          </div>
-          <div class="target-group">
-            <label for="dailyTarget">Daily Target</label>
-            <input type="number" id="dailyTarget" value="2" min="1" max="99" step="0.5">
-            <span style="font-size:11px;color:var(--text3)">tasks/day</span>
-          </div>
-          <!-- Performance filters -->
-          <button class="filter-chip all active"   data-filter="all"   onclick="setFilter(this,'all')">
-            <svg width="12" height="12" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M4 6h16M7 12h10M10 18h4"/></svg>
-            All
-          </button>
-          <button class="filter-chip f-green"  data-filter="above"  onclick="setFilter(this,'above')">
-            <svg width="10" height="10" viewBox="0 0 10 10"><circle cx="5" cy="5" r="5" fill="#22c55e"/></svg>
-            Above Target
-          </button>
-          <button class="filter-chip f-yellow" data-filter="near"   onclick="setFilter(this,'near')">
-            <svg width="10" height="10" viewBox="0 0 10 10"><circle cx="5" cy="5" r="5" fill="#f59e0b"/></svg>
-            Near Target
-          </button>
-          <button class="filter-chip f-red"    data-filter="below"  onclick="setFilter(this,'below')">
-            <svg width="10" height="10" viewBox="0 0 10 10"><circle cx="5" cy="5" r="5" fill="#ef4444"/></svg>
-            Below Target
-          </button>
-        </div>
-        <div class="kpi-toolbar-right">
-          <button class="btn btn-success" onclick="exportCSV()">
-            <svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
-            Export CSV
-          </button>
-        </div>
-      </div>
-
-      <!-- ── KPI Table ── -->
-      <div class="table-card fade-up fade-up-3">
-        <div class="table-card-header">
-          <div>
-            <div class="table-card-title">
-              <span class="table-card-dot" style="background:#3b82f6;"></span>
-              Employee KPI Report
+      <!-- ── Summary Table ── -->
+      <div class="card section fade-up fade-up-2">
+        <div class="card-header">
+          <div class="card-header-left">
+            <div class="card-title">
+              <span class="card-title-dot" style="background:#3b82f6;"></span>
+              Employee-wise Recipe &amp; Raw Material Status
             </div>
-            <div class="table-card-sub">Grouped by performance slab · Sortable within each group</div>
+            <div class="card-subtitle">Grouped by category and status for selected date range</div>
           </div>
-          <span class="row-count-badge" id="rowCount">— rows</span>
+          <span id="tableRowCount" style="font-size:12px;font-weight:600;color:var(--text3);">— employees</span>
         </div>
-        <div class="kpi-table-wrap">
-          <table class="kpi-table" id="kpiTable">
+        <div class="table-container">
+          <table>
             <thead>
-              <tr>
-                <th style="width:46px;" data-col="serial">No.</th>
-                <th class="name-cell" style="width:160px;text-align:left;" data-col="name">Employee</th>
-                <th style="width:86px;" data-col="workDays">Work Days</th>
-                <th style="width:94px;" data-col="assignTasks">Assign Tasks</th>
-                <th style="width:88px;" data-col="dailyTargetValue">Daily Target</th>
-                <th style="width:86px;" data-col="doneTasks">Done Task</th>
-                <th style="width:116px;" data-col="perDayAvg">Per Day Avg Task</th>
-                <th style="width:118px;" data-col="expectedTarget">Expected Target</th>
-                <th style="width:100px;" data-col="difference">Difference</th>
-                <th style="width:100px;" data-col="achievementPct">Achievement %</th>
+              <tr class="thead-group">
+                <th class="name-cell" rowspan="2" style="background:var(--table-head);color:rgba(255,255,255,.8);vertical-align:bottom;padding-bottom:10px;">Employee</th>
+                <th colspan="4" class="gh-recipe">Recipe &amp; Material</th>
+                <th colspan="4" class="gh-raw">Raw Material</th>
+                <th colspan="2" class="gh-other">Others</th>
+              </tr>
+              <tr class="thead-sub">
+                <!-- Recipe columns -->
+                <th>Total</th><th>Done</th><th>Close</th><th>Hold</th>
+                <!-- Raw columns -->
+                <th>Total</th><th>Done</th><th>Close</th><th>Hold</th>
+                <!-- Other columns -->
+                <th>Rework</th><th>Other</th>
               </tr>
             </thead>
-            <tbody id="kpiTbody">
-              <tr><td colspan="10" class="empty-kpi">Loading KPI data…</td></tr>
+            <tbody id="summaryTable">
+              <tr><td colspan="11" class="empty-cell">Loading data…</td></tr>
             </tbody>
           </table>
         </div>
       </div>
 
-
-      <!-- ── Performance Slab Grouped Table ── -->
-      <div class="table-card fade-up fade-up-3" id="slabTableCard" style="display:none; margin-top:18px;">
-        <div class="table-card-header">
-          <div>
-            <div class="table-card-title">
-              <span class="table-card-dot" style="background:#a855f7;"></span>
-              Performance Slab Summary
+      <!-- ── Month-wise Chart — PRESERVED EXACTLY ── -->
+      <div class="card section fade-up fade-up-3">
+        <div class="card-header">
+          <div class="card-header-left">
+            <div class="card-title">
+              <span class="card-title-dot" style="background:#fb923c;"></span>
+              Month-wise Category Chart
             </div>
-            <div class="table-card-sub">Employees grouped by achievement percentage</div>
+            <div class="card-subtitle">Dynamic for the selected date range</div>
           </div>
         </div>
-        <div class="kpi-table-wrap">
-          <table class="kpi-table slab-summary-table">
-            <thead>
-              <tr>
-                <th style="width:200px; text-align:left;">Performance Slab</th>
-                <th style="width:90px;">Achievement</th>
-                <th style="width:60px;">Count</th>
-                <th style="text-align:left;">Employees</th>
-              </tr>
-            </thead>
-            <tbody id="slabSummaryTbody">
-            </tbody>
-          </table>
+        <div class="chart-wrap-original">
+          <div class="chart-shell-original">
+            <div class="chart-box-original">
+              <canvas id="monthChart"></canvas>
+            </div>
+          </div>
         </div>
       </div>
 
@@ -1035,54 +648,9 @@
 </div><!-- /layout -->
 
 <script>
-/* ══════════════════════════════════════════════════════════════════════
-   PETPOOJA KPI REPORT — Clean Single-Source JS
-   Working Days source: Yash Team Month Roster (Attendance 2026 tab)
-   URL: https://docs.google.com/spreadsheets/d/
-        1b08Kfoh48N8pWIxWHp2gmjV9Wj_VNRXdlvTWlAN7wB4/
-        export?format=csv&gid=421022727
-   Structure:
-     Row 1 : header — col A="Date", col B="Name" (pipe-separated names)
-     Row 2+: data   — "DD/MM/YYYY" | "Name1 | Name2 | Name3 …"
-   Working Day rule:
-     If employee name appears in the pipe-list for a date → +1 working day
-     Matching: case-insensitive, trimmed, exact token match (not partial)
-══════════════════════════════════════════════════════════════════════ */
-
-/* ── CONFIG ──────────────────────────────────────────────────────── */
-const SHEET_URL      = "https://docs.google.com/spreadsheets/d/1-VxbQ_IaRMKtDH--2JDeqvGFrb_Or3D0kG-mGLu7dG8/export?format=csv&gid=1747930222";
-const MASTER_URL     = "https://docs.google.com/spreadsheets/d/1-VxbQ_IaRMKtDH--2JDeqvGFrb_Or3D0kG-mGLu7dG8/export?format=csv&gid=1007217209";
-const ATTENDANCE_URL = "https://docs.google.com/spreadsheets/d/1b08Kfoh48N8pWIxWHp2gmjV9Wj_VNRXdlvTWlAN7wB4/export?format=csv&gid=421022727";
-
-/* ── STATE ───────────────────────────────────────────────────────── */
-let kpiRows          = [];
-let filteredRows     = [];
-let lastHash         = "";
-let masterPromise    = null;
-let attendanceCache  = null;   // { dateStr("YYYY-MM-DD"): Set<normName> }
-let isLoading        = false;
-let hasInitialized   = false;
-let sortCol          = "serial";
-let sortDir          = 1;
-let activeFilter     = "all";
-let dateTimer        = null;
-// Cached for dailyTarget re-calc (no re-fetch needed)
-let latestAssignData = {};
-let latestDoneData   = {};
-let latestWorkDays   = {};   // normName -> workDays (number)
-
-/* ── DOM REFS ────────────────────────────────────────────────────── */
-const fromInput   = document.getElementById("fromDate");
-const toInput     = document.getElementById("toDate");
-const refreshBtn  = document.getElementById("refreshButton");
-const statusText  = document.getElementById("statusText");
-const errorBanner = document.getElementById("errorBanner");
-const searchInput = document.getElementById("searchInput");
-const dailyTarget = document.getElementById("dailyTarget");
-const kpiTbody    = document.getElementById("kpiTbody");
-const rowCountEl  = document.getElementById("rowCount");
-
-/* ── THEME / SIDEBAR ─────────────────────────────────────────────── */
+/* ══════════════════════════════════════════════════════
+   THEME / SIDEBAR / CLOCK
+══════════════════════════════════════════════════════ */
 function toggleTheme() {
   var html   = document.documentElement;
   var isDark = html.getAttribute('data-theme') === 'dark';
@@ -1091,6 +659,7 @@ function toggleTheme() {
   try { localStorage.setItem('pp-theme', next); } catch(e) {}
   _syncThemeIcon(next === 'dark');
 }
+
 function _syncThemeIcon(isDark) {
   var el = document.getElementById('themeIcon');
   if (!el) return;
@@ -1098,749 +667,450 @@ function _syncThemeIcon(isDark) {
     ? '<path stroke-linecap="round" stroke-linejoin="round" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"/>'
     : '<path stroke-linecap="round" stroke-linejoin="round" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z"/>';
 }
+
+// Sync icon immediately — runs before DOMContentLoaded, no flash
 _syncThemeIcon(document.documentElement.getAttribute('data-theme') === 'dark');
 
-function toggleSidebar() { document.getElementById("sidebar").classList.toggle("open"); document.getElementById("sidebarOverlay").classList.toggle("open"); }
-function closeSidebar()  { document.getElementById("sidebar").classList.remove("open");  document.getElementById("sidebarOverlay").classList.remove("open"); }
+function toggleSidebar()  { document.getElementById("sidebar").classList.toggle("open");  document.getElementById("sidebarOverlay").classList.toggle("open");  }
+function closeSidebar()   { document.getElementById("sidebar").classList.remove("open");   document.getElementById("sidebarOverlay").classList.remove("open");   }
 
-/* live clock */
-(function tickClock() {
-  var el = document.getElementById("sidebarTime");
-  if (el) el.textContent = new Date().toLocaleTimeString("en-IN",{hour:"2-digit",minute:"2-digit",second:"2-digit"});
-  setTimeout(tickClock, 1000);
-})();
+const _spinStyle = document.createElement("style");
+_spinStyle.textContent = "@keyframes spin{from{transform:rotate(0deg)}to{transform:rotate(360deg)}}";
+document.head.appendChild(_spinStyle);
 
-/* spin keyframe */
-var _ks = document.createElement("style");
-_ks.textContent = "@keyframes spin{from{transform:rotate(0deg)}to{transform:rotate(360deg)}}";
-document.head.appendChild(_ks);
+function tick() { document.getElementById("sidebarTime").textContent = new Date().toLocaleTimeString("en-IN",{hour:"2-digit",minute:"2-digit",second:"2-digit"}); }
+setInterval(tick, 1000); tick();
 
-/* ── UI HELPERS ──────────────────────────────────────────────────── */
-function setStatus(msg)  { statusText.textContent = msg; }
-function showError(msg)  { document.getElementById("errorText").textContent = msg; errorBanner.classList.add("visible"); setStatus("Error"); }
-function clearError()    { errorBanner.classList.remove("visible"); }
+/* ══════════════════════════════════════════════════════
+   CONFIG
+══════════════════════════════════════════════════════ */
+const SHEET_URL       = "https://docs.google.com/spreadsheets/d/1-VxbQ_IaRMKtDH--2JDeqvGFrb_Or3D0kG-mGLu7dG8/export?format=csv&gid=1747930222";
+const CACHE_KEY       = "pp-quarter-cache-v3";
+const CACHE_TTL_MS    = 120_000;
 
-function showAttWarn(show, msg) {
-  var el = document.getElementById("attWarn");
-  if (!el) return;
-  if (!show) { el.style.display = "none"; return; }
-  if (msg) { var m = document.getElementById("attWarnMsg"); if (m) m.innerHTML = msg; }
-  el.style.display = "flex";
+/* ══════════════════════════════════════════════════════
+   STATE
+══════════════════════════════════════════════════════ */
+let isLoading = false;
+let debTimer  = null;
+
+const fromInput     = document.getElementById("fromDate");
+const toInput       = document.getElementById("toDate");
+const refreshButton = document.getElementById("refreshButton");
+const statusText    = document.getElementById("statusText");
+const errorBanner   = document.getElementById("errorBanner");
+const summaryTbody  = document.getElementById("summaryTable");
+
+/* ══════════════════════════════════════════════════════
+   UI HELPERS
+══════════════════════════════════════════════════════ */
+function setStatus(msg) { statusText.textContent = msg; }
+function showError(msg) {
+  document.getElementById("errorText").textContent = msg;
+  errorBanner.classList.add("visible");
+  setStatus("Error");
 }
-function retryAttendance() {
-  attendanceCache = null;
-  showAttWarn(false);
-  loadData(fromInput.value, toInput.value, { force: true });
-}
+function clearError() { errorBanner.classList.remove("visible"); }
 
 function setBtnState() {
-  refreshBtn.disabled = isLoading;
-  refreshBtn.innerHTML = isLoading
-    ? '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="animation:spin 1s linear infinite"><path stroke-linecap="round" stroke-linejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg> Loading\u2026'
-    : '<svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg> Refresh';
-}
-
-function formatDate(d) {
-  return d.getFullYear() + "-" +
-    String(d.getMonth()+1).padStart(2,"0") + "-" +
-    String(d.getDate()).padStart(2,"0");
+  refreshButton.disabled = isLoading;
+  refreshButton.innerHTML = isLoading
+    ? `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="animation:spin 1s linear infinite"><path stroke-linecap="round" stroke-linejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg> Loading…`
+    : `<svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg> Refresh`;
 }
 
 function showSkeletons() {
-  var sk = "<tr>" + Array(10).fill('<td><div class="skeleton" style="height:11px;margin:auto;width:80%"></div></td>').join("") + "</tr>";
-  kpiTbody.innerHTML = Array(8).fill(sk).join("");
-  rowCountEl.textContent = "— rows";
-  ["sumTotalEmp","sumAvailEmp","sumTotalTasks","sumTotalTasksSub","sumAvgProd","sumBest","sumBestSub"].forEach(function(id){
-    var el = document.getElementById(id); if (el) el.textContent = "—";
-  });
+  const sk = `<tr>${Array(11).fill(`<td><div class="skeleton" style="height:11px;margin:auto;width:80%;"></div></td>`).join("")}</tr>`;
+  summaryTbody.innerHTML = Array(6).fill(sk).join("");
+  ["cTotalEmp","cTotalRecipe","cTotalRaw","cTotalOther"].forEach(id => { document.getElementById(id).textContent = "—"; });
 }
 
-function showWaitingState() {
-  kpiTbody.innerHTML = '<tr><td colspan="10" class="empty-kpi" style="padding:32px;">Select a date range and click Refresh to load KPI data.</td></tr>';
-  rowCountEl.textContent = "— rows";
+function formatDate(d) {
+  return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,"0")}-${String(d.getDate()).padStart(2,"0")}`;
 }
 
-/* ── DATA HELPERS ────────────────────────────────────────────────── */
+/* ══════════════════════════════════════════════════════
+   CACHE
+══════════════════════════════════════════════════════ */
+function readCache() {
+  try {
+    const raw = sessionStorage.getItem(CACHE_KEY);
+    if (!raw) return null;
+    const c = JSON.parse(raw);
+    if (!c?.csv || !c?.savedAt) return null;
+    if (Date.now() - c.savedAt > CACHE_TTL_MS) return null;
+    return c.csv;
+  } catch { return null; }
+}
+function writeCache(csv) {
+  try { sessionStorage.setItem(CACHE_KEY, JSON.stringify({ csv, savedAt: Date.now() })); } catch { /**/ }
+}
+
+/* ══════════════════════════════════════════════════════
+   DATA HELPERS
+══════════════════════════════════════════════════════ */
 function normalizeName(n)  { return (n||"").toLowerCase().trim().replace(/\s+/g," "); }
-function toDisplayName(n)  {
-  return normalizeName(n).split(" ").filter(Boolean)
-    .map(function(w){ return w[0].toUpperCase()+w.slice(1); }).join(" ");
+function toDisplayName(n)  { return normalizeName(n).split(" ").filter(Boolean).map(w=>w[0].toUpperCase()+w.slice(1)).join(" "); }
+
+function normalizeRelated(v) {
+  const r = (v||"").toLowerCase().trim();
+  if (r==="recipe & material") return "recipe";
+  if (r==="raw material")      return "raw";
+  if (r==="rework")            return "rework";
+  return "other";
 }
+function normalizeStatus(v) { return (v||"").toLowerCase().trim().replace(/\s+/g," "); }
 
 function parseCSV(text) {
-  var rows=[]; var row=[]; var cur=""; var inQ=false;
-  for(var i=0;i<text.length;i++){
-    var c=text[i]; var nc=text[i+1];
-    if(c==='"'){ if(inQ&&nc==='"'){cur+='"';i++;}else{inQ=!inQ;} }
+  const rows=[]; let row=[],cur="",inQ=false;
+  for(let i=0;i<text.length;i++){
+    const c=text[i],nc=text[i+1];
+    if(c==='"'){ inQ&&nc==='"'?(cur+='"',i++):(inQ=!inQ); }
     else if(c===","&&!inQ){ row.push(cur);cur=""; }
     else if((c==="\n"||c==="\r")&&!inQ){
       if(c==="\r"&&nc==="\n")i++;
       row.push(cur);
-      if(row.some(function(x){return x.trim()!==""})) rows.push(row);
+      if(row.some(x=>x.trim()!==""))rows.push(row);
       row=[];cur="";
     } else cur+=c;
   }
-  if(cur!==""||row.length){ row.push(cur); if(row.some(function(x){return x.trim()!==""}))rows.push(row); }
+  if(cur!==""||row.length){ row.push(cur); if(row.some(x=>x.trim()!==""))rows.push(row); }
   return rows;
 }
 
-/* ── ATTENDANCE DATA ─────────────────────────────────────────────────
-   Sheet: "Attendance 2026" (gid=421022727)
-   Row 1: headers — col A = "Date", col B = "Name"
-   Row 2+: DD/MM/YYYY  |  "Ankit | Priyanka | Nikita | …"
-   Returns: Map  dateStr("YYYY-MM-DD") → Set<normName>
-────────────────────────────────────────────────────────────────────── */
-async function loadAttendanceData() {
-  if (attendanceCache) return { map: attendanceCache, ok: true };
-  try {
-    var res = await fetch(ATTENDANCE_URL, { cache: "default" });
-    if (!res.ok) throw new Error("HTTP " + res.status);
-    var csv  = await res.text();
-    var rows = parseCSV(csv);
+/* ══════════════════════════════════════════════════════
+   RENDER: SUMMARY TABLE
+══════════════════════════════════════════════════════ */
+function renderTable(summary) {
+  const names = Object.keys(summary).sort();
+  document.getElementById("tableRowCount").textContent = `${names.length} employee${names.length!==1?"s":""}`;
 
-    /* Row 0 = header (Date | Name), skip.
-       Row 1+ = data rows. */
-    var map = {};
-
-    for (var i = 1; i < rows.length; i++) {
-      var row  = rows[i];
-      var dateCell = (row[0] || "").trim();
-      var nameCell = (row[1] || "").trim();
-
-      if (!dateCell || !nameCell) continue;
-
-      /* Parse date: MM/DD/YYYY */
-      var parts = dateCell.split("/");
-      if (parts.length !== 3) continue;
-      var mm = parts[0].trim(), dd = parts[1].trim(), yyyy = parts[2].trim();
-      if (!dd || !mm || !yyyy) continue;
-      var dateStr = yyyy + "-" + mm.padStart(2,"0") + "-" + dd.padStart(2,"0");
-
-      /* Validate date */
-      var d = new Date(parseInt(yyyy), parseInt(mm)-1, parseInt(dd));
-      if (isNaN(d.getTime())) continue;
-
-      /* Parse pipe-separated names — exact token matching */
-      var namesSet = new Set();
-      nameCell.split("|").forEach(function(raw) {
-        var n = normalizeName(raw);
-        if (n) namesSet.add(n);
-      });
-
-      map[dateStr] = namesSet;
-    }
-
-    attendanceCache = map;
-    return { map: map, ok: true };
-  } catch(e) {
-    console.warn("Attendance fetch failed:", e.message);
-    return { map: {}, ok: false, error: e.message };
-  }
-}
-
-/*
-  Count working days for one employee within exact [from, to] range.
-  Iterates day by day → checks if normName is in the Set for that date.
-  Exact match: "ankit" will NOT match "ankita" because Sets use === equality.
-*/
-function countWorkingDays(attMap, normName, from, to) {
-  var count = 0;
-  var cur   = new Date(from.getFullYear(), from.getMonth(), from.getDate());
-  var end   = new Date(to.getFullYear(),   to.getMonth(),   to.getDate());
-
-  while (cur <= end) {
-    var ds = cur.getFullYear() + "-" +
-             String(cur.getMonth()+1).padStart(2,"0") + "-" +
-             String(cur.getDate()).padStart(2,"0");
-    if (attMap[ds] && attMap[ds].has(normName)) count++;
-    cur.setDate(cur.getDate() + 1);
-  }
-  return count;
-}
-
-/* ── MASTER DATA (optional — for attendance fallback only) ────────── */
-function loadMasterData() {
-  if (!masterPromise) {
-    masterPromise = fetch(MASTER_URL, { cache: "default" })
-      .then(function(r){ if(!r.ok) throw new Error("Master "+r.status); return r.text(); })
-      .then(function(csv){
-        var rows = parseCSV(csv);
-        var hdr  = (rows[0]||[]).map(function(h){ return h.trim().toLowerCase(); });
-        var ni   = hdr.indexOf("employee");
-        var ai   = hdr.findIndex(function(h){ return h==="attendance"; });
-        var map  = {};
-        rows.slice(1).forEach(function(row){
-          var k = normalizeName(row[ni]);
-          if(k) map[k] = { attendance: ai>=0?(row[ai]||""):"" };
-        });
-        return map;
-      })
-      .catch(function(e){ masterPromise=null; return {}; });  // graceful
-  }
-  return masterPromise;
-}
-
-/* ── SLAB LOGIC ──────────────────────────────────────────────────── */
-function getSlabInfo(pct) {
-  if (pct === null) return { cls:"slab-none",      label:"No Data",        achCls:"" };
-  if (pct >= 100)   return { cls:"slab-excellent", label:"100%+ Achieved", achCls:"a-excellent" };
-  if (pct >= 90)    return { cls:"slab-good",      label:"90% \u2013 99%", achCls:"a-good" };
-  if (pct >= 80)    return { cls:"slab-average",   label:"80% \u2013 89%", achCls:"a-average" };
-  return                   { cls:"slab-poor",      label:"Below 80%",      achCls:"a-poor" };
-}
-
-function calcPerf(diff) {
-  if (diff > 0)   return "above";
-  if (diff === 0) return "near";
-  return "below";
-}
-
-/* ── KPI CALCULATION ─────────────────────────────────────────────── */
-function buildKpiRows(assignData, doneData, workDaysMap) {
-  var target = Math.max(0, parseFloat(dailyTarget.value) || 0);
-  var names  = new Set(Object.keys(assignData).concat(Object.keys(doneData)));
-
-  return Array.from(names).map(function(name) {
-    var key         = normalizeName(name);
-    var workDays    = workDaysMap[name] || 0;
-
-    var assignTasks    = assignData[name]  || 0;
-    var doneTasks      = doneData[name]    || 0;
-    var perDayAvg      = workDays > 0 ? doneTasks / workDays : 0;
-    var expectedTarget = workDays * target;
-    var difference     = doneTasks - expectedTarget;
-    var achievePct     = expectedTarget > 0
-                         ? Math.round((doneTasks / expectedTarget) * 100)
-                         : null;
-
-    return {
-      name, workDays, assignTasks, doneTasks,
-      dailyTargetValue: target,
-      perDayAvg, expectedTarget, difference,
-      achievePct,
-      perf: calcPerf(difference)
-    };
-  });
-}
-
-/* ── SUMMARY CARDS ───────────────────────────────────────────────── */
-function updateSummaryCards(rows) {
-  var totalEmp  = rows.length;
-  var totalDone = rows.reduce(function(s,r){ return s+r.doneTasks; }, 0);
-  var productive= rows.filter(function(r){ return r.workDays>0; });
-  var avgProd   = productive.length
-    ? productive.reduce(function(s,r){ return s+r.perDayAvg; },0) / productive.length
-    : 0;
-  var best = rows.slice().sort(function(a,b){ return b.perDayAvg-a.perDayAvg; })[0];
-  var aboveCnt  = rows.filter(function(r){ return r.perf==="above"; }).length;
-
-  document.getElementById("sumTotalEmp").textContent      = totalEmp;
-  document.getElementById("sumAvailEmp").textContent      = "\u2014";
-  document.getElementById("sumTotalTasks").textContent    = totalDone.toLocaleString();
-  document.getElementById("sumTotalTasksSub").textContent = aboveCnt + " above target";
-  document.getElementById("sumAvgProd").textContent       = avgProd.toFixed(2);
-  document.getElementById("sumAvgProdSub").textContent    = "tasks per work day";
-  document.getElementById("sumBest").textContent          = best ? best.name : "\u2014";
-  document.getElementById("sumBestSub").textContent       = best ? best.perDayAvg.toFixed(2)+" tasks/day" : "\u2014";
-}
-
-/* ── FILTER + SEARCH ─────────────────────────────────────────────── */
-function applyFilterSearch() {
-  var q = searchInput.value.toLowerCase().trim();
-  filteredRows = kpiRows.filter(function(r) {
-    var nm = !q || r.name.toLowerCase().includes(q);
-    var pm = activeFilter==="all" || r.perf===activeFilter;
-    return nm && pm;
-  });
-  renderTable();
-  renderSlabTable();   // always uses full kpiRows — unaffected by search/filter
-}
-
-function setFilter(btn, val) {
-  document.querySelectorAll(".filter-chip").forEach(function(b){ b.classList.remove("active"); });
-  btn.classList.add("active");
-  activeFilter = val;
-  applyFilterSearch();
-}
-
-searchInput.addEventListener("input", function(){ applyFilterSearch(); });
-
-/* Re-calc on dailyTarget change — no re-fetch */
-dailyTarget.addEventListener("change", function() {
-  if (!kpiRows.length) return;
-  kpiRows      = buildKpiRows(latestAssignData, latestDoneData, latestWorkDays);
-  filteredRows = kpiRows.slice();
-  updateSummaryCards(kpiRows);
-  applyFilterSearch();  // calls renderTable + renderSlabTable internally
-});
-
-/* ── SORTING ─────────────────────────────────────────────────────── */
-document.querySelectorAll(".kpi-table thead th[data-col]").forEach(function(th) {
-  th.addEventListener("click", function() {
-    var col = th.getAttribute("data-col");
-    if (sortCol===col) sortDir*=-1; else { sortCol=col; sortDir=1; }
-    document.querySelectorAll(".kpi-table thead th").forEach(function(t){
-      t.classList.remove("sorted-asc","sorted-desc");
-    });
-    th.classList.add(sortDir===1?"sorted-asc":"sorted-desc");
-    renderTable();
-  });
-});
-
-function sortedRows() {
-  return filteredRows.slice().sort(function(a,b) {
-    if (sortCol==="serial")  return b.doneTasks - a.doneTasks; // default: done desc
-    if (sortCol==="name")    return sortDir*(a.name.localeCompare(b.name));
-    var va=a[sortCol], vb=b[sortCol];
-    if (va==null&&vb==null) return 0;
-    if (va==null) return sortDir;
-    if (vb==null) return -sortDir;
-    if (typeof va==="string") return sortDir*va.localeCompare(vb);
-    return sortDir*(va-vb);
-  });
-}
-
-/* ── FORMAT HELPERS ──────────────────────────────────────────────── */
-var fmtDay  = function(v){ if(v==null||isNaN(v))return"—"; return v%1===0?v.toFixed(0):v.toFixed(1); };
-var fmtNum  = function(v){ if(v==null||isNaN(v))return"—"; return v%1===0?v.toFixed(0):v.toFixed(2); };
-var fmtDiff = function(v){
-  if(v==null||isNaN(v))return"—";
-  var s=v%1===0?v.toFixed(0):v.toFixed(2);
-  return v>0?"+"+s:s;
-};
-var diffCls = function(v){ return v>0?"diff-positive":v<0?"diff-negative":"diff-neutral"; };
-
-/* ── RENDER SLAB SUMMARY TABLE ──────────────────────────────────────
-   Builds 4 fixed rows (one per slab) in the slab summary table.
-   Each row shows: Slab label | Achievement range | Count | Employee pills
-   Uses kpiRows (full dataset, not filtered) so summary is always complete.
-─────────────────────────────────────────────────────────────────── */
-function renderSlabTable() {
-  var card  = document.getElementById("slabTableCard");
-  var tbody = document.getElementById("slabSummaryTbody");
-  if (!card || !tbody) return;
-
-  if (!kpiRows.length) { card.style.display = "none"; return; }
-  card.style.display = "";
-
-  var SLABS = [
-    {
-      key:     "excellent",
-      label:   "100%+ Achieved",
-      range:   "≥ 100%",
-      filter:  function(r) { return r.achievePct !== null && r.achievePct >= 100; }
-    },
-    {
-      key:     "good",
-      label:   "90% – 99%",
-      range:   "90% – 99%",
-      filter:  function(r) { return r.achievePct !== null && r.achievePct >= 90 && r.achievePct < 100; }
-    },
-    {
-      key:     "average",
-      label:   "80% – 89%",
-      range:   "80% – 89%",
-      filter:  function(r) { return r.achievePct !== null && r.achievePct >= 80 && r.achievePct < 90; }
-    },
-    {
-      key:     "poor",
-      label:   "Below 80%",
-      range:   "< 80%",
-      filter:  function(r) { return r.achievePct === null || r.achievePct < 80; }
-    }
-  ];
-
-  var frag = document.createDocumentFragment();
-
-  SLABS.forEach(function(slab, idx) {
-    var members = kpiRows
-      .filter(slab.filter)
-      .sort(function(a, b) {
-        /* Sort by achievePct desc, then name asc */
-        var pa = a.achievePct !== null ? a.achievePct : -1;
-        var pb = b.achievePct !== null ? b.achievePct : -1;
-        return pb !== pa ? pb - pa : a.name.localeCompare(b.name);
-      });
-
-    /* Build employee pills */
-    var pillsHTML = "";
-    if (members.length === 0) {
-      pillsHTML = '<span class="slab-none-msg">No employees in this range</span>';
-    } else {
-      members.forEach(function(r) {
-        var pct = r.achievePct !== null ? r.achievePct + "%" : "—";
-        pillsHTML +=
-          '<span class="slab-name-pill slab-pill-' + slab.key + '">' +
-            _esc(r.name) +
-            '<span class="slab-name-pill-pct">' + pct + '</span>' +
-          '</span>';
-      });
-    }
-
-    var tr = document.createElement("tr");
-    tr.className = "slab-row-" + slab.key;
-
-    tr.innerHTML =
-      /* Col 1: Slab label with coloured left bar */
-      '<td style="text-align:left;">' +
-        '<div class="slab-label-cell">' +
-          '<div class="slab-label-bar slab-bar-' + slab.key + '"></div>' +
-          '<div>' +
-            '<div class="slab-label-text">' + _esc(slab.label) + '</div>' +
-            '<div class="slab-range-text">Achievement ' + slab.range + '</div>' +
-          '</div>' +
-        '</div>' +
-      '</td>' +
-      /* Col 2: Achievement range badge */
-      '<td style="text-align:center;">' +
-        '<span class="slab-ach-badge slab-ach-' + slab.key + '">' + slab.range + '</span>' +
-      '</td>' +
-      /* Col 3: Count */
-      '<td style="text-align:center;">' +
-        '<span class="slab-count-badge slab-cnt-' + slab.key + '">' + members.length + '</span>' +
-      '</td>' +
-      /* Col 4: Employee name pills */
-      '<td style="text-align:left;">' +
-        '<div class="slab-names-wrap">' + pillsHTML + '</div>' +
-      '</td>';
-
-    frag.appendChild(tr);
-  });
-
-  tbody.innerHTML = "";
-  tbody.appendChild(frag);
-}
-
-/* Tiny HTML-escape helper */
-function _esc(str) {
-  return String(str)
-    .replace(/&/g,"&amp;").replace(/</g,"&lt;")
-    .replace(/>/g,"&gt;").replace(/"/g,"&quot;");
-}
-
-/* ── RENDER TABLE (grouped by slab) ────────────────────────────────
-   Renders the KPI table with Excel-style coloured group header rows
-   separating each slab section. Within each slab, employees are sorted
-   by achievementPct desc then name asc.
-   sortCol / sortDir only affect within-group order when user clicks headers.
-─────────────────────────────────────────────────────────────────── */
-function renderTable() {
-  var COLSPAN = 10;
-
-  /* Slab definitions — order top to bottom in table */
-  var GROUPS = [
-    { key: "excellent", ghClass: "kpi-gh-excellent",
-      label: "Achievement ≥ 100%",
-      filter: function(r){ return r.achievePct !== null && r.achievePct >= 100; } },
-    { key: "good",      ghClass: "kpi-gh-good",
-      label: "Achievement 90% – 99%",
-      filter: function(r){ return r.achievePct !== null && r.achievePct >= 90 && r.achievePct < 100; } },
-    { key: "average",   ghClass: "kpi-gh-average",
-      label: "Achievement 80% – 89%",
-      filter: function(r){ return r.achievePct !== null && r.achievePct >= 80 && r.achievePct < 90; } },
-    { key: "poor",      ghClass: "kpi-gh-poor",
-      label: "Achievement < 80%",
-      filter: function(r){ return r.achievePct === null || r.achievePct < 80; } },
-  ];
-
-  /* Apply search/filter from filteredRows, then split into groups */
-  var baseRows = filteredRows;  // already search+filter applied
-
-  /* Within each group, sort by user-selected column or default (achievePct desc) */
-  function sortGroup(arr) {
-    return arr.slice().sort(function(a, b) {
-      if (sortCol === "serial" || sortCol === "slab") {
-        /* Default: highest achievePct first, then name */
-        var pa = a.achievePct !== null ? a.achievePct : -1;
-        var pb = b.achievePct !== null ? b.achievePct : -1;
-        return pb !== pa ? pb - pa : a.name.localeCompare(b.name);
-      }
-      if (sortCol === "name") return sortDir * a.name.localeCompare(b.name);
-      var va = a[sortCol], vb = b[sortCol];
-      if (va == null && vb == null) return 0;
-      if (va == null) return sortDir;
-      if (vb == null) return -sortDir;
-      return sortDir * (va - vb);
-    });
-  }
-
-  var totalRows = 0;
-  GROUPS.forEach(function(g) {
-    totalRows += baseRows.filter(g.filter).length;
-  });
-
-  rowCountEl.textContent = totalRows + " row" + (totalRows !== 1 ? "s" : "");
-
-  if (totalRows === 0) {
-    kpiTbody.innerHTML =
-      '<tr><td colspan="' + COLSPAN + '" class="empty-kpi">No employees match the current filter.</td></tr>';
+  if(!names.length){
+    summaryTbody.innerHTML = `<tr><td colspan="11" class="empty-cell">No records found for the selected date range.</td></tr>`;
     return;
   }
 
-  var frag = document.createDocumentFragment();
-  var overallIndex = 0;  // running serial number across groups
+  // Accumulate totals
+  const totals = { recipe:{total:0,done:0,close:0,hold:0}, raw:{total:0,done:0,close:0,hold:0}, rework:0, other:0 };
+  const frag = document.createDocumentFragment();
 
-  /* Grand totals (for total row) */
-  var gTotAssign = 0, gTotDone = 0, gTotWorkDays = 0,
-      gTotExpected = 0, gSumPerDay = 0, gCount = 0;
+  names.forEach(name => {
+    const d = summary[name];
+    totals.recipe.total += d.recipe.total; totals.recipe.done  += d.recipe.done;
+    totals.recipe.close += d.recipe.close; totals.recipe.hold  += d.recipe.hold;
+    totals.raw.total    += d.raw.total;    totals.raw.done     += d.raw.done;
+    totals.raw.close    += d.raw.close;    totals.raw.hold     += d.raw.hold;
+    totals.rework       += d.rework;       totals.other        += d.other;
 
-  GROUPS.forEach(function(group) {
-    var members = sortGroup(baseRows.filter(group.filter));
-    if (members.length === 0) return;   // skip empty groups entirely
-
-    /* ── Group header row ── */
-    var ghTr = document.createElement("tr");
-    ghTr.className = "kpi-group-header " + group.ghClass;
-    ghTr.innerHTML =
-      '<td colspan="' + COLSPAN + '">' +
-        '<div class="kpi-gh-inner">' +
-          '<span class="kpi-gh-dot"></span>' +
-          group.label +
-          '<span class="kpi-gh-count">' + members.length + ' employee' +
-            (members.length !== 1 ? 's' : '') + '</span>' +
-        '</div>' +
-      '</td>';
-    frag.appendChild(ghTr);
-
-    /* ── Employee rows inside this group ── */
-    members.forEach(function(row) {
-      overallIndex++;
-      var achTxt = row.achievePct !== null ? row.achievePct + "%" : "—";
-
-      gTotAssign   += row.assignTasks;
-      gTotDone     += row.doneTasks;
-      gTotWorkDays += row.workDays;
-      gTotExpected += row.expectedTarget;
-      gSumPerDay   += row.perDayAvg;
-      gCount++;
-
-      var tr = document.createElement("tr");
-      tr.className = "kpi-group-row perf-" + row.perf;
-      tr.innerHTML =
-        '<td style="text-align:center;color:var(--text3);font-size:12px;">' + overallIndex + '</td>' +
-        '<td class="name-cell"><span class="emp-name">' + _esc(row.name) + '</span></td>' +
-        '<td style="text-align:center;">' + fmtDay(row.workDays) + '</td>' +
-        '<td style="text-align:center;font-weight:700;">' + row.assignTasks + '</td>' +
-        '<td style="text-align:center;" class="mono">' + fmtNum(row.dailyTargetValue) + '</td>' +
-        '<td style="text-align:center;font-weight:700;">' + row.doneTasks + '</td>' +
-        '<td style="text-align:center;" class="mono">' + row.perDayAvg.toFixed(2) + '</td>' +
-        '<td style="text-align:center;" class="mono">' + fmtNum(row.expectedTarget) + '</td>' +
-        '<td style="text-align:center;"><span class="diff-chip ' + diffCls(row.difference) + '">' + fmtDiff(row.difference) + '</span></td>' +
-        '<td style="text-align:center;"><span class="achieve-pct ' + getSlabInfo(row.achievePct).achCls + '">' + achTxt + '</span></td>';
-      frag.appendChild(tr);
-    });
+    const tr = document.createElement("tr");
+    tr.innerHTML = `
+      <td class="name-cell" style="font-weight:600;">${name}</td>
+      <td class="c-recipe">${d.recipe.total}</td>
+      <td class="c-done">${d.recipe.done}</td>
+      <td class="c-close">${d.recipe.close}</td>
+      <td class="c-hold">${d.recipe.hold}</td>
+      <td class="c-raw">${d.raw.total}</td>
+      <td class="c-done">${d.raw.done}</td>
+      <td class="c-close">${d.raw.close}</td>
+      <td class="c-hold">${d.raw.hold}</td>
+      <td class="c-rework">${d.rework}</td>
+      <td class="c-other">${d.other}</td>`;
+    frag.appendChild(tr);
   });
 
-  /* ── Grand total row ── */
-  var gDiff     = gTotDone - gTotExpected;
-  var gAchieve  = gTotExpected > 0 ? Math.round((gTotDone / gTotExpected) * 100) : null;
-  var avgPerDay = gCount > 0 ? gSumPerDay / gCount : 0;
-  var tgt       = Math.max(0, parseFloat(dailyTarget.value) || 0);
-
-  var totalTr = document.createElement("tr");
+  // Total row
+  const totalTr = document.createElement("tr");
   totalTr.className = "total-row";
-  totalTr.innerHTML =
-    '<td style="text-align:center;">—</td>' +
-    '<td class="name-cell">Σ Total / Avg</td>' +
-    '<td style="text-align:center;">' + fmtDay(gTotWorkDays) + '</td>' +
-    '<td style="text-align:center;">' + gTotAssign + '</td>' +
-    '<td class="mono" style="text-align:center;">' + fmtNum(tgt) + '</td>' +
-    '<td style="text-align:center;">' + gTotDone + '</td>' +
-    '<td class="mono" style="text-align:center;">' + avgPerDay.toFixed(2) + '</td>' +
-    '<td class="mono" style="text-align:center;">' + fmtNum(gTotExpected) + '</td>' +
-    '<td style="text-align:center;"><span class="diff-chip ' + diffCls(gDiff) + '">' + fmtDiff(gDiff) + '</span></td>' +
-    '<td style="text-align:center;">' + (gAchieve !== null ? gAchieve + "%" : "—") + '</td>';
+  totalTr.innerHTML = `
+    <td class="name-cell">Σ Total</td>
+    <td>${totals.recipe.total}</td><td>${totals.recipe.done}</td>
+    <td>${totals.recipe.close}</td><td>${totals.recipe.hold}</td>
+    <td>${totals.raw.total}</td><td>${totals.raw.done}</td>
+    <td>${totals.raw.close}</td><td>${totals.raw.hold}</td>
+    <td>${totals.rework}</td><td>${totals.other}</td>`;
   frag.appendChild(totalTr);
 
-  kpiTbody.innerHTML = "";
-  kpiTbody.appendChild(frag);
+  summaryTbody.innerHTML = "";
+  summaryTbody.appendChild(frag);
+
+  // Update KPI cards
+  document.getElementById("cTotalEmp").textContent     = names.length;
+  document.getElementById("cTotalRecipe").textContent  = totals.recipe.total;
+  document.getElementById("cRecipeDone").textContent   = `${totals.recipe.done} done`;
+  document.getElementById("cTotalRaw").textContent     = totals.raw.total;
+  document.getElementById("cRawDone").textContent      = `${totals.raw.done} done`;
+  document.getElementById("cTotalOther").textContent   = totals.rework + totals.other;
+  document.getElementById("cOtherSub").textContent     = `${totals.rework} rework · ${totals.other} other`;
 }
 
-/* ── EXPORT CSV ──────────────────────────────────────────────────── */
-function exportCSV() {
-  if (!filteredRows.length) { alert("No data to export."); return; }
-  var esc  = function(v){ return '"'+String(v).replace(/"/g,'""')+'"'; };
-  var hdrs = ["No.","Employee","Work Days","Assign Tasks","Daily Target",
-              "Done Task","Per Day Avg Task","Expected Target","Difference",
-              "Achievement %"];
-  var rows = sortedRows();
-  var lines = [hdrs.map(esc).join(",")];
+/* ══════════════════════════════════════════════════════
+   RENDER: MONTH CHART — PRESERVED EXACTLY FROM SOURCE
+   (stacked bar + totalValuePlugin, original colours)
+══════════════════════════════════════════════════════ */
+function renderMonthChart(monthData) {
+  const ctx = document.getElementById("monthChart").getContext("2d");
 
-  rows.forEach(function(row, i) {
-    var achTxt = row.achievePct!==null ? row.achievePct+"%" : "\u2014";
-    lines.push([
-      esc(i+1), esc(row.name), esc(fmtDay(row.workDays)),
-      esc(row.assignTasks), esc(fmtNum(row.dailyTargetValue)),
-      esc(row.doneTasks), esc(row.perDayAvg.toFixed(2)),
-      esc(fmtNum(row.expectedTarget)), esc(fmtDiff(row.difference)),
-      esc(achTxt)
-    ].join(","));
+  const months = Object.keys(monthData).sort((a, b) => {
+    const [yearA, monthA] = a.split("-").map(Number);
+    const [yearB, monthB] = b.split("-").map(Number);
+    return new Date(yearA, monthA - 1, 1) - new Date(yearB, monthB - 1, 1);
   });
 
-  var blob = new Blob([lines.join("\n")],{type:"text/csv;charset=utf-8;"});
-  var url  = URL.createObjectURL(blob);
-  var a    = document.createElement("a");
-  a.href   = url;
-  a.download = "kpi-report-"+fromInput.value+"-to-"+toInput.value+".csv";
-  a.click();
-  URL.revokeObjectURL(url);
+  const totalValuePlugin = {
+    id: "totalValuePlugin",
+    afterDatasetsDraw(chart) {
+      const { ctx: chartCtx, scales } = chart;
+      const xScale = scales.x;
+      const yScale = scales.y;
+      const totals = chart.data.labels.map((_, index) => {
+        return chart.data.datasets.reduce((sum, dataset) => {
+          return sum + (Number(dataset.data[index]) || 0);
+        }, 0);
+      });
+
+      chartCtx.save();
+      chartCtx.fillStyle = "#f8fafc";
+      chartCtx.font = "600 11px 'DM Sans', Poppins, sans-serif";
+      chartCtx.textAlign = "center";
+      chartCtx.textBaseline = "bottom";
+
+      totals.forEach((total, index) => {
+        if (!total) return;
+        const x = xScale.getPixelForValue(index);
+        const y = yScale.getPixelForValue(total) - 6;
+        chartCtx.fillText(String(total), x, y);
+      });
+
+      chartCtx.restore();
+    }
+  };
+
+  if (window.summaryChart) {
+    window.summaryChart.destroy();
+    window.summaryChart = null;
+  }
+
+  if (!months.length) {
+    window.summaryChart = new Chart(ctx, {
+      type: "bar",
+      data: {
+        labels: ["No Data"],
+        datasets: [{ label: "No Data", data: [0], backgroundColor: "#cbd5e1" }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: { legend: { display: false } },
+        scales: {
+          y: { beginAtZero: true, ticks: { color: "#dbeafe" }, grid: { color: "rgba(148, 163, 184, 0.14)" } },
+          x: { ticks: { color: "#f8fafc" }, grid: { display: false } }
+        }
+      }
+    });
+    return;
+  }
+
+  const labels = months.map(monthKey => {
+    const [year, month] = monthKey.split("-").map(Number);
+    return new Date(year, month - 1, 1).toLocaleString("en-US", { month: "long" });
+  });
+
+  window.summaryChart = new Chart(ctx, {
+    type: "bar",
+    data: {
+      labels,
+      datasets: [
+        {
+          label: "Raw Material",
+          data: months.map(month => monthData[month].raw || 0),
+          backgroundColor: "rgba(59, 130, 246, 0.86)",
+          borderColor: "#93c5fd",
+          borderWidth: 1,
+          borderRadius: 10,
+          borderSkipped: false
+        },
+        {
+          label: "Recipe & Material",
+          data: months.map(month => monthData[month].recipe || 0),
+          backgroundColor: "rgba(251, 146, 60, 0.88)",
+          borderColor: "#fdba74",
+          borderWidth: 1,
+          borderRadius: 10,
+          borderSkipped: false
+        },
+        {
+          label: "Other",
+          data: months.map(month => monthData[month].other || 0),
+          backgroundColor: "rgba(217, 70, 239, 0.82)",
+          borderColor: "#e9a8f2",
+          borderWidth: 1,
+          borderRadius: 10,
+          borderSkipped: false
+        },
+        {
+          label: "Rework",
+          data: months.map(month => monthData[month].rework || 0),
+          backgroundColor: "rgba(45, 212, 191, 0.84)",
+          borderColor: "#99f6e4",
+          borderWidth: 1,
+          borderRadius: 10,
+          borderSkipped: false
+        }
+      ]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      animation: { duration: 260 },
+      layout: {
+        padding: { top: 28, right: 14, left: 8, bottom: 0 }
+      },
+      plugins: {
+        legend: {
+          position: "top",
+          labels: {
+            color: "#f8fafc",
+            usePointStyle: true,
+            pointStyle: "rectRounded",
+            boxWidth: 10,
+            padding: 16,
+            font: { weight: "600" }
+          }
+        },
+        tooltip: {
+          backgroundColor: "rgba(15, 23, 42, 0.94)",
+          titleColor: "#f8fafc",
+          bodyColor: "#dbeafe",
+          borderColor: "rgba(148, 163, 184, 0.28)",
+          borderWidth: 1,
+          padding: 12
+        }
+      },
+      scales: {
+        x: {
+          stacked: true,
+          ticks: { color: "#f8fafc", font: { weight: "600" } },
+          grid: { display: false, drawBorder: false }
+        },
+        y: {
+          stacked: true,
+          beginAtZero: true,
+          ticks: { color: "rgba(226, 232, 240, 0.78)", precision: 0 },
+          grid: { color: "rgba(148, 163, 184, 0.14)", drawBorder: false }
+        }
+      }
+    },
+    plugins: [totalValuePlugin]
+  });
 }
 
-/* ── MAIN LOAD ───────────────────────────────────────────────────── */
-async function loadData(fromDate, toDate, opts) {
-  opts = opts || {};
-  if (isLoading) return;
-  if (!fromDate || !toDate) { showWaitingState(); setStatus("Select date range"); return; }
-
-  isLoading = true; setBtnState(); setStatus("Loading\u2026"); clearError();
+/* ══════════════════════════════════════════════════════
+   MAIN LOAD
+══════════════════════════════════════════════════════ */
+async function loadTable(opts={}) {
+  if(isLoading) return;
+  if(!fromInput.value||!toInput.value) return;
+  isLoading=true; setBtnState(); setStatus("Loading…"); clearError();
   showSkeletons();
 
   try {
-    /* Parse date range */
-    var fp = fromDate.split("-"); var from = new Date(fp[0],fp[1]-1,fp[2]);
-    var tp = toDate.split("-");   var to   = new Date(tp[0],tp[1]-1,tp[2]); to.setHours(23,59,59,999);
+    const [fy,fm,fd]=fromInput.value.split("-");
+    const from=new Date(fy,fm-1,fd);
+    const [ty,tm,td]=toInput.value.split("-");
+    const to=new Date(ty,tm-1,td); to.setHours(23,59,59,999);
 
-    /* Fetch task sheet + attendance in parallel; master is optional */
-    var attFetchP    = loadAttendanceData();
-    var sheetFetchP  = fetch(SHEET_URL, { cache: "no-cache" });
-    var masterFetchP = loadMasterData();
-
-    var results    = await Promise.all([sheetFetchP, attFetchP, masterFetchP]);
-    var sheetRes   = results[0];
-    var attResult  = results[1];
-    /* masterMap result[2] no longer needed for workDays */
-
-    if (!sheetRes.ok) throw new Error("Sheet fetch failed: " + sheetRes.status);
-    var csv = await sheetRes.text();
-
-    /* Show attendance warning if needed */
-    if (!attResult.ok) {
-      showAttWarn(true,
-        '<strong>Attendance file not accessible</strong> \u2014 Work Days will show 0.<br>' +
-        'Error: ' + (attResult.error||"unknown") + '<br>' +
-        'Ensure the <em>Yash Team Month Roster</em> sheet is shared as <strong>\u201cAnyone with link can view\u201d</strong>.'
-      );
-    } else {
-      showAttWarn(false);
+    // Cache logic
+    let csv = opts.forceNetwork ? null : readCache();
+    if(!csv){
+      const res = await fetch(SHEET_URL,{cache:opts.forceNetwork?"no-cache":"default"});
+      if(!res.ok) throw new Error(`Sheet fetch failed: ${res.status}`);
+      csv = await res.text();
+      writeCache(csv);
     }
 
-    /* De-duplicate check — include date range in hash so changing
-       From/To always triggers a full re-compute of work days */
-    var rangeKey = fromDate + "|" + toDate;
-    var fullHash = rangeKey + "||" + csv;
-    if (!opts.force && fullHash === lastHash) {
-      setStatus("Up to date \u00b7 " + new Date().toLocaleTimeString());
-      isLoading = false; setBtnState(); return;
-    }
-    lastHash = fullHash;
-
-    /* ── Parse task sheet (single pass) ── */
-    var rows    = parseCSV(csv);
-    var headers = (rows[0]||[]).map(function(h){ return h.trim(); });
-    var idx = {
-      date:     headers.findIndex(function(h){ return h.toLowerCase()==="assign date"; }),
-      assigned: headers.findIndex(function(h){ return h.toLowerCase()==="assigned"; }),
-      status:   headers.findIndex(function(h){ return h.toLowerCase()==="status"; })
+    const rows    = parseCSV(csv);
+    const headers = (rows[0]||[]).map(h=>h.trim().toLowerCase());
+    const idx     = {
+      date:     headers.indexOf("assign date"),
+      related:  headers.indexOf("related to"),
+      assigned: headers.indexOf("assigned"),
+      status:   headers.indexOf("status"),
     };
-    if ([idx.date,idx.assigned,idx.status].some(function(i){ return i===-1; }))
-      throw new Error("Missing required columns: Assign Date / Assigned / Status.");
+    if([idx.date,idx.related,idx.assigned,idx.status].some(i=>i===-1))
+      throw new Error("Missing required columns (Assign Date / Related To / Assigned / Status).");
 
-    var assignData = {};
-    var doneData   = {};
+    const summary   = {};
+    const monthData = {};
+    const len = rows.length;
 
-    for (var i = 1; i < rows.length; i++) {
-      var row    = rows[i];
-      var rawDt  = row[idx.date]; if (!rawDt) continue;
-      var parts  = rawDt.split("/"); if (parts.length!==3) continue;
-      var rowDate = new Date(parseInt(parts[2]),parseInt(parts[1])-1,parseInt(parts[0]));
-      if (isNaN(rowDate.getTime()) || rowDate<from || rowDate>to) continue;
+    for(let i=1;i<len;i++){
+      const row=rows[i];
+      const rawDt=row[idx.date]; if(!rawDt) continue;
+      const parts=rawDt.split("/"); if(parts.length!==3) continue;
+      const date=new Date(parts[2],parts[1]-1,parts[0]); if(isNaN(date.getTime())) continue;
+      if(date<from||date>to) continue;
 
-      var nn    = normalizeName(row[idx.assigned]); if (!nn) continue;
-      var dname = toDisplayName(nn);
-      var st    = (row[idx.status]||"").toLowerCase().trim().replace(/\s+/g," ");
+      const nname=normalizeName(row[idx.assigned]); if(!nname) continue;
+      const name=toDisplayName(nname);
+      const related=normalizeRelated(row[idx.related]);
+      const status=normalizeStatus(row[idx.status]);
+      const monthKey=`${date.getFullYear()}-${String(date.getMonth()+1).padStart(2,"0")}`;
 
-      assignData[dname] = (assignData[dname]||0) + 1;
-      if (st.includes("done")) doneData[dname] = (doneData[dname]||0) + 1;
+      if(!summary[name]) summary[name]={recipe:{total:0,done:0,close:0,hold:0},raw:{total:0,done:0,close:0,hold:0},rework:0,other:0};
+      if(!monthData[monthKey]) monthData[monthKey]={recipe:0,raw:0,rework:0,other:0};
+
+      if(related==="recipe"){
+        summary[name].recipe.total++; monthData[monthKey].recipe++;
+        if(status.includes("done"))  summary[name].recipe.done++;
+        else if(status.includes("close")) summary[name].recipe.close++;
+        else if(status.includes("hold"))  summary[name].recipe.hold++;
+      } else if(related==="raw"){
+        summary[name].raw.total++; monthData[monthKey].raw++;
+        if(status.includes("done"))  summary[name].raw.done++;
+        else if(status.includes("close")) summary[name].raw.close++;
+        else if(status.includes("hold"))  summary[name].raw.hold++;
+      } else if(related==="rework"){
+        summary[name].rework++; monthData[monthKey].rework++;
+      } else {
+        summary[name].other++; monthData[monthKey].other++;
+      }
     }
 
-    /* ── Compute working days from attendance map for every employee ── */
-    var attMap   = attResult.map;
-    var workDays = {};
-    var allNames = new Set(Object.keys(assignData).concat(Object.keys(doneData)));
+    renderTable(summary);
 
-    allNames.forEach(function(name) {
-      var nn  = normalizeName(name);
-      var cnt = countWorkingDays(attMap, nn, from, to);
-      workDays[name] = cnt;
-    });
+    // Defer chart — non-critical
+    if(typeof requestIdleCallback==="function")
+      requestIdleCallback(()=>renderMonthChart(monthData),{timeout:1200});
+    else setTimeout(()=>renderMonthChart(monthData),0);
 
-    /* ── Cache for dailyTarget re-calc ── */
-    latestAssignData = assignData;
-    latestDoneData   = doneData;
-    latestWorkDays   = workDays;
-
-    /* ── Build + render ── */
-    kpiRows      = buildKpiRows(assignData, doneData, workDays);
-    filteredRows = kpiRows.slice();
-    updateSummaryCards(kpiRows);
-    applyFilterSearch();
-    setStatus("Updated \u00b7 " + new Date().toLocaleTimeString());
+    setStatus(`Updated · ${new Date().toLocaleTimeString()}`);
 
   } catch(e) {
     console.error(e);
-    showError(e.message || "Unable to load KPI data.");
+    showError(e.message||"Unable to load Quarter Performance data.");
   } finally {
-    isLoading = false; setBtnState();
+    isLoading=false; setBtnState();
   }
 }
 
-/* ── INIT — bulletproof 4-strategy ──────────────────────────────── */
-refreshBtn.addEventListener("click", function() {
-  if (!fromInput.value || !toInput.value) { alert("Please select From and To dates first."); return; }
-  loadData(fromInput.value, toInput.value, { force: true });
-});
+/* ══════════════════════════════════════════════════════
+   EVENTS & INIT
+══════════════════════════════════════════════════════ */
+refreshButton.addEventListener("click", ()=>loadTable({forceNetwork:true}));
 
-function debounceDate() {
-  clearTimeout(dateTimer);
-  dateTimer = setTimeout(function() {
-    if (fromInput.value && toInput.value) loadData(fromInput.value, toInput.value, { force: true });
-  }, 350);
+function debounceLoad() {
+  clearTimeout(debTimer);
+  debTimer = setTimeout(()=>loadTable({forceNetwork:false}), 350);
 }
-fromInput.addEventListener("change", debounceDate);
-toInput.addEventListener("change",   debounceDate);
+fromInput.addEventListener("change", debounceLoad);
+toInput.addEventListener("change", debounceLoad);
 
-function setDefaultDates() {
-  var today = new Date();
-  var first = new Date(today.getFullYear(), today.getMonth(), 1);
-  fromInput.value = formatDate(first);
-  toInput.value   = formatDate(today);
-}
-
-function initializePage() {
-  if (hasInitialized) return;
-  hasInitialized = true;
-  setDefaultDates();
-  var th = document.querySelector('th[data-col="serial"]');
-  if (th) th.classList.add("sorted-desc");
+window.addEventListener("load", ()=>{
+  const today=new Date(), first=new Date(today.getFullYear(),today.getMonth(),1);
+  fromInput.value=formatDate(first);
+  toInput.value=formatDate(today);
   setBtnState();
-  if (!fromInput.value || !toInput.value) { showWaitingState(); return; }
-  loadData(fromInput.value, toInput.value, { force: true });
-}
-
-/* Strategy 1: DOMContentLoaded */
-document.addEventListener("DOMContentLoaded", initializePage);
-/* Strategy 2: window load fallback */
-window.addEventListener("load", initializePage);
-/* Strategy 3: immediate (script already below DOM) */
-if (document.readyState==="complete" || document.readyState==="interactive") {
-  setTimeout(initializePage, 0);
-}
-/* Strategy 4: bfcache restore */
-window.addEventListener("pageshow", function(ev) {
-  if (ev.persisted) {
-    isLoading = false; setBtnState(); clearError();
-    if (!fromInput.value || !toInput.value) { hasInitialized=false; initializePage(); }
-  }
+  loadTable();
 });
 </script>
 </body>
