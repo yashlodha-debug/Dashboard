@@ -986,12 +986,11 @@
                 <th style="width:46px;" data-col="serial">No.</th>
                 <th class="name-cell" style="width:160px;text-align:left;" data-col="name">Employee</th>
                 <th style="width:86px;" data-col="workDays">Work Days</th>
-                <th style="width:118px;" data-col="expectedTarget">Expected Target</th>
                 <th style="width:94px;" data-col="assignTasks">Assign Tasks</th>
-                <th style="width:86px;" data-col="doneTasks">Done Task</th>
                 <th style="width:88px;" data-col="dailyTargetValue">Daily Target</th>
+                <th style="width:86px;" data-col="doneTasks">Done Task</th>
                 <th style="width:116px;" data-col="perDayAvg">Per Day Avg Task</th>
-                
+                <th style="width:118px;" data-col="expectedTarget">Expected Target</th>
                 <th style="width:100px;" data-col="difference">Difference</th>
                 <th style="width:100px;" data-col="achievementPct">Achievement %</th>
               </tr>
@@ -1661,9 +1660,9 @@ function renderTable() {
 function exportCSV() {
   if (!filteredRows.length) { alert("No data to export."); return; }
   var esc  = function(v){ return '"'+String(v).replace(/"/g,'""')+'"'; };
-  var hdrs = ["No.","Employee","Work Days","Expected Target","Assign Tasks",
-              "Done Task","Daily Target","Per Day Avg Task","Difference",
-              "Achievement %"]; 
+  var hdrs = ["No.","Employee","Work Days","Assign Tasks","Daily Target",
+              "Done Task","Per Day Avg Task","Expected Target","Difference",
+              "Achievement %"];
   var rows = sortedRows();
   var lines = [hdrs.map(esc).join(",")];
 
