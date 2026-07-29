@@ -334,8 +334,10 @@
   .search-box input {
     border:none; outline:none; background:transparent;
     color:var(--text); font-family:var(--font); font-size:13px;
-    width:100%; placeholder-color:var(--text3);
+    width:100%;
   }
+
+  .search-box input::placeholder { color:var(--text3); }
 
   .target-group {
     display:flex; align-items:center; gap:8px;
@@ -358,7 +360,7 @@
     cursor:pointer; transition:all var(--transition);
   }
   .filter-chip:hover, .filter-chip.active { border-color:var(--accent); color:var(--accent); background:rgba(59,130,246,.08); }
-  .filter-chip.all     { }
+  /* .filter-chip.all intentionally left out to avoid empty ruleset */
   .filter-chip.f-green.active  { border-color:#22c55e; color:#22c55e; background:rgba(34,197,94,.08); }
   .filter-chip.f-yellow.active { border-color:#f59e0b; color:#f59e0b; background:rgba(245,158,11,.08); }
   .filter-chip.f-red.active    { border-color:#ef4444; color:#ef4444; background:rgba(239,68,68,.08); }
